@@ -1,0 +1,31 @@
+{
+  "id": "lesson_04_limit",
+  "title": "LIMIT",
+  "markdown_content": "## Limiting Results with LIMIT\n\nThe `LIMIT` clause restricts how many rows are returned. This is useful when you only need a sample of the data or the top N results.\n\n### Syntax\n\n```sql\nSELECT column1, column2 FROM table_name\nLIMIT n;\n```\n\n### Combining with ORDER BY\n\nA common pattern is to get the \"top 3\" of something by combining `ORDER BY` and `LIMIT`:\n\n```sql\nSELECT * FROM products ORDER BY price DESC LIMIT 3;\n```\n\nThis returns the 3 most expensive products.",
+  "challenges": [
+    {
+      "instructions": "Challenge 1: Write a query to get the 3 most expensive products.",
+      "starter_query": "SELECT * FROM products ORDER BY price DESC LIMIT 3",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM products ORDER BY price DESC LIMIT 3",
+      "hint": "Use ORDER BY price DESC to sort highest first, then LIMIT 3.",
+      "solution": "SELECT * FROM products ORDER BY price DESC LIMIT 3"
+    },
+    {
+      "instructions": "Challenge 2: Write a query to get the first 5 customers.",
+      "starter_query": "SELECT * FROM customers LIMIT 5",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM customers LIMIT 5",
+      "hint": "Use SELECT * FROM customers LIMIT 5.",
+      "solution": "SELECT * FROM customers LIMIT 5"
+    },
+    {
+      "instructions": "Challenge 3: Write a query to get the 2 most recent orders (by order_date).",
+      "starter_query": "SELECT * FROM orders ORDER BY order_date DESC LIMIT 2",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM orders ORDER BY order_date DESC LIMIT 2",
+      "hint": "Order by order_date DESC, then LIMIT 2.",
+      "solution": "SELECT * FROM orders ORDER BY order_date DESC LIMIT 2"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "courses": [
+    {
+      "id": "sql-basics",
+      "title": "SQL Basics",
+      "modules": [
+        {
+          "id": "module-1",
+          "title": "SELECT Fundamentals",
+          "lessons": [
+            {"id": "lesson_01_intro_select", "title": "Introduction to SELECT"},
+            {"id": "lesson_02_where", "title": "WHERE Filtering"},
+            {"id": "lesson_03_order_by", "title": "ORDER BY"},
+            {"id": "lesson_04_limit", "title": "LIMIT"},
+            {"id": "lesson_05_aggregations", "title": "Basic Aggregations"}
+          ]
+        }
+      ]
+    }
+  ]
+}

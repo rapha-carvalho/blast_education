@@ -1,0 +1,31 @@
+{
+  "id": "lesson_03_order_by",
+  "title": "ORDER BY",
+  "markdown_content": "## Sorting Results with ORDER BY\n\nThe `ORDER BY` clause sorts the result set by one or more columns.\n\n### Syntax\n\n```sql\nSELECT column1, column2 FROM table_name\nORDER BY column1 ASC, column2 DESC;\n```\n\n- `ASC` (default): ascending order (A-Z, 0-9)\n- `DESC`: descending order (Z-A, 9-0)\n\n### Example\n\nSort customers by name alphabetically:\n\n```sql\nSELECT * FROM customers ORDER BY name ASC;\n```\n\nSort products by price from highest to lowest:\n\n```sql\nSELECT name, price FROM products ORDER BY price DESC;\n```",
+  "challenges": [
+    {
+      "instructions": "Challenge 1: Write a query to get all products ordered by price from highest to lowest.",
+      "starter_query": "SELECT * FROM products ORDER BY price DESC",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM products ORDER BY price DESC",
+      "hint": "Use ORDER BY price DESC to sort by price in descending order.",
+      "solution": "SELECT * FROM products ORDER BY price DESC"
+    },
+    {
+      "instructions": "Challenge 2: Write a query to get all customers ordered by name in ascending order.",
+      "starter_query": "SELECT * FROM customers ORDER BY name ASC",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM customers ORDER BY name ASC",
+      "hint": "Use ORDER BY name ASC for alphabetical order.",
+      "solution": "SELECT * FROM customers ORDER BY name ASC"
+    },
+    {
+      "instructions": "Challenge 3: Write a query to get all orders ordered by order_date from newest to oldest.",
+      "starter_query": "SELECT * FROM orders ORDER BY order_date DESC",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM orders ORDER BY order_date DESC",
+      "hint": "Use ORDER BY order_date DESC to get newest first.",
+      "solution": "SELECT * FROM orders ORDER BY order_date DESC"
+    }
+  ]
+}

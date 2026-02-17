@@ -1,0 +1,31 @@
+{
+  "id": "lesson_02_where",
+  "title": "WHERE Filtering",
+  "markdown_content": "## Filtering with WHERE\n\nThe `WHERE` clause filters rows based on a condition. Only rows that satisfy the condition are returned.\n\n### Syntax\n\n```sql\nSELECT column1, column2 FROM table_name\nWHERE condition;\n```\n\n### Comparison operators\n\n- `=` Equal\n- `!=` or `<>` Not equal\n- `>` Greater than\n- `<` Less than\n- `>=` Greater than or equal\n- `<=` Less than or equal\n\n### Example\n\nTo find customers from the USA:\n\n```sql\nSELECT * FROM customers WHERE country = 'USA';\n```\n\nStrings must be enclosed in single quotes.",
+  "challenges": [
+    {
+      "instructions": "Challenge 1: Write a query to get all customers from the USA.",
+      "starter_query": "SELECT * FROM customers WHERE country = 'USA'",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM customers WHERE country = 'USA'",
+      "hint": "Use WHERE country = 'USA' to filter by country. Remember to use single quotes for the string.",
+      "solution": "SELECT * FROM customers WHERE country = 'USA'"
+    },
+    {
+      "instructions": "Challenge 2: Write a query to get all customers from the UK.",
+      "starter_query": "SELECT * FROM customers WHERE country = 'UK'",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM customers WHERE country = 'UK'",
+      "hint": "Same pattern as Challenge 1, but use country = 'UK'.",
+      "solution": "SELECT * FROM customers WHERE country = 'UK'"
+    },
+    {
+      "instructions": "Challenge 3: Write a query to get all customers with id greater than 3.",
+      "starter_query": "SELECT * FROM customers WHERE id > 3",
+      "validation_type": "result_match",
+      "validation_query": "SELECT * FROM customers WHERE id > 3",
+      "hint": "Use WHERE id > 3 to filter by numeric comparison.",
+      "solution": "SELECT * FROM customers WHERE id > 3"
+    }
+  ]
+}
