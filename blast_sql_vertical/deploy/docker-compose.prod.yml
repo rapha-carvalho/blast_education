@@ -1,14 +1,17 @@
-# Production Docker Compose – NAS deployment
-# Usage: docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
+# Production Docker Compose – blast-education NAS
 #
-# Images are built by GitHub Actions and published to GHCR.
-# To update: docker compose -f docker-compose.prod.yml pull && docker compose -f docker-compose.prod.yml up -d
+# USAGE:
+#   First time:  docker compose up -d
+#   Updates:     docker compose up -d          (auto-pulls latest images)
+#
+# REQUIREMENTS: a .env file in the same directory (copy .env.example → .env)
 
 services:
 
-  # ── Frontend (React + nginx) ──────────────────────────────────────────────
+  # ── Frontend ──────────────────────────────────────────────────────────────
   frontend:
-    image: ghcr.io/${GHCR_OWNER}/blast-sql-frontend:${IMAGE_TAG:-latest}
+    image: ghcr.io/rapha-carvalho/blast-sql-frontend:latest
+    pull_policy: always
     restart: unless-stopped
     depends_on:
       backend:
@@ -24,58 +27,16 @@ services:
         limits:
           memory: 256m
 
-  # ── Backend (FastAPI + SQLite + Playwright) ────────────────────────────────
+  # ── Backend ───────────────────────────────────────────────────────────────
   backend:
-    image: ghcr.io/${GHCR_OWNER}/blast-sql-backend:${IMAGE_TAG:-latest}
+    image: ghcr.io/rapha-carvalho/blast-sql-backend:latest
+    pull_policy: always
     restart: unless-stopped
+    env_file: .env                       # all secrets come from .env
     environment:
-      # --- Database ---
-      USER_DB_PATH: /app/data/users.db
-
-      # --- Auth ---
-      AUTH_TOKEN_TTL_HOURS: ${AUTH_TOKEN_TTL_HOURS:-168}
-      IMPERSONATION_TTL_MINUTES: ${IMPERSONATION_TTL_MINUTES:-30}
-
-      # --- Bootstrap admin (only used on first start) ---
-      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL}
-      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD}
-
-      # --- Content ---
-      STRICT_CONTENT_VALIDATION: ${STRICT_CONTENT_VALIDATION:-1}
-
-      # --- Stripe ---
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
-      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
-      STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
-      CHECKOUT_SUCCESS_URL: ${CHECKOUT_SUCCESS_URL}
-      CHECKOUT_CANCEL_URL: ${CHECKOUT_CANCEL_URL}
-      CHECKOUT_RETURN_URL: ${CHECKOUT_RETURN_URL}
-      STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES: ${STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES:-card,pix}
-      STRIPE_CHECKOUT_LOCALE: ${STRIPE_CHECKOUT_LOCALE:-pt-BR}
-      STRIPE_CARD_INSTALLMENTS_ENABLED: ${STRIPE_CARD_INSTALLMENTS_ENABLED:-1}
-      STRIPE_AUTOMATIC_TAX_ENABLED: ${STRIPE_AUTOMATIC_TAX_ENABLED:-0}
-      STRIPE_WEBHOOK_FORWARD_EVENTS: ${STRIPE_WEBHOOK_FORWARD_EVENTS:-checkout.session.completed,payment_intent.succeeded,charge.refunded,customer.subscription.deleted,charge.dispute.created}
-
-      # --- Billing ---
-      BILLING_COURSE_ID: ${BILLING_COURSE_ID:-sql-basics}
-      ACCESS_DURATION_MONTHS: ${ACCESS_DURATION_MONTHS:-6}
-      REFUND_WINDOW_DAYS: ${REFUND_WINDOW_DAYS:-14}
-      CHECKOUT_SIGNUP_INTENT_TTL_HOURS: ${CHECKOUT_SIGNUP_INTENT_TTL_HOURS:-24}
-
-      # --- Encryption ---
-      CPF_ENCRYPTION_KEY: ${CPF_ENCRYPTION_KEY}
-
-      # --- Email (Resend) ---
-      RESEND_API_KEY: ${RESEND_API_KEY}
-      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL}
-      APP_BASE_URL: ${APP_BASE_URL}
-      PASSWORD_RESET_TOKEN_TTL_MINUTES: ${PASSWORD_RESET_TOKEN_TTL_MINUTES:-60}
-
-      # --- PDF renderer ---
-      PLAYWRIGHT_CHROMIUM_ARGS: ${PLAYWRIGHT_CHROMIUM_ARGS:---disable-dev-shm-usage,--no-sandbox}
+      USER_DB_PATH: /app/data/users.db   # fixed — do not change
+      PLAYWRIGHT_CHROMIUM_ARGS: --disable-dev-shm-usage,--no-sandbox
     volumes:
-      # Named volume for SQLite DB + data — persisted across restarts/updates
       - backend_data:/app/data
     expose:
       - "8000"
@@ -88,14 +49,12 @@ services:
     deploy:
       resources:
         limits:
-          # Playwright/Chromium needs headroom for PDF rendering
           memory: 1500m
 
   # ── Cloudflare Tunnel ─────────────────────────────────────────────────────
-  # Routes education.blastgroup.org → frontend:80
-  # Token is obtained from the Cloudflare Zero Trust dashboard (see docs/deploy-nas.md).
   cloudflared:
     image: cloudflare/cloudflared:latest
+    pull_policy: always
     command: tunnel --no-autoupdate run
     environment:
       TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}

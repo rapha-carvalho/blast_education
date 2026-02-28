@@ -34,10 +34,11 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Production secrets (never commit)
+# Production secrets (never commit — only .env.example is safe to commit)
 deploy/.env.prod
 deploy/.env
 **/.env.prod
+blast_sql_vertical/deploy/.env
 
 # SQLite databases
 *.db
