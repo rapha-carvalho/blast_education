@@ -266,9 +266,6 @@ def require_admin_user(authorization: str | None = Header(default=None)) -> dict
 
 
 def bootstrap_initial_admin() -> None:
-    if count_users() > 0:
-        _promote_initial_admin_if_exists()
-        return
     if not INITIAL_ADMIN_EMAIL or not INITIAL_ADMIN_PASSWORD:
         logger.info("Skipping initial admin bootstrap: INITIAL_ADMIN_EMAIL/PASSWORD not set.")
         return
@@ -281,6 +278,15 @@ def bootstrap_initial_admin() -> None:
             "Skipping initial admin bootstrap: INITIAL_ADMIN_PASSWORD must have at least %s characters.",
             PASSWORD_MIN_LENGTH,
         )
+        return
+    existing = get_user_by_email(clean_email)
+    if existing:
+        # User already exists — just make sure they are admin.
+        changed = set_user_role_by_email(clean_email, "admin")
+        if changed:
+            logger.info("Initial admin promoted to role=admin: %s", clean_email)
+        else:
+            logger.info("Initial admin already has role=admin: %s", clean_email)
         return
     create_user(
         email=clean_email,
