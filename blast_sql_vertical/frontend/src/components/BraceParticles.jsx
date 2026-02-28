@@ -1,12 +1,19 @@
 import { useEffect, useRef } from "react";
-import { motion } from "framer-motion";
 
-export default function BraceParticles({ children }) {
+export default function BraceParticles({
+    children,
+    braceAnchorSelector = null,
+    braceAnchorOffsetY = 0,
+    height = "clamp(220px, 34vh, 600px)"
+}) {
+    const containerRef = useRef(null);
     const canvasRef = useRef(null);
+    const contentRef = useRef(null);
 
     useEffect(() => {
+        const container = containerRef.current;
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        if (!container || !canvas) return;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
@@ -15,18 +22,39 @@ export default function BraceParticles({ children }) {
         const isMobileViewport = () => window.innerWidth < 768;
         let particles = [];
         let animationFrameId;
-        let width = canvas.parentElement ? canvas.parentElement.clientWidth : window.innerWidth;
+        let resizeObserver;
+        let width = container.clientWidth || window.innerWidth;
         let height = isMobileViewport()
             ? Math.min(340, window.innerHeight * 0.34)
             : Math.min(600, window.innerHeight * 0.50);
 
+        const getAnchorMetrics = () => {
+            if (!braceAnchorSelector || !contentRef.current) return null;
+
+            const anchor = contentRef.current.querySelector(braceAnchorSelector);
+            if (!anchor) return null;
+
+            const containerRect = container.getBoundingClientRect();
+            const anchorRect = anchor.getBoundingClientRect();
+            const centerX = anchorRect.left - containerRect.left + anchorRect.width / 2;
+            const centerY = anchorRect.top - containerRect.top + anchorRect.height / 2 + braceAnchorOffsetY;
+
+            return {
+                centerX: clamp(centerX, 0, width),
+                centerY: clamp(centerY, 0, height),
+                width: anchorRect.width
+            };
+        };
+
         const resize = () => {
-            if (!canvasRef.current?.parentElement) return;
-            width = canvasRef.current.parentElement.clientWidth;
+            width = container.clientWidth || window.innerWidth;
+            const measuredHeight = container.clientHeight;
             const isMobile = isMobileViewport();
-            height = isMobile
-                ? Math.min(340, window.innerHeight * 0.34)
-                : Math.min(600, window.innerHeight * 0.50);
+            height = measuredHeight > 0
+                ? measuredHeight
+                : (isMobile
+                    ? Math.min(340, window.innerHeight * 0.34)
+                    : Math.min(600, window.innerHeight * 0.50));
             // Adjust canvas resolution dynamically
             const dpr = window.devicePixelRatio || 1;
             canvas.width = width * dpr;
@@ -42,7 +70,7 @@ export default function BraceParticles({ children }) {
         const initParticles = () => {
             particles = [];
             const isMobile = isMobileViewport();
-            const density = isMobile ? 6 : 4;
+            const density = 4;
 
             // Create an offscreen canvas to render text for sampling
             const offCanvas = document.createElement("canvas");
@@ -62,14 +90,20 @@ export default function BraceParticles({ children }) {
                 : clamp(width * 0.45, 160, 260);
             offCtx.font = `300 ${fontSize}px "Outfit", "Segoe UI", sans-serif`;
 
-            // Calculate positions dynamically around center
-            const centerX = width / 2;
-            const centerY = height / 2;
+            const anchorMetrics = getAnchorMetrics();
+
+            // Calculate positions dynamically around center (or anchored element when provided)
+            const centerX = anchorMetrics?.centerX ?? (width / 2);
+            const centerY = anchorMetrics?.centerY ?? (height / 2);
 
             // Offset to flank the text. Keep it responsive but bounded.
-            const braceOffset = isMobile
-                ? clamp(width * 0.40, 115, 190)
-                : clamp(width * 0.42, 140, 430);
+            const braceOffset = anchorMetrics?.width
+                ? (isMobile
+                    ? clamp(anchorMetrics.width * 0.62, 110, 190)
+                    : clamp(anchorMetrics.width * 0.64, 170, 430))
+                : (isMobile
+                    ? clamp(width * 0.40, 115, 190)
+                    : clamp(width * 0.42, 140, 430));
 
             // Draw left brace
             offCtx.fillText("{", centerX - braceOffset, centerY);
@@ -93,17 +127,17 @@ export default function BraceParticles({ children }) {
                             y: Math.random() * height,
                             baseX: x,                 // The target X coordinate perfectly forming the '{' or '}'
                             baseY: y,                 // The target Y coordinate
-                            size: isMobile ? (Math.random() * 0.85 + 0.35) : (Math.random() * 1.5 + 0.5),
+                            size: Math.random() * 1.5 + 0.5,
                             vx: 0,
                             vy: 0,
-                            color: isMobile ? "rgba(66,133,244,0.72)" : "#4285F4" // Google Blue
+                            color: isMobile ? "rgba(66,133,244,0.88)" : "#4285F4" // Google Blue
                         });
                     }
                 }
             }
 
             // Add some random "ambient" particles that aren't part of the text
-            const ambientCount = isMobile ? 16 : 100;
+            const ambientCount = isMobile ? 30 : 100;
             for (let i = 0; i < ambientCount; i++) {
                 particles.push({
                     x: Math.random() * width,
@@ -113,7 +147,7 @@ export default function BraceParticles({ children }) {
                     size: isMobile ? (Math.random() * 0.8 + 0.3) : (Math.random() * 1.5 + 0.5),
                     vx: 0,
                     vy: 0,
-                    color: isMobile ? "rgba(154,160,166,0.45)" : "#9aa0a6", // Grey
+                    color: isMobile ? "rgba(154,160,166,0.6)" : "#9aa0a6", // Grey
                     isAmbient: true
                 });
             }
@@ -196,10 +230,22 @@ export default function BraceParticles({ children }) {
             animationFrameId = requestAnimationFrame(animate);
         };
 
-        // Load custom fonts before measuring if necessary, but we rely on system-ui fallback if needed
-        document.fonts.ready.then(() => {
+        const fontsReady = document.fonts?.ready ?? Promise.resolve();
+        fontsReady.then(() => {
             resize();
             animate();
+
+            if (typeof ResizeObserver !== "undefined") {
+                resizeObserver = new ResizeObserver(resize);
+                resizeObserver.observe(container);
+                if (contentRef.current) {
+                    resizeObserver.observe(contentRef.current);
+                    const anchor = braceAnchorSelector
+                        ? contentRef.current.querySelector(braceAnchorSelector)
+                        : null;
+                    if (anchor) resizeObserver.observe(anchor);
+                }
+            }
         });
 
         window.addEventListener("resize", resize);
@@ -207,11 +253,12 @@ export default function BraceParticles({ children }) {
         return () => {
             window.removeEventListener("resize", resize);
             cancelAnimationFrame(animationFrameId);
+            if (resizeObserver) resizeObserver.disconnect();
         };
-    }, []);
+    }, [braceAnchorOffsetY, braceAnchorSelector]);
 
     return (
-        <div style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center", alignItems: "center", height: "clamp(220px, 34vh, 600px)", overflow: "hidden" }}>
+        <div ref={containerRef} style={{ position: "relative", width: "100%", display: "flex", justifyContent: "center", alignItems: "center", height, overflow: "hidden" }}>
             {/* Background Canvas Layer */}
             <canvas
                 ref={canvasRef}
@@ -227,7 +274,7 @@ export default function BraceParticles({ children }) {
             />
 
             {/* Overlayed HTML content (Achieve new heights) */}
-            <div style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: "800px" }}>
+            <div ref={contentRef} style={{ position: "relative", zIndex: 1, textAlign: "center", width: "100%", maxWidth: "800px" }}>
                 {children}
             </div>
         </div>

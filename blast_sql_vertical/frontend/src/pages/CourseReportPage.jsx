@@ -129,7 +129,7 @@ export default function CourseReportPage() {
 
             {/* Hero Cover */}
             <div style={{ background: "linear-gradient(to bottom, #111 0%, #0a0a0a 100%)", borderBottom: "1px solid rgba(255,255,255,0.05)", pageBreakAfter: "always" }}>
-                <BraceParticles>
+                <BraceParticles braceAnchorSelector="h1">
                     <div style={{ padding: "4rem 2rem", pointerEvents: "auto", minHeight: "60vh", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                         <div style={{ display: "inline-block", background: "rgba(66, 133, 244, 0.1)", border: "1px solid rgba(66, 133, 244, 0.2)", color: "#4285F4", padding: "0.4rem 1rem", borderRadius: 999, fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "1.5rem" }}>
                             Material de Apoio Oficial
@@ -140,7 +140,7 @@ export default function CourseReportPage() {
                         <p style={{ fontSize: "1.1rem", color: "#9aa0a6", maxWidth: 600, margin: "0 0 2rem 0", lineHeight: 1.6 }}>
                             Apostila consolidada com todas as referências teóricas, comandos e explicações ensinadas no curso.
                         </p>
-                        <div style={{ display: "flex", gap: "2rem", color: "#7a8086", fontSize: "0.9rem" }}>
+                        <div style={{ display: "flex", gap: "2rem", color: "#7a8086", fontSize: "0.9rem", justifyContent: "center", flexWrap: "wrap" }}>
                             <div><strong style={{ color: "#d2d2d2" }}>Aluno(a):</strong> {studentName}</div>
                             <div><strong style={{ color: "#d2d2d2" }}>Data:</strong> {dateLabel}</div>
                         </div>
