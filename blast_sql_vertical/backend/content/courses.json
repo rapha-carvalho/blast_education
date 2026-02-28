@@ -2,17 +2,213 @@
   "courses": [
     {
       "id": "sql-basics",
-      "title": "SQL Basics",
+      "title": "SQL do básico ao avançado",
       "modules": [
         {
           "id": "module-1",
-          "title": "SELECT Fundamentals",
+          "title": "SQL e o Mundo de Dados Moderno",
           "lessons": [
-            {"id": "lesson_01_intro_select", "title": "Introduction to SELECT"},
-            {"id": "lesson_02_where", "title": "WHERE Filtering"},
-            {"id": "lesson_03_order_by", "title": "ORDER BY"},
-            {"id": "lesson_04_limit", "title": "LIMIT"},
-            {"id": "lesson_05_aggregations", "title": "Basic Aggregations"}
+            {
+              "id": "lesson_m1_1",
+              "title": "O que é SQL e por que isso importa?"
+            },
+            {
+              "id": "lesson_m1_2",
+              "title": "O que é um Banco de Dados? Tabelas, Linhas e Colunas"
+            },
+            {
+              "id": "lesson_m1_3",
+              "title": "OLTP vs OLAP: Dois Trabalhos, Dois Tipos de Banco de Dados"
+            },
+            {
+              "id": "lesson_m1_4",
+              "title": "ETL, ELT e Como os Dados Chegam ao Data Warehouse"
+            },
+            {
+              "id": "lesson_m1_5",
+              "title": "Cloud Data Warehouses, Data Lakes e Lakehouses"
+            }
+          ]
+        },
+        {
+          "id": "module-2",
+          "title": "Filtrando e Fatiando Dados",
+          "lessons": [
+            {
+              "id": "lesson_m2_1",
+              "title": "WHERE e Operadores de Comparação"
+            },
+            {
+              "id": "lesson_m2_2",
+              "title": "AND, OR e Parênteses"
+            },
+            {
+              "id": "lesson_m2_3",
+              "title": "BETWEEN e IN"
+            },
+            {
+              "id": "lesson_m2_4",
+              "title": "LIKE e Correspondência de Padrões"
+            },
+            {
+              "id": "lesson_m2_5",
+              "title": "NULL: O Problema Silencioso dos Dados"
+            },
+            {
+              "id": "lesson_m2_6",
+              "title": "ORDER BY, LIMIT e OFFSET"
+            }
+          ]
+        },
+        {
+          "id": "module-3",
+          "title": "Agregando Dados",
+          "lessons": [
+            {
+              "id": "lesson_m3_1",
+              "title": "Funções de Agregação: COUNT, SUM, AVG, MIN, MAX"
+            },
+            {
+              "id": "lesson_m3_2",
+              "title": "GROUP BY: Agregando por Categoria"
+            },
+            {
+              "id": "lesson_m3_3",
+              "title": "WHERE vs HAVING: Filtros Pré e Pós-Agregação"
+            },
+            {
+              "id": "lesson_m3_4",
+              "title": "COUNT(DISTINCT) e Contagem de Valores Únicos"
+            }
+          ]
+        },
+        {
+          "id": "module-4",
+          "title": "JOINs: Combinando Tabelas",
+          "lessons": [
+            {
+              "id": "lesson_m4_1",
+              "title": "INNER JOIN: Apenas Registros Correspondentes"
+            },
+            {
+              "id": "lesson_m4_2",
+              "title": "LEFT JOIN: Mantenha Tudo à Esquerda"
+            },
+            {
+              "id": "lesson_m4_3",
+              "title": "Depuração de Join: Quando a Contagem de Linhas Está Errada"
+            }
+          ]
+        },
+        {
+          "id": "module-5",
+          "title": "Análise de Datas e Séries Temporais",
+          "lessons": [
+            {
+              "id": "lesson_m5_1",
+              "title": "Extraindo e Truncando Datas"
+            },
+            {
+              "id": "lesson_m5_2",
+              "title": "Aritmética de Datas e Diferenças de Tempo"
+            },
+            {
+              "id": "lesson_m5_3",
+              "title": "Comparações de Períodos e Coortes"
+            }
+          ]
+        },
+        {
+          "id": "module-6",
+          "title": "Lógica Condicional e Qualidade de Dados",
+          "lessons": [
+            {
+              "id": "lesson_m6_1",
+              "title": "CASE WHEN: Lógica Condicional em SQL"
+            },
+            {
+              "id": "lesson_m6_2",
+              "title": "COALESCE, NULLIF e Tratamento de Dados Ausentes"
+            },
+            {
+              "id": "lesson_m6_3",
+              "title": "Verificações de Qualidade de Dados com SQL"
+            }
+          ]
+        },
+        {
+          "id": "module-7",
+          "title": "Subqueries e CTEs",
+          "lessons": [
+            {
+              "id": "lesson_m7_1",
+              "title": "Subqueries"
+            },
+            {
+              "id": "lesson_m7_2",
+              "title": "CTEs: Escrevendo SQL que Parece uma História"
+            }
+          ]
+        },
+        {
+          "id": "module-8",
+          "title": "Window Functions",
+          "lessons": [
+            {
+              "id": "lesson_m8_1",
+              "title": "Ranqueando com ROW_NUMBER, RANK, DENSE_RANK"
+            },
+            {
+              "id": "lesson_m8_2",
+              "title": "LAG e LEAD: Comparando Linhas no Tempo"
+            },
+            {
+              "id": "lesson_m8_3",
+              "title": "Totais Móveis (Running Totals) e Médias Móveis"
+            }
+          ]
+        },
+        {
+          "id": "module-9",
+          "title": "Análise de Negócio Avançada",
+          "lessons": [
+            {
+              "id": "lesson_m9_1",
+              "title": "Análise de Funil"
+            },
+            {
+              "id": "lesson_m9_2",
+              "title": "Retenção e Churn (Cancelamento / Evasão)"
+            },
+            {
+              "id": "lesson_m9_3",
+              "title": "Relatórios de Lucro e Perda com SQL"
+            }
+          ]
+        },
+        {
+          "id": "module-10",
+          "title": "Performance e Boas Práticas de SQL",
+          "lessons": [
+            {
+              "id": "lesson_m10_1",
+              "title": "Escrevendo SQL de Alto Desempenho"
+            },
+            {
+              "id": "lesson_m10_2",
+              "title": "Escrevendo SQL Legível e Sustentável"
+            }
+          ]
+        },
+        {
+          "id": "module-11",
+          "title": "Master Challenge Final",
+          "lessons": [
+            {
+              "id": "lesson_master_challenge_1",
+              "title": "Master Challenge - Case Real de Negócio",
+              "locked_until_all_previous_completed": true
+            }
           ]
         }
       ]

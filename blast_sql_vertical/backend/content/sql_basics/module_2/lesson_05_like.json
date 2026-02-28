@@ -1,0 +1,179 @@
+{
+  "id": "lesson_05_like",
+  "title": "NULL: O Problema Silencioso dos Dados",
+  "lesson_type": "interactive_sql",
+  "objective": "Match text patterns using LIKE and wildcards.",
+  "prerequisites": [
+    "lesson_04_in"
+  ],
+  "estimated_minutes": 12,
+  "content_markdown": "**Contexto de negócio**: Alguns clientes não preencheram o número de telefone. Alguns pedidos ainda não têm data de entrega. NULL não é zero, nem uma string vazia — é a ausência de dados. Tratar isso de forma errada é um dos erros mais comuns dos analistas.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Explicar o que significa NULL (não é zero, não está em branco — é ausência de um valor).\r\n- Filtrar corretamente por NULL usando `IS NULL`.\r\n- Filtrar por valores não nulos usando `IS NOT NULL`.\r\n- Explicar por que `WHERE coluna = NULL` sempre retorna zero linhas (e por que isso é um bug silencioso).\r\n\r\n> ⚠️ **Aviso de Erro Comum**: `WHERE telefone = NULL` nunca retornará linhas. NULL não pode ser igual a nada — incluindo ele mesmo. `NULL = NULL` é avaliado como NULL, não TRUE. Use sempre `IS NULL` ou `IS NOT NULL`.",
+  "dataset_context": {
+    "business_model": "core_sql",
+    "tables_used": [
+      "filtering.customers",
+      "filtering.products"
+    ],
+    "scenario": "Search text with LIKE patterns."
+  },
+  "exercises": [
+    {
+      "id": "ch1_starts_with",
+      "title": "Challenge 1: Names starting with J",
+      "prompt_markdown": "### Objective\nReturn customers where `name` starts with 'J'.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.customers\nWHERE name LIKE 'J%';",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "name": "John Smith",
+          "email": "john@gmail.com",
+          "country": "USA",
+          "phone": "555-0101"
+        },
+        {
+          "id": 2,
+          "name": "Jane Doe",
+          "email": "jane@yahoo.com",
+          "country": "USA",
+          "phone": null
+        },
+        {
+          "id": 6,
+          "name": "Julia Martinez",
+          "email": "julia@outlook.com",
+          "country": "Argentina",
+          "phone": "555-0104"
+        },
+        {
+          "id": 7,
+          "name": "James Lee",
+          "email": "james@gmail.com",
+          "country": "USA",
+          "phone": "555-0105"
+        },
+        {
+          "id": 9,
+          "name": "Jose Hernandez",
+          "email": null,
+          "country": "Mexico",
+          "phone": "555-0106"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return customers whose name starts with J",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "country",
+          "phone"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use LIKE with % for any characters after.",
+      "hint_level_2": "WHERE name LIKE 'J%'"
+    },
+    {
+      "id": "ch2_contains",
+      "title": "Challenge 2: Product name contains 'pro'",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.products` where `product_name` contains 'pro' (anywhere).",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.products\nWHERE product_name LIKE '%pro%';",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "product_name": "Laptop Pro",
+          "price": 1299.99,
+          "category": "Electronics"
+        },
+        {
+          "id": 2,
+          "product_name": "Professional Mouse",
+          "price": 79.99,
+          "category": "Electronics"
+        },
+        {
+          "id": 5,
+          "product_name": "Software Pro",
+          "price": 199.99,
+          "category": "Software"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return products with 'pro' in the name",
+        "expected_columns": [
+          "id",
+          "product_name",
+          "price",
+          "category"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use % before and after to match anywhere.",
+      "hint_level_2": "WHERE product_name LIKE '%pro%'"
+    },
+    {
+      "id": "ch3_ends_with",
+      "title": "Challenge 3: Email ends with @gmail.com",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.customers` where `email` ends with '@gmail.com'.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.customers\nWHERE email LIKE '%@gmail.com';",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "name": "John Smith",
+          "email": "john@gmail.com",
+          "country": "USA",
+          "phone": "555-0101"
+        },
+        {
+          "id": 4,
+          "name": "Alice Brown",
+          "email": "alice@gmail.com",
+          "country": "Mexico",
+          "phone": null
+        },
+        {
+          "id": 5,
+          "name": "Carlos Garcia",
+          "email": "carlos@gmail.com",
+          "country": "Brazil",
+          "phone": "555-0103"
+        },
+        {
+          "id": 7,
+          "name": "James Lee",
+          "email": "james@gmail.com",
+          "country": "USA",
+          "phone": "555-0105"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return customers with Gmail addresses",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "country",
+          "phone"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use % before the suffix to match any prefix.",
+      "hint_level_2": "WHERE email LIKE '%@gmail.com'"
+    }
+  ]
+}

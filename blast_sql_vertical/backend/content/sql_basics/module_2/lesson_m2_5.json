@@ -1,0 +1,143 @@
+{
+  "id": "lesson_m2_5",
+  "title": "NULL: O Problema Silencioso dos Dados",
+  "lesson_type": "interactive_sql",
+  "objective": "Interpretar corretamente valores ausentes e usar IS NULL e IS NOT NULL sem cair no bug de comparação com NULL.",
+  "prerequisites": [
+    "lesson_m2_4"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.customers",
+      "filtering.orders"
+    ],
+    "scenario": "Você atua no time de analytics da GrooveCommerce e precisa identificar dados ausentes que impactam CRM, operação e auditoria."
+  },
+  "tabs": [
+    {
+      "id": "tab_null_basics",
+      "title": "O que NULL significa?",
+      "type": "content",
+      "content_markdown": "#### NULL não e zero, nem string vazia\n\nEm SQL, `NULL` significa **ausência de valor**.\nIsso e diferente de:\n\n- `0` (valor numérico valido)\n- `''` (texto vazio, mas ainda ? um valor)\n\nQuando você ignora NULL, o relatório pode parecer certo e estar errado.\n\n```sql\nSELECT id, name, phone\nFROM filtering.customers\nWHERE phone IS NULL;\n```\n\nEssa query encontra clientes sem telefone cadastrado.\n\n---\n\n#### Erro clássico (bug silencioso)\n\nEssas comparações estão erradas:\n\n```sql\nWHERE phone = NULL\nWHERE phone != NULL\n```\n\nAmbas não funcionam como esperado, porque NULL não pode ser comparado com `=` ou `!=`.\n\n[PLACEHOLDER_IMAGEM: Painel educativo mostrando diferença entre NULL, zero e string vazia, com alerta de bug silencioso ao usar igual com NULL.]"
+    },
+    {
+      "id": "tab_null_filters",
+      "title": "IS NULL e IS NOT NULL",
+      "type": "content",
+      "content_markdown": "#### Operadores corretos para valores ausentes\n\nUse sempre estes operadores:\n\n| Caso | Operador correto | Exemplo |\n|---|---|---|\n| Encontrar dados ausentes | `IS NULL` | `delivery_date IS NULL` |\n| Encontrar dados preenchidos | `IS NOT NULL` | `email IS NOT NULL` |\n\n---\n\n#### Casos reais de negócio\n\n| Pergunta de negócio | Filtro SQL |\n|---|---|\n| Quais clientes estão sem telefone? | `phone IS NULL` |\n| Quais pedidos ainda não tem entrega registrada? | `delivery_date IS NULL` |\n| Quais clientes tem contato completo? | `email IS NOT NULL AND phone IS NOT NULL` |\n\n---\n\n#### Regra de ouro\n\n> Sempre que o campo puder estar ausente, pense primeiro em `IS NULL` ou `IS NOT NULL`.\n\n[PLACEHOLDER_IMAGEM: Quadro comparativo com exemplos corretos de IS NULL e IS NOT NULL em clientes e pedidos, incluindo resultado esperado por regra.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Clientes sem telefone",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time de CRM precisa identificar clientes sem telefone cadastrado para uma campanha de atualizacao de perfil.\n\n> **Sua missão:** Retorne os clientes sem telefone usando o filtro correto para valores ausentes."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Pedidos sem entrega registrada",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "A operação quer monitorar pedidos sem data de entrega registrada para evitar atrasos invisiveis no dashboard.\n\n> **Sua missão:** Liste pedidos com `delivery_date` ausente, ordenando do mais recente para o mais antigo."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Base de contato completa",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Para acionar campanhas premium, o marketing quer apenas clientes com email e telefone preenchidos.\n\n> **Sua missão:** Retorne clientes com contato completo usando `IS NOT NULL` em ambos os campos."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `NULL` representa ausência de valor, não zero e não string vazia.\n- Comparar com `= NULL` ou `!= NULL` gera bug silencioso.\n- `IS NULL` encontra registros com valor ausente.\n- `IS NOT NULL` encontra registros preenchidos.\n- Tratar NULL corretamente evita erros de leitura de negócio.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `NULL` | Ausencia de valor em uma coluna |\n| `IS NULL` | Operador para filtrar valores ausentes |\n| `IS NOT NULL` | Operador para filtrar valores preenchidos |\n| Bug silencioso | Erro lógico sem mensagem explícita de falha |\n\n> **Próxima aula:** ORDER BY, LIMIT e OFFSET para priorizar leitura e paginar resultados."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m2_5_clientes_sem_telefone",
+      "title": "Desafio 1 - Clientes sem telefone",
+      "prompt_markdown": "Retorne clientes sem telefone cadastrado na tabela `filtering.customers`.\n\n**Requisitos:**\n- Colunas: `id`, `name`, `country`, `phone`\n- Filtro: `phone IS NULL`\n- Ordenar por `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, name, country, phone FROM filtering.customers WHERE phone IS NULL ORDER BY id ASC;",
+      "hint_level_1": "Use IS NULL para encontrar valores ausentes. Não use comparação com = NULL.",
+      "hint_level_2": "SELECT id, name, country, phone FROM filtering.customers WHERE phone IS NULL ORDER BY id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar clientes sem telefone cadastrado, ordenados por id",
+        "expected_columns": [
+          "id",
+          "name",
+          "country",
+          "phone"
+        ],
+        "notes": [
+          "Deve usar IS NULL no campo phone",
+          "A query deve retornar 3 linhas (ids 2, 4 e 8)",
+          "A ordenação deve ser por id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_5_pedidos_sem_entrega",
+      "title": "Desafio 2 - Pedidos sem entrega registrada",
+      "prompt_markdown": "Liste pedidos sem data de entrega registrada na tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `id`, `status`, `order_date`, `delivery_date`\n- Filtro: `delivery_date IS NULL`\n- Ordenar por `order_date DESC`, depois `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, status, order_date, delivery_date FROM filtering.orders WHERE delivery_date IS NULL ORDER BY order_date DESC, id ASC;",
+      "hint_level_1": "Use IS NULL em delivery_date e ordene por order_date DESC para priorizar os mais recentes.",
+      "hint_level_2": "SELECT id, status, order_date, delivery_date FROM filtering.orders WHERE delivery_date IS NULL ORDER BY order_date DESC, id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos sem entrega registrada, priorizando os mais recentes",
+        "expected_columns": [
+          "id",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": [
+          "Deve usar IS NULL em delivery_date",
+          "A query deve retornar 5 linhas (ids 2, 21, 14, 6 e 8 nessa ordem)",
+          "A ordenação deve ser order_date DESC e id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_5_contato_completo",
+      "title": "Desafio 3 - Clientes com contato completo",
+      "prompt_markdown": "Retorne clientes com email e telefone preenchidos na tabela `filtering.customers`.\n\n**Requisitos:**\n- Colunas: `id`, `name`, `email`, `phone`\n- Filtros: `email IS NOT NULL` e `phone IS NOT NULL`\n- Ordenar por `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, name, email, phone FROM filtering.customers WHERE email IS NOT NULL AND phone IS NOT NULL ORDER BY id ASC;",
+      "hint_level_1": "Use IS NOT NULL nos dois campos e combine com AND para manter apenas contato completo.",
+      "hint_level_2": "SELECT id, name, email, phone FROM filtering.customers WHERE email IS NOT NULL AND phone IS NOT NULL ORDER BY id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar clientes com email e telefone preenchidos",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "phone"
+        ],
+        "notes": [
+          "Deve usar IS NOT NULL em email e phone",
+          "A query deve retornar 5 linhas (ids 1, 5, 6, 7 e 10)",
+          "A ordenação deve ser por id ASC"
+        ]
+      }
+    }
+  ]
+}

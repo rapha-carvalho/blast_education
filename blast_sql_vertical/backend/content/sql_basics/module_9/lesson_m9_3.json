@@ -1,0 +1,144 @@
+{
+  "id": "lesson_m9_3",
+  "title": "Relatórios de Lucro e Perda com SQL",
+  "lesson_type": "interactive_sql",
+  "objective": "Construir um relatório de lucro e perda com SQL, incluindo receita, desconto, resultado e comparação mensal.",
+  "prerequisites": [
+    "lesson_m9_2"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "itens_pedido",
+      "produtos"
+    ],
+    "scenario": "A liderança financeira quer um painel mensal de P&L para acompanhar receita realizada, descontos e evolução de resultado."
+  },
+  "tabs": [
+    {
+      "id": "tab_pl_fundamentos",
+      "title": "Fundamentos de P&L",
+      "type": "content",
+      "content_markdown": "#### O que entra em um relatório de lucro e perda\n\nNo contexto desta aula, vamos usar:\n\n1. `receita_bruta`: valor cheio de tabela dos itens\n2. `desconto`: diferença entre valor de tabela e valor praticado\n3. `receita_liquida`: valor final realizado\n4. `resultado_operacional`: receita líquida menos perdas por cancelamento\n\n---\n\n#### Leitura executiva\n\n| Indicador | O que sinaliza |\n|---|---|\n| Receita líquida subindo | Melhor conversão e ticket |\n| Desconto alto | Pressao comercial para vender |\n| Resultado caindo | Risco de margem/eficiência |\n\n---\n\n#### Estrutura recomendada\n\n- Resumo mensal em linha do tempo\n- Colunas com definição objetiva e auditável\n- Comparação com mês anterior para identificar tendência\n\n[PLACEHOLDER_IMAGEM: Dashboard financeiro com receita, desconto, resultado e variação mensal em formato executivo.]"
+    },
+    {
+      "id": "tab_pl_sql",
+      "title": "Modelando P&L no SQL",
+      "type": "content",
+      "content_markdown": "#### Exemplo de resumo mensal de receita entregue\n\n```sql\nSELECT\n  DATE_TRUNC('month', created_at) AS mes_ref,\n  COUNT(*) AS pedidos_entregues,\n  ROUND(SUM(order_total), 2) AS receita_liquida\nFROM pedidos\nWHERE status_code = 'entregue'\nGROUP BY mes_ref\nORDER BY mes_ref;\n```\n\n---\n\n#### Exemplo de comparação mes contra mes\n\n```sql\nWITH mensal AS (\n  SELECT DATE_TRUNC('month', created_at) AS mes_ref,\n         ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita\n  FROM pedidos\n  GROUP BY mes_ref\n)\nSELECT mes_ref,\n       receita,\n       LAG(receita) OVER (ORDER BY mes_ref) AS receita_mes_anterior\nFROM mensal\nORDER BY mes_ref;\n```\n\n---\n\n#### Boas práticas\n\n| Prática | Motivo |\n|---|---|\n| Separar métricas por CTE | Facilita auditoria e manutenção |\n| Usar ROUND em valores monetários | Padrão de leitura financeira |\n| Definir filtro de status explicitamente | Evita misturar receita com cancelamento |\n| Mostrar comparativo de período | Apoia decisão executiva |\n\n[PLACEHOLDER_IMAGEM: Fluxo SQL com CTEs de receita, desconto e variação mensal para gerar P&L.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Resumo mensal de receita",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você vai montar a base mensal de receita para o P&L.\n\n> **Sua missão:** consolidar pedidos entregues e receita líquida por mês."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Receita bruta, desconto e líquida",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora você vai cruzar pedidos e itens para separar valor de tabela e desconto.\n\n> **Sua missão:** calcular receita bruta de lista, desconto e receita líquida mensal."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Resultado e variação mensal",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A diretoria quer ver tendência do resultado mês a mês.\n\n> **Sua missão:** calcular resultado operacional e variação percentual com LAG."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- P&L depende de métricas financeiras consistentes por período.\n- Receita de pedidos entregues e base principal de análise.\n- Cruce de itens e preço de lista permite estimar desconto.\n- Variação mês a mês revela tendência de resultado.\n- SQL financeiro precisa ser claro para auditoria executiva.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Receita bruta | Valor cheio antes de descontos |\n| Receita líquida | Valor efetivamente realizado |\n| Resultado operacional | Receita após perdas operacionais |\n| Variação mensal | Mudança percentual vs mês anterior |\n\n> **Próxima aula:** Escrevendo SQL de alto desempenho."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m9_3_resumo_mensal_receita",
+      "title": "Desafio 1 - Receita entregue por mês",
+      "prompt_markdown": "Crie um resumo mensal de receita entregue.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Filtrar apenas `status_code = 'entregue'`\n- Colunas finais:\n  - `mes_ref` = `DATE_TRUNC('month', created_at)`\n  - `pedidos_entregues` = `COUNT(*)`\n  - `receita_liquida` = `ROUND(SUM(order_total), 2)`\n  - `ticket_medio` = `ROUND(AVG(order_total), 2)`\n- Ordenar por `mes_ref` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT DATE_TRUNC('month', created_at) AS mes_ref, COUNT(*) AS pedidos_entregues, ROUND(SUM(order_total), 2) AS receita_liquida, ROUND(AVG(order_total), 2) AS ticket_medio FROM pedidos WHERE status_code = 'entregue' GROUP BY mes_ref ORDER BY mes_ref ASC;",
+      "hint_level_1": "Use DATE_TRUNC no mês e agregue somente pedidos entregues.",
+      "hint_level_2": "SELECT DATE_TRUNC('month', created_at) AS mes_ref, COUNT(*) AS pedidos_entregues, ROUND(SUM(order_total), 2) AS receita_liquida, ROUND(AVG(order_total), 2) AS ticket_medio FROM pedidos WHERE status_code = 'entregue' GROUP BY mes_ref ORDER BY mes_ref ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Consolidar receita mensal realizada para base do P&L",
+        "expected_columns": [
+          "mes_ref",
+          "pedidos_entregues",
+          "receita_liquida",
+          "ticket_medio"
+        ],
+        "notes": [
+          "Deve retornar 3 linhas para jan, fev e mar de 2024",
+          "A receita deve considerar apenas pedidos entregues"
+        ]
+      }
+    },
+    {
+      "id": "ex_m9_3_bruta_desconto_liquida",
+      "title": "Desafio 2 - Receita bruta, desconto e receita líquida",
+      "prompt_markdown": "Separe receita bruta, desconto e receita líquida por mês usando itens e preço de lista.\n\n**Requisitos:**\n- Considerar apenas pedidos `entregue`\n- Criar CTE `base_itens` com:\n  - `mes_ref`\n  - `receita_bruta_lista_item` = `quantity * produtos.price`\n  - `receita_liquida_item` = `quantity * itens_pedido.unit_price`\n- Agregar por mês em CTE `itens_mes`\n- Criar CTE `pedidos_mes` com soma de `order_total` por mês (entregue)\n- Resultado final:\n  - `mes_ref`\n  - `receita_bruta_lista`\n  - `desconto_total` (`receita_bruta_lista - receita_liquida_itens`)\n  - `receita_liquida_itens`\n  - `receita_liquida_pedidos`\n- Aplicar `ROUND(..., 2)` e ordenar por `mes_ref` ASC",
+      "starter_query": "",
+      "solution_query": "WITH base_itens AS (SELECT DATE_TRUNC('month', p.created_at) AS mes_ref, ip.quantity * pr.price AS receita_bruta_lista_item, ip.quantity * ip.unit_price AS receita_liquida_item FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id JOIN produtos pr ON ip.product_id = pr.product_id WHERE p.status_code = 'entregue'), itens_mes AS (SELECT mes_ref, ROUND(SUM(receita_bruta_lista_item), 2) AS receita_bruta_lista, ROUND(SUM(receita_liquida_item), 2) AS receita_liquida_itens FROM base_itens GROUP BY mes_ref), pedidos_mes AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, ROUND(SUM(order_total), 2) AS receita_liquida_pedidos FROM pedidos WHERE status_code = 'entregue' GROUP BY mes_ref) SELECT i.mes_ref, i.receita_bruta_lista, ROUND(i.receita_bruta_lista - i.receita_liquida_itens, 2) AS desconto_total, i.receita_liquida_itens, p.receita_liquida_pedidos FROM itens_mes i JOIN pedidos_mes p ON i.mes_ref = p.mes_ref ORDER BY i.mes_ref ASC;",
+      "hint_level_1": "Calcule receita de lista e receita praticada por item e só depois agregue por mês.",
+      "hint_level_2": "WITH base_itens AS (SELECT DATE_TRUNC('month', p.created_at) AS mes_ref, ip.quantity * pr.price AS receita_bruta_lista_item, ip.quantity * ip.unit_price AS receita_liquida_item FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id JOIN produtos pr ON ip.product_id = pr.product_id WHERE p.status_code = 'entregue'), itens_mes AS (SELECT mes_ref, ROUND(SUM(receita_bruta_lista_item), 2) AS receita_bruta_lista, ROUND(SUM(receita_liquida_item), 2) AS receita_liquida_itens FROM base_itens GROUP BY mes_ref), pedidos_mes AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, ROUND(SUM(order_total), 2) AS receita_liquida_pedidos FROM pedidos WHERE status_code = 'entregue' GROUP BY mes_ref) SELECT i.mes_ref, i.receita_bruta_lista, ROUND(i.receita_bruta_lista - i.receita_liquida_itens, 2) AS desconto_total, i.receita_liquida_itens, p.receita_liquida_pedidos FROM itens_mes i JOIN pedidos_mes p ON i.mes_ref = p.mes_ref ORDER BY i.mes_ref ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Separar valor bruto de tabela e desconto real da operação",
+        "expected_columns": [
+          "mes_ref",
+          "receita_bruta_lista",
+          "desconto_total",
+          "receita_liquida_itens",
+          "receita_liquida_pedidos"
+        ],
+        "notes": [
+          "Deve retornar 3 linhas mensais",
+          "Desconto total deve ser bruto menos líquida por itens"
+        ]
+      }
+    },
+    {
+      "id": "ex_m9_3_resultado_variacao",
+      "title": "Desafio 3 - Resultado operacional e variação mensal",
+      "prompt_markdown": "Calcule resultado operacional por mês ? a variação percentual vs mês anterior.\n\n**Requisitos:**\n- CTE `mensal` com:\n  - `mes_ref`\n  - `receita_entregue` = soma de `order_total` com `status_code = 'entregue'`\n  - `valor_cancelado` = soma de `order_total` com `status_code = 'cancelado'`\n- CTE `dre` com `resultado_operacional = receita_entregue - valor_cancelado`\n- Resultado final com colunas:\n  - `mes_ref`\n  - `receita_entregue`\n  - `valor_cancelado`\n  - `resultado_operacional`\n  - `resultado_mes_anterior` (`LAG`)\n  - `variacao_pct_mes` (2 casas, usando `NULLIF`)\n- Ordenar por `mes_ref` ASC",
+      "starter_query": "",
+      "solution_query": "WITH mensal AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, ROUND(SUM(CASE WHEN status_code = 'cancelado' THEN order_total ELSE 0 END), 2) AS valor_cancelado FROM pedidos GROUP BY mes_ref), dre AS (SELECT mes_ref, receita_entregue, valor_cancelado, ROUND(receita_entregue - valor_cancelado, 2) AS resultado_operacional FROM mensal) SELECT mes_ref, receita_entregue, valor_cancelado, resultado_operacional, LAG(resultado_operacional) OVER (ORDER BY mes_ref) AS resultado_mes_anterior, ROUND(((resultado_operacional - LAG(resultado_operacional) OVER (ORDER BY mes_ref)) * 100.0) / NULLIF(LAG(resultado_operacional) OVER (ORDER BY mes_ref), 0), 2) AS variacao_pct_mes FROM dre ORDER BY mes_ref ASC;",
+      "hint_level_1": "Monte o resultado por mês e depois aplique LAG para comparar com o mês anterior.",
+      "hint_level_2": "WITH mensal AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, ROUND(SUM(CASE WHEN status_code = 'cancelado' THEN order_total ELSE 0 END), 2) AS valor_cancelado FROM pedidos GROUP BY mes_ref), dre AS (SELECT mes_ref, receita_entregue, valor_cancelado, ROUND(receita_entregue - valor_cancelado, 2) AS resultado_operacional FROM mensal) SELECT mes_ref, receita_entregue, valor_cancelado, resultado_operacional, LAG(resultado_operacional) OVER (ORDER BY mes_ref) AS resultado_mes_anterior, ROUND(((resultado_operacional - LAG(resultado_operacional) OVER (ORDER BY mes_ref)) * 100.0) / NULLIF(LAG(resultado_operacional) OVER (ORDER BY mes_ref), 0), 2) AS variacao_pct_mes FROM dre ORDER BY mes_ref ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Transformar P&L mensal em leitura de tendência com window function",
+        "expected_columns": [
+          "mes_ref",
+          "receita_entregue",
+          "valor_cancelado",
+          "resultado_operacional",
+          "resultado_mes_anterior",
+          "variacao_pct_mes"
+        ],
+        "notes": [
+          "Deve retornar 3 linhas mensais",
+          "A primeira linha pode ter resultado_mes_anterior e variação nulos"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "id": "lesson_01_joins",
+  "title": "Funções de Agregação: COUNT, SUM, AVG, MIN, MAX",
+  "lesson_type": "interactive_sql",
+  "objective": "Combine tables with JOIN to answer restaurant-level business questions.",
+  "prerequisites": [
+    "lesson_02_having"
+  ],
+  "estimated_minutes": 20,
+  "content_markdown": "**Contexto de negócio**: A equipe financeira pergunta: \"Quanta receita geramos no mês passado? Qual é o tamanho médio do pedido? Qual foi o maior pedido único?\" Todas essas perguntas exigem funções de agregação.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Usar `COUNT(*)` para contar todas as linhas e `COUNT(coluna)` para contar valores não nulos.\r\n- Usar `SUM` para somar uma coluna numérica.\r\n- Usar `AVG`, `MIN` e `MAX` em colunas numéricas e de data.\r\n- Explicar por que `COUNT(*)` e `COUNT(coluna)` podem retornar números diferentes.\r\n\r\n> ⚠️ **Aviso de Erro Comum**: `COUNT(coluna)` ignora NULLs. `COUNT(*)` conta todas as linhas, incluindo NULLs. Se você quiser saber quantos clientes têm um endereço de e-mail, use `COUNT(email)` — não `COUNT(*)`.",
+  "dataset_context": {
+    "business_model": "food_delivery",
+    "tables_used": [
+      "food_delivery.orders",
+      "food_delivery.customers",
+      "food_delivery.restaurants"
+    ],
+    "scenario": "Operations wants to understand which customers ordered from which restaurants."
+  },
+  "exercises": [
+    {
+      "id": "join_orders_customers",
+      "title": "Challenge 1: Attach customer names to orders",
+      "prompt_markdown": "### Objective\nReturn each order id with the customer name.\n\n### Expected output\n- Columns: `order_id`, `customer_name`\n- 4 rows (all food delivery orders)\n\n### Constraints\n- Join `food_delivery.orders` with `food_delivery.customers`.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT o.id AS order_id, c.name AS customer_name\nFROM food_delivery.orders o\nJOIN food_delivery.customers c ON o.customer_id = c.id\nORDER BY o.id;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "order_id": 1,
+          "customer_name": "Jane Doe"
+        },
+        {
+          "order_id": 2,
+          "customer_name": "John Smith"
+        },
+        {
+          "order_id": 3,
+          "customer_name": "Jane Doe"
+        },
+        {
+          "order_id": 4,
+          "customer_name": "Maria Garcia"
+        }
+      ],
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Map every order to a customer name.",
+        "expected_columns": [
+          "order_id",
+          "customer_name"
+        ],
+        "notes": [
+          "Include all 4 orders."
+        ]
+      },
+      "hint_level_1": "Use `orders.customer_id = customers.id`.",
+      "hint_level_2": "Join `food_delivery.orders o` to `food_delivery.customers c` on the customer id."
+    },
+    {
+      "id": "join_orders_restaurants_customers",
+      "title": "Challenge 2: Show order, customer, and restaurant",
+      "prompt_markdown": "### Objective\nReturn order id, customer name, and restaurant name for each order.\n\n### Expected output\n- Columns: `order_id`, `customer_name`, `restaurant_name`\n- Sorted by order id ascending\n\n### Constraints\n- Join all three tables.\n- Keep alias names exactly as shown in expected output.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT o.id AS order_id, c.name AS customer_name, r.name AS restaurant_name\nFROM food_delivery.orders o\nJOIN food_delivery.customers c ON o.customer_id = c.id\nJOIN food_delivery.restaurants r ON o.restaurant_id = r.id\nORDER BY o.id;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "order_id": 1,
+          "customer_name": "Jane Doe",
+          "restaurant_name": "Pizza Hub"
+        },
+        {
+          "order_id": 2,
+          "customer_name": "John Smith",
+          "restaurant_name": "Pizza Hub"
+        },
+        {
+          "order_id": 3,
+          "customer_name": "Jane Doe",
+          "restaurant_name": "Bowl & Roll"
+        },
+        {
+          "order_id": 4,
+          "customer_name": "Maria Garcia",
+          "restaurant_name": "Taco Lane"
+        }
+      ],
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Create a complete order-level joined view.",
+        "expected_columns": [
+          "order_id",
+          "customer_name",
+          "restaurant_name"
+        ],
+        "notes": [
+          "Rows should be sorted by `order_id`."
+        ]
+      },
+      "hint_level_1": "Start from orders, then join customer and restaurant dimensions.",
+      "hint_level_2": "Join `customers` on `customer_id` and `restaurants` on `restaurant_id`."
+    }
+  ]
+}

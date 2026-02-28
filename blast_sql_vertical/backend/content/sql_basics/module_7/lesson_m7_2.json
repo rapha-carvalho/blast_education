@@ -1,0 +1,136 @@
+{
+  "id": "lesson_m7_2",
+  "title": "CTEs: Escrevendo SQL que Parece uma História",
+  "lesson_type": "interactive_sql",
+  "objective": "Escrever CTEs (Common Table Expressions) para organizar queries em etapas nomeadas; encadear CTEs e saber quando usar CTE vs subquery.",
+  "prerequisites": [
+    "lesson_m7_1"
+  ],
+  "estimated_minutes": 25,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos",
+      "produtos",
+      "itens_pedido"
+    ],
+    "scenario": "Analistas precisam de queries com várias etapas: calcular métricas, ranquear, filtrar. CTEs permitem escrever cada etapa em um bloco nomeado, de cima para baixo."
+  },
+  "tabs": [
+    {
+      "id": "tab_conceito",
+      "title": "O que é um CTE?",
+      "type": "content",
+      "content_markdown": "#### CTE = Common Table Expression\n\nUm **CTE** é um bloco `WITH nome AS (query)` que você define antes do `SELECT` principal. A query principal pode usar esse nome como se fosse uma tabela.\n\nSintaxe básica:\n\n```sql\nWITH nome_cte AS (\n  SELECT col1, col2 FROM tabela WHERE condição\n)\nSELECT * FROM nome_cte;\n```\n\nBenefícios:\n- **Legibilidade**: a lógica vai de cima para baixo, como uma história\n- **Testabilidade**: você pode rodar cada CTE separadamente para debugar\n- **Manutenção**: etapas nomeadas são mais fáceis de alterar\n\n---\n\n#### Comparado à subquery\n\nUma subquery aninhada obriga a leitura de dentro para fora. O CTE inverte isso: você lê de cima para baixo, etapa por etapa.\n\n[PLACEHOLDER_IMAGEM: Comparação subquery aninhada vs CTE — fluxo de leitura de dentro para fora vs de cima para baixo.]"
+    },
+    {
+      "id": "tab_conceito2",
+      "title": "Encadeando vários CTEs",
+      "type": "content",
+      "content_markdown": "#### Vários CTEs na mesma query\n\nVocê pode encadear CTEs separados por vírgula. Cada um pode referenciar os anteriores:\n\n```sql\nWITH\n  etapa_1 AS (SELECT ... FROM tabela),\n  etapa_2 AS (SELECT ... FROM etapa_1)\nSELECT * FROM etapa_2;\n```\n\nO segundo CTE usa o resultado do primeiro. A ordem de definição importa: um CTE só pode referenciar CTEs declarados antes dele.\n\n---\n\n#### Quando usar CTE vs subquery\n\n- **CTE**: quando a lógica tem várias etapas, ou quando você quer reutilizar o mesmo bloco mais de uma vez.\n- **Subquery simples**: quando é uma única etapa ? a subquery é curta (ex: `WHERE x IN (SELECT ...)`).\n\n[PLACEHOLDER_IMAGEM: Fluxo de dois CTEs encadeados — etapa_1 alimenta etapa_2.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Primeiro CTE",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "A equipe quer ver a receita por canal de aquisição dos clientes.\n\n> **Sua missão:** Use um CTE chamado `clientes_por_canal` que agrupa `clientes` por `acquisition_channel` e conta quantos clientes há em cada canal. Depois faça `SELECT * FROM clientes_por_canal ORDER BY total_clientes DESC`. Retorne `acquisition_channel` e `total_clientes`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Dois CTEs encadeados",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O CFO quer os 3 meses com maior receita (apenas pedidos entregues).\n\n> **Sua missão:** Primeiro CTE `receita_mensal`: agrupe por mês e some `order_total`. Segundo CTE `ranked`: use `ROW_NUMBER() OVER (ORDER BY receita_mensal DESC)`. No SELECT final, filtre `WHERE posicao <= 3`. Retorne `mes_pedido`, `receita_mensal` e `posicao`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — CTE + JOIN",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A equipe quer ver o nome dos clientes e quanto cada um gastou no total (pedidos entregues).\n\n> **Sua missão:** CTE `gastos_por_cliente` com `customer_id` e `total_gasto`. Depois faça `JOIN` com `clientes` para trazer `first_name` e `last_name`. Retorne `first_name`, `last_name` e `total_gasto`, ordenados por `total_gasto DESC`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **WITH nome AS (query)** — define um CTE que pode ser usado como tabela no SELECT principal.\n- **CTEs encadeados** — separe por vírgula; cada CTE pode referenciar os anteriores.\n- **CTE vs subquery** — use CTE para lógica multi-etapas; subquery para filtros simples.\n- **Leitura de cima para baixo** — CTEs tornam a query uma história sequencial.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|-------|-------------|\n| **CTE** | Common Table Expression; bloco WITH nome AS (query) |\n| **WITH** | Palavra-chave que introduce um ou mais CTEs |\n| **Encadear** | Um CTE referenciar outro CTE definido antes |\n| **Subquery** | Query aninhada dentro de outra (SELECT, FROM, WHERE) |\n\n---\n\n> **Próxima aula:** Ranqueando com ROW_NUMBER, RANK, DENSE_RANK (módulo 8)."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_primeiro_cte",
+      "title": "Desafio 1 — Primeiro CTE",
+      "prompt_markdown": "Use um CTE para agrupar clientes por canal de aquisição.\n\n**Sua missão:** CTE `clientes_por_canal` com `acquisition_channel` e `total_clientes` (COUNT). Retorne essas colunas, ordenadas por `total_clientes DESC`.",
+      "starter_query": "",
+      "solution_query": "WITH clientes_por_canal AS (SELECT acquisition_channel, COUNT(*) AS total_clientes FROM clientes GROUP BY acquisition_channel) SELECT acquisition_channel, total_clientes FROM clientes_por_canal ORDER BY total_clientes DESC;",
+      "hint_level_1": "WITH clientes_por_canal AS (SELECT acquisition_channel, COUNT(*) AS total_clientes FROM clientes GROUP BY acquisition_channel) SELECT * FROM clientes_por_canal ORDER BY total_clientes DESC;",
+      "hint_level_2": "WITH clientes_por_canal AS (SELECT acquisition_channel, COUNT(*) AS total_clientes FROM clientes GROUP BY acquisition_channel) SELECT acquisition_channel, total_clientes FROM clientes_por_canal ORDER BY total_clientes DESC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Clientes por canal de aquisição usando CTE",
+        "expected_columns": [
+          "acquisition_channel",
+          "total_clientes"
+        ],
+        "notes": [
+          "Usar WITH... AS"
+        ]
+      }
+    },
+    {
+      "id": "ex2_dois_ctes",
+      "title": "Desafio 2 — Dois CTEs encadeados",
+      "prompt_markdown": "Retorne os 3 meses com maior receita (pedidos entregues). Use dois CTEs encadeados.\n\n**Sua missão:** CTE1 `receita_mensal`: mes_pedido (DATE_TRUNC), receita_mensal. CTE2 `ranked`: adicione ROW_NUMBER() OVER (ORDER BY receita_mensal DESC) AS posicao. SELECT final com WHERE posicao <= 3. Retorne `mes_pedido`, `receita_mensal`, `posicao`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1), ranked AS (SELECT mes_pedido, receita_mensal, ROW_NUMBER() OVER (ORDER BY receita_mensal DESC) AS posicao FROM receita_mensal) SELECT mes_pedido, receita_mensal, posicao FROM ranked WHERE posicao <= 3 ORDER BY posicao;",
+      "hint_level_1": "Primeiro CTE: receita por mês. Segundo CTE: adicione ROW_NUMBER(). Filtre posicao <= 3.",
+      "hint_level_2": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1), ranked AS (SELECT mes_pedido, receita_mensal, ROW_NUMBER() OVER (ORDER BY receita_mensal DESC) AS posicao FROM receita_mensal) SELECT mes_pedido, receita_mensal, posicao FROM ranked WHERE posicao <= 3 ORDER BY posicao;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Top 3 meses por receita com dois CTEs",
+        "expected_columns": [
+          "mes_pedido",
+          "receita_mensal",
+          "posicao"
+        ],
+        "notes": [
+          "Dois CTEs encadeados",
+          "Apenas pedidos entregues"
+        ]
+      }
+    },
+    {
+      "id": "ex3_cte_join",
+      "title": "Desafio 3 — CTE + JOIN",
+      "prompt_markdown": "Retorne first_name, last_name e total_gasto de cada cliente (apenas pedidos entregues). Use um CTE para calcular o total por cliente e depois faça JOIN com a tabela clientes.\n\n**Sua missão:** CTE `gastos_por_cliente` com customer_id e total_gasto. JOIN com clientes. Retorne first_name, last_name, total_gasto. Ordenar por total_gasto DESC.",
+      "starter_query": "",
+      "solution_query": "WITH gastos_por_cliente AS (SELECT customer_id, SUM(order_total) AS total_gasto FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) SELECT c.first_name, c.last_name, g.total_gasto FROM clientes c JOIN gastos_por_cliente g ON c.customer_id = g.customer_id ORDER BY g.total_gasto DESC;",
+      "hint_level_1": "CTE com customer_id e SUM(order_total). Depois JOIN clientes c ON c.customer_id = g.customer_id.",
+      "hint_level_2": "WITH gastos_por_cliente AS (SELECT customer_id, SUM(order_total) AS total_gasto FROM pedidos WHERE status_code='entregue' GROUP BY customer_id) SELECT c.first_name, c.last_name, g.total_gasto FROM clientes c JOIN gastos_por_cliente g ON c.customer_id = g.customer_id ORDER BY g.total_gasto DESC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Clientes com total gasto usando CTE e JOIN",
+        "expected_columns": [
+          "first_name",
+          "last_name",
+          "total_gasto"
+        ],
+        "notes": [
+          "Apenas pedidos entregues"
+        ]
+      }
+    }
+  ]
+}

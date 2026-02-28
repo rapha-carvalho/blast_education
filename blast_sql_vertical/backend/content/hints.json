@@ -1,0 +1,548 @@
+{
+  "version": "2.0",
+  "description": "Armazém centralizado de dicas para todos os exercícios do currículo v2. Cada entrada mapeia para uma lição e exercício por ID. hint_level_1 é um empurrão conceitual; hint_level_2 é um empurrão no nível de sintaxe. Este arquivo é a fonte da verdade para dicas — os arquivos JSON de lições individuais devem referenciar ou copiar daqui.",
+  "hints": {
+    "lesson_m1_1": {
+      "ex1_select_all_customers": {
+        "hint_level_1": "Uma query SQL sempre começa com SELECT (o que voce quer) e FROM (de onde vem). Para pedir TUDO de uma tabela, existe um curinga especial de um so caractere.",
+        "hint_level_2": "Use o asterisco: SELECT * FROM clientes; — o * significa 'todas as colunas'. Nao esqueça o ponto e virgula no final."
+      },
+      "ex2_select_specific_columns": {
+        "hint_level_1": "Em vez do asterisco, escreva os nomes das colunas que voce quer. Separe cada nome com uma virgula, como se fosse uma lista de compras: first_name, last_name, email.",
+        "hint_level_2": "SELECT first_name, last_name, email FROM clientes;"
+      },
+      "ex3_recent_orders": {
+        "hint_level_1": "Voce precisa de tres coisas: (1) selecionar as 4 colunas certas, (2) dizer qual coluna define a 'mais recente' com ORDER BY, e (3) limitar a 10 linhas com LIMIT.",
+        "hint_level_2": "SELECT order_id, customer_id, created_at, order_total FROM pedidos ORDER BY created_at DESC LIMIT 10;"
+      }
+    },
+    "m1_c1_what_is_sql": {
+      "ex1_select_all_customers": {
+        "hint_level_1": "Para retornar todas as linhas e colunas de uma tabela, voce precisa de apenas duas palavras apos o SELECT.",
+        "hint_level_2": "Use SELECT * FROM clientes; — o * significa todas as colunas."
+      },
+      "ex2_select_specific_columns": {
+        "hint_level_1": "Voce nem sempre precisa de todas as colunas. Liste apenas aquelas que deseja, separadas por virgulas.",
+        "hint_level_2": "SELECT first_name, last_name, email FROM clientes;"
+      },
+      "ex3_recent_orders": {
+        "hint_level_1": "Para ver as linhas mais recentes, voce precisa ordenar por data em ordem decrescente e parar em 10 linhas.",
+        "hint_level_2": "Use ORDER BY created_at DESC seguido de LIMIT 10."
+      }
+    },
+    "m1_c2_database_structure": {
+      "ex1_explore_products": {
+        "hint_level_1": "Use SELECT * para retornar todas as colunas e todas as linhas de uma tabela.",
+        "hint_level_2": "SELECT * FROM produtos; mostrará a tabela completa."
+      },
+      "ex2_primary_key": {
+        "hint_level_1": "Liste apenas as duas colunas que você precisa — o identificador e o nome.",
+        "hint_level_2": "SELECT product_id, product_name FROM produtos;"
+      },
+      "ex3_foreign_key": {
+        "hint_level_1": "A tabela itens_pedido tem colunas que a ligam a pedidos e produtos. Liste apenas as quatro colunas solicitadas.",
+        "hint_level_2": "SELECT order_item_id, order_id, product_id, quantity FROM itens_pedido;"
+      }
+    },
+    "m1_c3_oltp_vs_olap": {
+      "ex1_oltp_lookup": {
+        "hint_level_1": "Você está procurando por um pedido específico. Use WHERE para corresponder o order_id exatamente.",
+        "hint_level_2": "SELECT * FROM pedidos WHERE order_id = 1042;"
+      },
+      "ex2_olap_count": {
+        "hint_level_1": "Para contar todas as linhas em uma tabela, use uma função de agregação. Você não precisa de uma cláusula WHERE.",
+        "hint_level_2": "SELECT COUNT(*) AS total_orders FROM pedidos;"
+      },
+      "ex3_revenue_by_month": {
+        "hint_level_1": "Para agrupar por mês, você precisa 'arredondar' cada timestamp para seu mês, depois usar GROUP BY e SUM.",
+        "hint_level_2": "Use DATE_TRUNC('month', created_at) AS order_month e SUM(order_total) AS total_revenue, em seguida GROUP BY 1 ORDER BY 1."
+      }
+    },
+    "m1_c4_etl_elt": {
+      "ex1_raw_status_codes": {
+        "hint_level_1": "Use DISTINCT para ver apenas os valores únicos que aparecem em uma coluna.",
+        "hint_level_2": "SELECT DISTINCT status_code FROM pedidos ORDER BY status_code;"
+      },
+      "ex2_case_when_preview": {
+        "hint_level_1": "CASE WHEN avalia cada condição em ordem e retorna o valor THEN correspondente. Não esqueça o END no final.",
+        "hint_level_2": "Estrutura: CASE WHEN status_code = 1 THEN 'pendente' WHEN status_code = 2 THEN 'confirmado' ... ELSE 'desconhecido' END AS status_label"
+      },
+      "ex3_freshness_check": {
+        "hint_level_1": "Para encontrar a linha mais recente, você precisa do maior (máximo) valor na coluna de data.",
+        "hint_level_2": "SELECT MAX(created_at) AS latest_order_time FROM pedidos;"
+      }
+    },
+    "m1_c5_cloud_infrastructure": {
+      "ex1_warehouse_snapshot": {
+        "hint_level_1": "Você pode usar uma subquery entre parênteses dentro de um SELECT para obter um único valor de outra tabela.",
+        "hint_level_2": "Use (SELECT COUNT(*) FROM clientes) AS total_customers, e repita o padrão para pedidos e receita."
+      },
+      "ex2_sessions_structure": {
+        "hint_level_1": "LIMIT restringe o número de linhas retornadas. Use-o para ter um preview da estrutura de uma tabela sem puxar tudo.",
+        "hint_level_2": "SELECT * FROM sessoes LIMIT 5;"
+      },
+      "ex3_cross_domain_join": {
+        "hint_level_1": "Você precisa fazer um JOIN entre duas tabelas e contar quantas sessões cada cliente tem. Pense em LEFT JOIN e COUNT.",
+        "hint_level_2": "Faça JOIN da tabela clientes com sessoes usando customer_id, use COUNT(s.session_id), GROUP BY c.customer_id, c.email."
+      }
+    },
+    "checkpoint_a": {
+      "ca1_company_snapshot": {
+        "hint_level_1": "Você precisa de um número de quatro tabelas diferentes em um único SELECT. Use subqueries entre parênteses para cada uma.",
+        "hint_level_2": "Padrão: SELECT (SELECT COUNT(*) FROM clientes) AS customer_count, (SELECT COUNT(*) FROM pedidos) AS order_count, ..."
+      },
+      "ca2_freshness_check": {
+        "hint_level_1": "MIN fornece o valor mais antigo; MAX fornece o mais recente. Aplique ambos à coluna created_at.",
+        "hint_level_2": "SELECT MIN(created_at) AS oldest_order, MAX(created_at) AS newest_order FROM pedidos;"
+      },
+      "ca3_structured_exploration": {
+        "hint_level_1": "Liste as quatro colunas específicas, depois use ORDER BY no preço na direção que coloca o preço mais alto primeiro.",
+        "hint_level_2": "SELECT product_id, product_name, category_id, price FROM produtos ORDER BY price DESC;"
+      }
+    },
+    "m2_c1_where_comparison": {
+      "ex1_high_value_orders": {
+        "hint_level_1": "Use WHERE com o operador > na coluna order_total.",
+        "hint_level_2": "SELECT * FROM pedidos WHERE order_total > 500;"
+      },
+      "ex2_not_delivered": {
+        "hint_level_1": "O operador != significa 'não igual a'. Use-o para excluir um valor específico de status_code.",
+        "hint_level_2": "SELECT order_id, customer_id, status_code, created_at FROM pedidos WHERE status_code != 4;"
+      },
+      "ex3_orders_since_2024": {
+        "hint_level_1": "Você pode comparar uma coluna TIMESTAMP contra uma string de data usando >=. Em seguida, ordene os resultados.",
+        "hint_level_2": "WHERE created_at >= '2024-01-01' ORDER BY created_at ASC"
+      }
+    },
+    "m2_c2_and_or": {
+      "ex1_and_filter": {
+        "hint_level_1": "AND exige que AMBAS as condições sejam verdadeiras ao mesmo tempo.",
+        "hint_level_2": "WHERE order_total > 200 AND status_code = 4"
+      },
+      "ex2_or_filter": {
+        "hint_level_1": "OR exige que pelo menos UMA condição seja verdadeira.",
+        "hint_level_2": "WHERE status_code = 1 OR status_code = 2"
+      },
+      "ex3_parentheses": {
+        "hint_level_1": "Sem parênteses, AND é avaliado antes do OR — o que pode alterar silenciosamente os resultados. Envolva as condições OR em parênteses primeiro.",
+        "hint_level_2": "WHERE (status_code = 1 OR status_code = 2) AND order_total > 100"
+      }
+    },
+    "m2_c3_between_in": {
+      "ex1_q1_orders": {
+        "hint_level_1": "BETWEEN inclui os extremos. Forneça as datas de início e fim como strings entre aspas.",
+        "hint_level_2": "WHERE created_at BETWEEN '2024-01-01' AND '2024-03-31'"
+      },
+      "ex2_mid_range_products": {
+        "hint_level_1": "BETWEEN funciona com números também. Combine-o com ORDER BY para ordenar os resultados.",
+        "hint_level_2": "WHERE price BETWEEN 20 AND 100 ORDER BY price ASC"
+      },
+      "ex3_in_status_codes": {
+        "hint_level_1": "IN permite que você verifique valores de uma lista em apenas uma expressão — mais limpo do que várias condições OR.",
+        "hint_level_2": "WHERE status_code IN (3, 4)"
+      }
+    },
+    "m2_c4_like": {
+      "ex1_gmail_customers": {
+        "hint_level_1": "O curinga % corresponde a qualquer número de caracteres. Coloque-o antes do padrão para buscar sufixos (termina com).",
+        "hint_level_2": "WHERE email LIKE '%@gmail.com'"
+      },
+      "ex2_product_name_contains": {
+        "hint_level_1": "Para encontrar uma palavra em qualquer lugar da string, envolva-a com % em ambos os lados.",
+        "hint_level_2": "WHERE LOWER(product_name) LIKE '%pro%'"
+      },
+      "ex3_combined_like": {
+        "hint_level_1": "Você pode combinar duas condições LIKE com AND. Uma verifica o início do first_name, a outra o final do e-mail.",
+        "hint_level_2": "WHERE first_name LIKE 'A%' AND email LIKE '%.com'"
+      }
+    },
+    "m2_c5_null": {
+      "ex1_missing_phone": {
+        "hint_level_1": "NULL não pode ser comparado com =. Existe um operador especial de duas palavras para ele.",
+        "hint_level_2": "WHERE phone IS NULL"
+      },
+      "ex2_no_delivery_date": {
+        "hint_level_1": "Para encontrar linhas onde um valor ESTÁ presente (não está faltando), use o oposto de IS NULL.",
+        "hint_level_2": "WHERE delivery_date IS NULL"
+      },
+      "ex3_no_contact_info": {
+        "hint_level_1": "Ambas as condições devem ser verdadeiras simultaneamente. Use AND para combinar duas verificações IS NULL.",
+        "hint_level_2": "WHERE phone IS NULL AND email IS NULL"
+      }
+    },
+    "m2_c6_order_limit": {
+      "ex1_top10_expensive": {
+        "hint_level_1": "Ordem decrescente coloca os maiores valores primeiro. Combine com LIMIT para limitar os resultados.",
+        "hint_level_2": "ORDER BY order_total DESC LIMIT 10"
+      },
+      "ex2_recent_customers": {
+        "hint_level_1": "Ordene a coluna created_at do mais novo ao mais antigo e, em seguida, limite a 20 linhas.",
+        "hint_level_2": "ORDER BY created_at DESC LIMIT 20"
+      },
+      "ex3_multi_column_sort": {
+        "hint_level_1": "Você pode ordenar por mais de uma coluna — separe-as com vírgulas. A primeira coluna é a ordenação primária.",
+        "hint_level_2": "ORDER BY status_code ASC, order_total DESC"
+      }
+    },
+    "m3_c1_aggregate_functions": {
+      "ex1_revenue_summary": {
+        "hint_level_1": "Use SUM para totais, AVG para médias e MAX para o maior valor — todos no mesmo SELECT.",
+        "hint_level_2": "SELECT SUM(order_total) AS total_revenue, AVG(order_total) AS avg_order_value, MAX(order_total) AS max_order_total FROM pedidos;"
+      },
+      "ex2_count_with_nulls": {
+        "hint_level_1": "COUNT(*) conta cada linha. COUNT(coluna) conta apenas as linhas onde essa coluna não é NULL. Eles podem retornar números diferentes.",
+        "hint_level_2": "SELECT COUNT(*) AS total_customers, COUNT(phone) AS customers_with_phone FROM clientes;"
+      },
+      "ex3_q1_revenue": {
+        "hint_level_1": "Adicione um filtro WHERE para restringir as linhas ao primeiro trimestre de 2024 antes de contar e somar.",
+        "hint_level_2": "WHERE created_at BETWEEN '2024-01-01' AND '2024-03-31' — depois aplique COUNT(*) e SUM(order_total)."
+      }
+    },
+    "m3_c2_group_by": {
+      "ex1_orders_per_status": {
+        "hint_level_1": "GROUP BY colapsa todas as linhas com o mesmo valor em um único grupo. Use COUNT(*) para contar linhas por grupo.",
+        "hint_level_2": "SELECT status_code, COUNT(*) AS order_count FROM pedidos GROUP BY status_code ORDER BY order_count DESC;"
+      },
+      "ex2_revenue_by_category": {
+        "hint_level_1": "Você precisará juntar itens_pedido a produtos para obter a categoria. Depois aplique SUM na receita por category_id.",
+        "hint_level_2": "JOIN produtos p ON oi.product_id = p.product_id, depois GROUP BY p.category_id e SUM(oi.unit_price * oi.quantity)."
+      },
+      "ex3_customers_per_channel": {
+        "hint_level_1": "Agrupe pela coluna acquisition_channel e conte as linhas em cada grupo.",
+        "hint_level_2": "SELECT acquisition_channel, COUNT(*) AS customer_count FROM clientes GROUP BY acquisition_channel ORDER BY customer_count DESC;"
+      }
+    },
+    "m3_c3_where_vs_having": {
+      "ex1_having_only": {
+        "hint_level_1": "HAVING filtra após o GROUP BY rodar. Use-o quando sua condição envolver um agregado como COUNT.",
+        "hint_level_2": "GROUP BY acquisition_channel HAVING COUNT(*) > 50"
+      },
+      "ex2_where_and_having": {
+        "hint_level_1": "WHERE filtra linhas individuais (antes de agrupar); HAVING filtra resultados agrupados. Você pode usar ambos na mesma query.",
+        "hint_level_2": "WHERE status_code = 4 — em seguida, GROUP BY customer_id — depois HAVING COUNT(*) > 3."
+      },
+      "ex3_combined_filter": {
+        "hint_level_1": "Filtre por ano com WHERE primeiro, depois agrupe por categoria e depois use HAVING para manter apenas grupos com receita alta.",
+        "hint_level_2": "WHERE o.created_at >= '2024-01-01' AND o.created_at < '2025-01-01' — GROUP BY p.category_id — HAVING SUM(...) > 5000."
+      }
+    },
+    "m3_c4_count_distinct": {
+      "ex1_unique_customers": {
+        "hint_level_1": "Um cliente pode fazer vários pedidos. Para contá-lo apenas uma vez, use COUNT com DISTINCT.",
+        "hint_level_2": "SELECT COUNT(DISTINCT customer_id) AS unique_ordering_customers FROM pedidos;"
+      },
+      "ex2_unique_products_per_category": {
+        "hint_level_1": "Junte itens_pedido a produtos, depois GROUP BY category_id e use COUNT DISTINCT e o product_ids.",
+        "hint_level_2": "COUNT(DISTINCT oi.product_id) AS unique_products_sold — agrupado por p.category_id."
+      },
+      "ex3_duplicate_detection": {
+        "hint_level_1": "Para encontrar duplicatas, agrupe pela coluna que deveria ser única e filtre para manter grupos com mais de uma linha.",
+        "hint_level_2": "GROUP BY email HAVING COUNT(*) > 1"
+      }
+    },
+    "checkpoint_b": {
+      "cb1_monthly_revenue": {
+        "hint_level_1": "Use DATE_TRUNC para criar uma coluna de mês, depois GROUP BY para agrupar e COUNT/SUM.",
+        "hint_level_2": "DATE_TRUNC('month', created_at) AS order_month — GROUP BY 1 — SUM(order_total)."
+      },
+      "cb2_top_customers": {
+        "hint_level_1": "Agregue pedidos por customer_id, exclua pedidos cancelados (status=5) e então ordene pelo gasto total.",
+        "hint_level_2": "WHERE status_code != 5 — GROUP BY customer_id — ORDER BY SUM(order_total) DESC LIMIT 10."
+      },
+      "cb3_category_health": {
+        "hint_level_1": "Agrupe por category_id na tabela de produtos e aplique COUNT, AVG, MIN, MAX na coluna de preço.",
+        "hint_level_2": "SELECT category_id, COUNT(*), AVG(price), MIN(price), MAX(price) FROM produtos GROUP BY category_id."
+      }
+    },
+    "m4_c1_inner_join": {
+      "ex1_orders_with_customers": {
+        "hint_level_1": "JOIN conecta duas tabelas numa coluna em comum. A cláusula ON especifica quais colunas corresponder.",
+        "hint_level_2": "FROM pedidos o JOIN clientes c ON o.customer_id = c.customer_id — depois SELECT o.order_id, o.order_total, c.first_name, c.last_name."
+      },
+      "ex2_items_with_product_names": {
+        "hint_level_1": "Junte itens_pedido com produtos utilizando a coluna product_id que eles compartilham.",
+        "hint_level_2": "FROM itens_pedido oi JOIN produtos p ON oi.product_id = p.product_id — selecione oi.order_item_id, oi.order_id, p.product_name, oi.quantity, oi.unit_price."
+      },
+      "ex3_three_table_join": {
+        "hint_level_1": "Você pode encadear JOINs. Comece de pedidos, dê join em clientes, depois join em itens_pedido, depois join em produtos.",
+        "hint_level_2": "JOIN clientes c ON o.customer_id = c.customer_id — JOIN itens_pedido oi ON o.order_id = oi.order_id — JOIN produtos p ON oi.product_id = p.product_id."
+      }
+    },
+    "m4_c2_left_join": {
+      "ex1_all_customers_with_orders": {
+        "hint_level_1": "O LEFT JOIN mantém todas as linhas da tabela esquerda (clientes), mesmo sem correspondência na esquerda. Conte o order_id especificamente, e não asterisco.",
+        "hint_level_2": "FROM clientes c LEFT JOIN pedidos o ON c.customer_id = o.customer_id — GROUP BY c.customer_id, c.first_name — COUNT(o.order_id)."
+      },
+      "ex2_customers_never_ordered": {
+        "hint_level_1": "Após um LEFT JOIN, as linhas sem correspondência terão NULL nas colunas da tabela direita. Filtre por esses NULLs.",
+        "hint_level_2": "LEFT JOIN pedidos o ON c.customer_id = o.customer_id WHERE o.order_id IS NULL."
+      },
+      "ex3_products_never_ordered": {
+        "hint_level_1": "Use LEFT JOIN de produtos até itens_pedido. Qualquer produto sem linha em itens_pedido terá NULL correspondente.",
+        "hint_level_2": "FROM produtos p LEFT JOIN itens_pedido oi ON p.product_id = oi.product_id WHERE oi.order_item_id IS NULL."
+      }
+    },
+    "m4_c3_join_debugging": {
+      "ex1_diagnose_fanout": {
+        "hint_level_1": "A diferença nos totais de linha explica por que joins inflam resultados. Use COUNT(*) nas duas bases.",
+        "hint_level_2": "SELECT COUNT(*) FROM pedidos; e SELECT COUNT(*) FROM itens_pedido; — em seguida compare os números."
+      },
+      "ex2_safe_aggregation": {
+        "hint_level_1": "Para agregar com segurança após o JOIN, verifique a granularidade ou agrupe pelas chaves dimensionais corretas.",
+        "hint_level_2": "FROM pedidos o JOIN itens_pedido oi ON o.order_id = oi.order_id — GROUP BY o.order_id, o.customer_id — SUM(oi.unit_price * oi.quantity)."
+      },
+      "ex3_aggregate_first": {
+        "hint_level_1": "Agregue itens_pedido numa linha por pedido PRIMEIRO (em um CTE), e dê join à orders em seguida. Evita multiplicações.",
+        "hint_level_2": "CTE: SELECT order_id, SUM(unit_price * quantity) AS order_revenue FROM itens_pedido GROUP BY order_id — depois JOIN em pedidos e GROUP BY customer_id."
+      }
+    },
+    "m5_c1_date_trunc": {
+      "ex1_monthly_order_count": {
+        "hint_level_1": "DATE_TRUNC('month', coluna) arredonda um timestamp até o 1º dia do mês. Em seguida dê um GROUP BY no resultado.",
+        "hint_level_2": "SELECT DATE_TRUNC('month', created_at) AS order_month, COUNT(*) AS order_count FROM pedidos GROUP BY 1 ORDER BY 1;"
+      },
+      "ex2_weekly_signups": {
+        "hint_level_1": "O mesmo de meses, utilizando 'week' para criar a métrica em DATE_TRUNC.",
+        "hint_level_2": "SELECT DATE_TRUNC('week', created_at) AS signup_week, COUNT(*) AS new_customers FROM clientes GROUP BY 1 ORDER BY 1;"
+      },
+      "ex3_orders_by_day_of_week": {
+        "hint_level_1": "Use EXTRACT. DOW retorna índice 0 para Domingo e 6 para Sábado no postgres / sqlite.",
+        "hint_level_2": "SELECT EXTRACT(DOW FROM created_at) AS day_of_week, COUNT(*) AS order_count FROM pedidos GROUP BY 1 ORDER BY order_count DESC;"
+      }
+    },
+    "m5_c2_date_arithmetic": {
+      "ex1_days_to_delivery": {
+        "hint_level_1": "Subtrair as duas datas (fazendo o casting com ::date) resultará em dias de diferença.",
+        "hint_level_2": "(delivery_date::date - created_at::date) AS days_to_deliver — filtre WHERE status_code = 4 AND delivery_date IS NOT NULL."
+      },
+      "ex2_last_90_days": {
+        "hint_level_1": "Use CURRENT_DATE para achar datas dentro de 90 dias via operador de subtração com INTERVAL.",
+        "hint_level_2": "WHERE created_at >= CURRENT_DATE - INTERVAL '90 days'"
+      },
+      "ex3_avg_delivery_by_month": {
+        "hint_level_1": "Agrupe as médias do mês e use AVG() nas restrições solicitadas.",
+        "hint_level_2": "DATE_TRUNC('month', created_at) AS order_month — AVG(delivery_date::date - created_at::date) — WHERE status_code = 4."
+      }
+    },
+    "m5_c3_cohorts": {
+      "ex1_cohort_sizes": {
+        "hint_level_1": "Um coorte usa a data fixada de inscrição original da base do consumidor para calcular retenção.",
+        "hint_level_2": "SELECT DATE_TRUNC('month', created_at) AS signup_cohort, COUNT(*) AS cohort_size FROM clientes GROUP BY 1 ORDER BY 1;"
+      },
+      "ex2_first_order_month": {
+        "hint_level_1": "Use o LEFT JOIN para pegar todo mundo, até zero. Aplique um MIN(o.created_at) e limite de datas.",
+        "hint_level_2": "LEFT JOIN pedidos o ON c.customer_id = o.customer_id — GROUP BY c.customer_id, c.created_at — DATE_TRUNC('month', MIN(o.created_at))."
+      },
+      "ex3_cohort_conversion_rate": {
+        "hint_level_1": "A conversão será as divisões do volume distinto da safra versus volume novo ativo.",
+        "hint_level_2": "COUNT(DISTINCT c.customer_id) AS cohort_size — COUNT(DISTINCT o.customer_id) AS customers_ordered — divida com NULLIF para isentar quebras via ZERO."
+      }
+    },
+    "m6_c1_case_when": {
+      "ex1_order_size_labels": {
+        "hint_level_1": "Use CASE WHEN nas comparações diretas top->bottom de valores.",
+        "hint_level_2": "CASE WHEN order_total < 50 THEN 'Pequeno' WHEN order_total <= 200 THEN 'Medio' ELSE 'Grande' END AS order_size_label."
+      },
+      "ex2_count_per_label": {
+        "hint_level_1": "Você pode rodar agregadores (COUNT) depois de englobar CASE WHEN nas regras via GROUP BY 1.",
+        "hint_level_2": "SELECT CASE WHEN ... END AS order_size_label, COUNT(*) AS order_count FROM pedidos GROUP BY 1."
+      },
+      "ex3_status_labels": {
+        "hint_level_1": "Trocadilhos lógicos podem utilizar o CASE direto (WHEN 1, WHEN 2...).",
+        "hint_level_2": "CASE status_code WHEN 1 THEN 'Pendente' WHEN 2 THEN 'Confirmado' ... ELSE 'Desconhecido' END AS status_label."
+      }
+    },
+    "m6_c2_coalesce_nullif": {
+      "ex1_replace_null_channel": {
+        "hint_level_1": "Use o COALESCE() para substituir colunas nulas pela tag string desejada.",
+        "hint_level_2": "COALESCE(acquisition_channel, 'Unknown') AS coalesced_channel."
+      },
+      "ex2_safe_division": {
+        "hint_level_1": "NULLIF(clicks, 0) previne crashes. A query dividirá 0 com isenção segura.",
+        "hint_level_2": "conversions::numeric / NULLIF(clicks, 0) * 100 — protegido no ROUND(..., 2)."
+      },
+      "ex3_coalesce_in_math": {
+        "hint_level_1": "Utilize NULL+Number conversor antes de calcular o saldo residual.",
+        "hint_level_2": "order_total - COALESCE(discount_amount, 0) AS net_revenue."
+      }
+    },
+    "m6_c3_data_quality": {
+      "ex1_duplicate_orders": {
+        "hint_level_1": "Apenas adicione a verificação condicional póstuma com HAVING COUNT > 1.",
+        "hint_level_2": "SELECT order_id, COUNT(*) AS occurrence_count FROM pedidos GROUP BY order_id HAVING COUNT(*) > 1;"
+      },
+      "ex2_orphaned_items": {
+        "hint_level_1": "Tabelas associativas pedem LEFT JOIN e varreduras de colunas esquerdas como nulas.",
+        "hint_level_2": "FROM itens_pedido oi LEFT JOIN produtos p ON oi.product_id = p.product_id WHERE p.product_id IS NULL."
+      },
+      "ex3_null_rate_summary": {
+        "hint_level_1": "Empilhe consultas de diagnósticos usando operadores de UNION e limites agregacionais.",
+        "hint_level_2": "SELECT 'email' AS column_name, COUNT(*) - COUNT(email) AS null_count FROM clientes UNION ALL SELECT 'phone', COUNT(*) - COUNT(phone) FROM clientes ..."
+      }
+    },
+    "m7_c1_subqueries": {
+      "ex1_above_average_orders": {
+        "hint_level_1": "Coloque a query analítica da média nos parênteses das exigências lógicas da raiz (WHERE).",
+        "hint_level_2": "WHERE order_total > (SELECT AVG(order_total) FROM pedidos)."
+      },
+      "ex2_from_subquery": {
+        "hint_level_1": "A cláusula FROM suporta sub-consultas (parênteses com alias).",
+        "hint_level_2": "FROM (SELECT customer_id, SUM(order_total) AS total_spend FROM pedidos WHERE status_code != 5 GROUP BY customer_id) AS customer_spend WHERE total_spend > 500."
+      },
+      "ex3_in_subquery": {
+        "hint_level_1": "Crie o sub-banco DISTINCT que retorne as bases únicas para que ocorra validações limpas com operador lógico 'IN'.",
+        "hint_level_2": "WHERE customer_id IN (SELECT DISTINCT customer_id FROM pedidos WHERE created_at >= '2024-01-01' AND created_at < '2025-01-01')."
+      }
+    },
+    "m7_c2_ctes": {
+      "ex1_first_cte": {
+        "hint_level_1": "Inicie o CTE aplicando a cláusula WITH para encapsular suas pesquisas prévias.",
+        "hint_level_2": "WITH active_customers AS (SELECT DISTINCT customer_id FROM pedidos WHERE created_at >= CURRENT_DATE - INTERVAL '180 days') SELECT ... FROM clientes c JOIN active_customers ac ON ..."
+      },
+      "ex2_chained_ctes": {
+        "hint_level_1": "Vírgulas separam matrizes temporárias adicionais. Use CTE2 referenciando nativamente o primeiro.",
+        "hint_level_2": "WITH campaign_stats AS (...), campaign_rates AS (SELECT ... FROM campaign_stats ...) SELECT * FROM campaign_rates WHERE conversion_rate_pct > 5."
+      },
+      "ex3_refactor_to_cte": {
+        "hint_level_1": "Extraia as lógicas estofadas convertendo e transacionando dados para CTEs nomeados e organizados.",
+        "hint_level_2": "WITH clean_orders AS (SELECT * FROM pedidos WHERE status_code != 5), customer_ltv AS (SELECT customer_id, SUM(order_total) AS ltv FROM clean_orders GROUP BY customer_id) SELECT * FROM customer_ltv WHERE ltv > 1000."
+      }
+    },
+    "checkpoint_c": {
+      "cc1_monthly_cohort_conversion": {
+        "hint_level_1": "Faça cruzamento de cohorts, a base CTE mensal com pedidos gerados das novas interações temporais associado aos mesmos.",
+        "hint_level_2": "CTE 1: DATE_TRUNC('month', created_at) das contas e CTE2 das datas primárias."
+      },
+      "cc2_top5_products_with_flag": {
+        "hint_level_1": "Cruze produtos e preços aplicados e exiba um sinalizador condicional. Agregue as transações nas junções corretas.",
+        "hint_level_2": "WITH product_sales AS (SELECT product_id, SUM(quantity), AVG(unit_price) FROM itens_pedido GROUP BY product_id)... CASE WHEN"
+      }
+    },
+    "m8_c1_ranking": {
+      "ex1_rank_customers_by_ltv": {
+        "hint_level_1": "Operadores espaciais OVER combinados são necessários (não limite o agrupamento principal).",
+        "hint_level_2": "SELECT customer_id, SUM(order_total) AS lifetime_value, RANK() OVER (ORDER BY SUM(order_total) DESC) AS ltv_rank FROM pedidos WHERE status_code != 5 GROUP BY customer_id."
+      },
+      "ex2_rank_within_category": {
+        "hint_level_1": "Defina cortes modulares com PARTITION BY (reinicia iterações locais baseadas nas categorias).",
+        "hint_level_2": "RANK() OVER (PARTITION BY category_id ORDER BY product_revenue DESC) AS rank_in_category."
+      },
+      "ex3_top1_per_category": {
+        "hint_level_1": "Gere as posições fixas com Window Functions ROW_NUMBER() dentro de matriz isolada.",
+        "hint_level_2": "ROW_NUMBER() OVER (PARTITION BY category_id ORDER BY product_revenue DESC) AS rn — então isole outer row."
+      }
+    },
+    "m8_c2_lag_lead": {
+      "ex1_mom_revenue": {
+        "hint_level_1": "Identifique a base anterior via a função estocástica referencial (LAG) nas tabelas resultantes mensais originais.",
+        "hint_level_2": "LAG(monthly_revenue) OVER (ORDER BY order_month) AS prior_month_revenue — calcule as diferenças operacionais de resultados."
+      },
+      "ex2_mom_pct_change": {
+        "hint_level_1": "Percentuais usam as médias das posições do Mês-X sobrepostas aos denominadores Mês (X-1).",
+        "hint_level_2": "(monthly_revenue - prior_month_revenue) / NULLIF(prior_month_revenue, 0) * 100 — circunde em ROUND."
+      },
+      "ex3_days_since_prev_order": {
+        "hint_level_1": "PARTITION BY limpa os fluxos de LAG inter-clientes sem invadir informações.",
+        "hint_level_2": "LAG(created_at::date) OVER (PARTITION BY customer_id ORDER BY created_at) AS prev_order_date — faça aritmética final com base do sistema principal."
+      }
+    },
+    "m8_c3_running_totals": {
+      "ex1_running_total_revenue": {
+        "hint_level_1": "Resultados de janelas abertas acumulativas se processam nas sobreposições sumárias dimensionais.",
+        "hint_level_2": "SUM(monthly_revenue) OVER (ORDER BY order_month) AS running_total — forme as médias usando CTE."
+      },
+      "ex2_3month_moving_avg": {
+        "hint_level_1": "Use o argumento de limites estruturados para mover janelas entre partições. (ROW BETWEEN 2 PRIOR...).",
+        "hint_level_2": "AVG(monthly_revenue) OVER (ORDER BY order_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg_3mo."
+      },
+      "ex3_running_spend_per_customer": {
+        "hint_level_1": "Crie fluxos in-locais abertos em ROWS predefinidos nos paineis irrestritos até o dia atual.",
+        "hint_level_2": "SUM(order_total) OVER (PARTITION BY customer_id ORDER BY created_at ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS running_customer_spend."
+      }
+    },
+    "m9_c1_funnel": {
+      "ex1_funnel_counts": {
+        "hint_level_1": "COUNTs múltiplos e condicionados vão agrupar tags dimensionais se transacionados no escopo restrito CASE WHEN via id session.",
+        "hint_level_2": "COUNT(DISTINCT CASE WHEN event_type = 'page_view' THEN session_id END) AS viewed_product — repita para 'add_to_cart' e 'purchase'."
+      },
+      "ex2_funnel_with_rates": {
+        "hint_level_1": "Reutilize as conversões diretas para aplicar os cálculos de limites fracionados da query via taxas brutas escalonares.",
+        "hint_level_2": "ROUND(viewed_product::numeric / NULLIF(total_sessions, 0) * 100, 1) AS view_rate — aplique isto para cart e purchase rates iterativos."
+      },
+      "ex3_funnel_by_channel": {
+        "hint_level_1": "Canais da base analítica dependem da conexão estrutural base cliente.",
+        "hint_level_2": "LEFT JOIN clientes c ON s.customer_id = c.customer_id — GROUP BY c.acquisition_channel — COUNT(DISTINCT CASE WHEN ...)."
+      }
+    },
+    "m9_c2_retention_churn": {
+      "ex1_active_customers_per_month": {
+        "hint_level_1": "Truncamentos associados limitam o acesso para sumarizar as bases isoladas por mês.",
+        "hint_level_2": "SELECT DATE_TRUNC('month', created_at), COUNT(DISTINCT customer_id) FROM pedidos WHERE status_code != 5 GROUP BY 1."
+      },
+      "ex2_mom_retorder": {
+        "hint_level_1": "Agrupar partições duplicadas na mesma query faz a auto-verificação do crescimento intertemporal das safras.",
+        "hint_level_2": "JOIN monthly_active b ON a.customer_id = b.customer_id AND b.order_month = a.order_month + INTERVAL '1 month'."
+      },
+      "ex3_churned_customers": {
+        "hint_level_1": "Desligamentos saem da amostra via sub-representação nos relatórios de NULL.",
+        "hint_level_2": "LEFT JOIN monthly_active b ON a.customer_id = b.customer_id AND b.order_month = a.order_month + INTERVAL '1 month' WHERE b.customer_id IS NULL."
+      }
+    },
+    "m9_c3_pnl_reporting": {
+      "ex1_monthly_pnl": {
+        "hint_level_1": "Fluxo bruto contábil interage com deduções anuláveis isoladas.",
+        "hint_level_2": "SUM(order_total) AS gross_revenue — SUM(COALESCE(discount_amount, 0)) AS total_discounts — abata-as isoladas das receitas parciais liquidas."
+      },
+      "ex2_gross_margin_by_category": {
+        "hint_level_1": "As avaliações dependem da quantificação real via cálculo estendido nas unidades vs produtos diretos associados.",
+        "hint_level_2": "JOIN itens_pedido aos produtos — GROUP BY category_id — SUM(oi.unit_price * oi.quantity) vs SUM(p.unit_cost * oi.quantity) — aplique limite dimensional interrelativo com div NULL."
+      },
+      "ex3_yoy_comparison": {
+        "hint_level_1": "Anos contábeis demandam matriz relacional baseada nas referências operacionais sobrepostas dos conjuntos de LAGs temporais equivalidos.",
+        "hint_level_2": "WITH yearly AS (...GROUP BY EXTRACT(YEAR FROM created_at)) SELECT order_year, total_revenue, LAG(total_revenue) OVER (ORDER BY order_year)..."
+      }
+    },
+    "m10_c1_performance": {
+      "ex1_partition_aware_query": {
+        "hint_level_1": "Não leia histórico sem necessidade. Filtre matriz e vetores operacionais restritivos primariamente por data referenciada contábil.",
+        "hint_level_2": "WHERE created_at >= CURRENT_DATE - INTERVAL '30 days' — e então DATE_TRUNC, COUNT, SUM, GROUP BY."
+      },
+      "ex2_avoid_select_star": {
+        "hint_level_1": "Não solicite asteriscos em grandes processadores limitadores de tráfego, isole os itens vitais.",
+        "hint_level_2": "SELECT order_id, customer_id, order_total, created_at FROM pedidos WHERE created_at >= '2024-01-01'."
+      },
+      "ex3_pre_aggregate_before_join": {
+        "hint_level_1": "Dê preferência via junções limpas de agregadores únicos aos conjuntos não estruturados em banco.",
+        "hint_level_2": "WITH ltv AS (SELECT customer_id, SUM(order_total) AS lifetime_value FROM pedidos WHERE status_code != 5 GROUP BY customer_id) SELECT c.*, l.lifetime_value FROM clientes c JOIN ltv l ON c.customer_id = l.customer_id."
+      }
+    },
+    "m10_c2_good_sql": {
+      "ex1_reformat_query": {
+        "hint_level_1": "Crie alinhamentos verticais organizados em comandos operacionais primários para revisão legível de analistas seniores.",
+        "hint_level_2": "Agrupe, formate recuos padronizados nos subtextos nativos de queries para revisões rápidas isoladas."
+      },
+      "ex2_meaningful_aliases": {
+        "hint_level_1": "Pense nas restrições lexicais semânticas via referências explícitas (e.g., c.email vs e.email).",
+        "hint_level_2": "Navegue usando rótulos coesos para cada item, tabelas lógicas via referências."
+      },
+      "ex3_structured_analysis": {
+        "hint_level_1": "Analises completas necessitam CTE referenciadores padronizados lógicos não restritivos.",
+        "hint_level_2": "CTE escalável sem interversão contábil despropositada limitando legibilidade futura em blocos escalares formatados isoladamente lógicos modulares escalonados operacionais limitadores nativos."
+      }
+    },
+    "final_checkpoint": {
+      "fc1_channel_funnel": {
+        "hint_level_1": "Construa pipelines consolidados, calcule gastos associados aos canais convertidos das planilhas originárias (pedidos X clientes).",
+        "hint_level_2": "Mova CTE para junções modulares escaláveis agregados."
+      },
+      "fc2_monthly_dashboard": {
+        "hint_level_1": "Formule agregadores contínuos isolando transações de crescimento sobrepostas YTD vs mensuração contínua modular.",
+        "hint_level_2": "Analise lag via operacionais estendidas para a função agregadora YTD nas sobreposições mensais parciais dimensionais equivalidas mensuradas unidas YTD."
+      },
+      "fc3_data_quality_audit": {
+        "hint_level_1": "Averigue blocos operacionais nulos via contagens submetidas às comparações diferenciais entre distintos das chaves vitais analíticas interativas base log.",
+        "hint_level_2": "Subtrações base id resultam na duplicata. Frequências base originárias fracionais apontam percentuais restritivos."
+      }
+    }
+  }
+}

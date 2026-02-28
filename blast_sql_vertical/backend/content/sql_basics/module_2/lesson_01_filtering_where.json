@@ -1,0 +1,193 @@
+{
+  "id": "lesson_01_filtering_where",
+  "title": "WHERE e Operadores de Comparação",
+  "lesson_type": "interactive_sql",
+  "objective": "Filter rows using WHERE and comparison operators.",
+  "prerequisites": [
+    "lesson_05_table_structure"
+  ],
+  "estimated_minutes": 15,
+  "content_markdown": "**Contexto de negócio**: A equipe financeira da GrooveCommerce precisa encontrar pedidos grandes para reconciliação. Seu trabalho é filtrar a tabela de pedidos para trazer as linhas relevantes.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Escrever uma cláusula `WHERE` usando `=`, `!=`, `>`, `<`, `>=`, `<=`.\r\n- Explicar a diferença entre `=` e `!=` em linguagem simples.\r\n- Filtrar uma coluna de data usando um operador de comparação.\r\n- Combinar o filtro de uma coluna com uma ordenação.\r\n\r\n> ⚠️ **Aviso de Erro Comum**: `WHERE status = NULL` nunca retornará linhas. NULL não é um valor — é a *ausência* de um valor. Use sempre `IS NULL`. Você praticará isso corretamente na Aula 2.5.",
+  "dataset_context": {
+    "business_model": "core_sql",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.customers"
+    ],
+    "scenario": "Practice filtering with WHERE and comparison operators."
+  },
+  "exercises": [
+    {
+      "id": "ch1_amount_gt_500",
+      "title": "Challenge 1: Amount greater than 500",
+      "prompt_markdown": "### Objective\nReturn all rows from `filtering.orders` where `amount` is greater than 500.\n\n### Expected output\n- All columns from filtering.orders\n- Only rows with amount > 500",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.orders\nWHERE amount > 500;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "customer_id": 1,
+          "amount": 650,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2024-03-15",
+          "delivery_date": "2024-03-18"
+        },
+        {
+          "id": 5,
+          "customer_id": 5,
+          "amount": 550,
+          "city": "São Paulo",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2024-02-01",
+          "delivery_date": "2024-02-05"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return orders with amount > 500",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "city",
+          "country",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use WHERE with a comparison operator.",
+      "hint_level_2": "Use WHERE amount > 500"
+    },
+    {
+      "id": "ch2_country_usa",
+      "title": "Challenge 2: USA customers",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.customers` where `country = 'USA'`.\n\n### Expected output\n- All columns from filtering.customers\n- Only USA customers",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.customers\nWHERE country = 'USA';",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "name": "John Smith",
+          "email": "john@gmail.com",
+          "country": "USA",
+          "phone": "555-0101"
+        },
+        {
+          "id": 2,
+          "name": "Jane Doe",
+          "email": "jane@yahoo.com",
+          "country": "USA",
+          "phone": null
+        },
+        {
+          "id": 7,
+          "name": "James Lee",
+          "email": "james@gmail.com",
+          "country": "USA",
+          "phone": "555-0105"
+        },
+        {
+          "id": 10,
+          "name": "Professional Tools Co",
+          "email": "info@protools.com",
+          "country": "USA",
+          "phone": "555-0107"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return USA customers",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "country",
+          "phone"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Filter on the country column.",
+      "hint_level_2": "Use WHERE country = 'USA'"
+    },
+    {
+      "id": "ch3_amount_lte_50",
+      "title": "Challenge 3: Amount less than or equal to 50",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.orders` where `amount` is less than or equal to 50.\n\n### Expected output\n- All columns from filtering.orders\n- Only rows with amount <= 50",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.orders\nWHERE amount <= 50;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 2,
+          "customer_id": 2,
+          "amount": 45,
+          "city": "LA",
+          "country": "USA",
+          "status": "pending",
+          "order_date": "2024-03-10",
+          "delivery_date": null
+        },
+        {
+          "id": 6,
+          "customer_id": 6,
+          "amount": 25,
+          "city": "Buenos Aires",
+          "country": "Argentina",
+          "status": "rejected",
+          "order_date": "2024-01-12",
+          "delivery_date": null
+        },
+        {
+          "id": 14,
+          "customer_id": 4,
+          "amount": 35,
+          "city": "Tijuana",
+          "country": "Mexico",
+          "status": "pending",
+          "order_date": "2024-02-14",
+          "delivery_date": null
+        },
+        {
+          "id": 21,
+          "customer_id": 2,
+          "amount": 22,
+          "city": "LA",
+          "country": "USA",
+          "status": "rejected",
+          "order_date": "2024-03-01",
+          "delivery_date": null
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return orders with amount <= 50",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "city",
+          "country",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use <= for less than or equal.",
+      "hint_level_2": "Use WHERE amount <= 50"
+    }
+  ]
+}

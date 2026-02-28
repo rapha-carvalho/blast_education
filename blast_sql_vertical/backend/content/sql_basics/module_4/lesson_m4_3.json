@@ -1,0 +1,137 @@
+{
+  "id": "lesson_m4_3",
+  "title": "Depuração de Join: Quando a Contagem de Linhas Esta Errada",
+  "lesson_type": "interactive_sql",
+  "objective": "Diagnosticar e corrigir erros de fan-out em joins um-para-muitos para evitar distorcao de métricas.",
+  "prerequisites": [
+    "lesson_m4_2"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "itens_pedido",
+      "clientes"
+    ],
+    "scenario": "Você trabalha no time de analytics da GrooveCommerce e precisa investigar por que um relatório de receita aumentou após um join com itens de pedido."
+  },
+  "tabs": [
+    {
+      "id": "tab_join_fanout",
+      "title": "O problema de fan-out",
+      "type": "content",
+      "content_markdown": "#### Quando o join multiplica linhas sem você perceber\n\nEm joins **um-para-muitos**, uma linha da tabela principal pode aparecer varias vezes após a união.\n\nExemplo real:\n\n- `pedidos` tem 1 linha por pedido\n- `itens_pedido` tem varias linhas por pedido (uma por item)\n\n```sql\nSELECT p.order_id, p.order_total, ip.item_id\nFROM pedidos p\nJOIN itens_pedido ip\n  ON p.order_id = ip.order_id;\n```\n\nSe você somar `p.order_total` nesse resultado, o valor pode ser inflado, porque pedidos com mais de um item serão repetidos.\n\n---\n\n#### Sinal de alerta\n\nSempre compare contagem antes e depois do join:\n\n| Etapa | O que medir |\n|---|---|\n| Antes do join | `COUNT(*)` da tabela base |\n| Depois do join | `COUNT(*)` da tabela unida |\n\nSe aumentar inesperadamente, você pode estar com fan-out.\n\n[PLACEHOLDER_IMAGEM: Fluxo visual mostrando tabela pedidos (1 linha por pedido) sendo expandida após join com itens_pedido (varias linhas por pedido), destacando risco de duplicação de receita.]"
+    },
+    {
+      "id": "tab_join_debug_playbook",
+      "title": "Playbook de depuração",
+      "type": "content",
+      "content_markdown": "#### Passo a passo para depurar joins\n\n1. Conte linhas da tabela base\n2. Conte linhas após join\n3. Identifique quais chaves estão repetindo\n4. Corrija a agregação para nível certo\n\n```sql\n-- Passo 1 e 2: base vs join\nSELECT\n  (SELECT COUNT(*) FROM pedidos) AS linhas_base,\n  (SELECT COUNT(*)\n   FROM pedidos p\n   JOIN itens_pedido ip ON p.order_id = ip.order_id) AS linhas_join;\n```\n\n---\n\n#### Como corrigir\n\nEscolha uma dessas abordagens:\n\n- agregar antes do join (ex.: itens por pedido)\n- agregar depois, no nível correto\n- evitar somar métrica da tabela \"um\" em resultado já multiplicado\n\n```sql\nWITH itens_por_pedido AS (\n  SELECT order_id, SUM(quantity * unit_price) AS total_itens\n  FROM itens_pedido\n  GROUP BY order_id\n)\nSELECT p.order_id, p.order_total, i.total_itens\nFROM pedidos p\nLEFT JOIN itens_por_pedido i\n  ON p.order_id = i.order_id;\n```\n\n---\n\n#### Regra prática\n\n> Sempre confirme a granularidade de cada tabela antes de agregar métricas financeiras.\n\n[PLACEHOLDER_IMAGEM: Checklist de depuração de join com etapas de contagem, identificação de chaves repetidas e padrões de correção para evitar fan-out.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Detectar explosao de linhas",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você precisa provar tecnicamente que houve fan-out após o join entre pedidos e itens.\n\n> **Sua missão:** Retorne em uma única linha a contagem da base ? a contagem após o join."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Descobrir pedidos duplicados",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora você vai localizar exatamente quais pedidos estão sendo multiplicados no join.\n\n> **Sua missão:** Liste os `order_id` com mais de uma linha após join com `itens_pedido`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Quantificar impacto financeiro",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A liderança quer ver o impacto do erro em reais.\n\n> **Sua missão:** Retorne receita errada (com fan-out), receita correta e diferença para pedidos `entregue`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Join um-para-muitos pode multiplicar linhas (fan-out).\n- Fan-out distorce agregações quando a métrica vem da tabela base.\n- Comparar `COUNT(*)` antes e depois do join ? o primeiro diagnóstico.\n- Chaves com `COUNT(*) > 1` ajudam a localizar a origem da duplicação.\n- A correção depende da granularidade certa antes de agregar.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Fan-out | Multiplicacao de linhas após join um-para-muitos |\n| Granularidade | Nivel de detalhe de uma tabela (pedido, item, cliente) |\n| Tabela base | Tabela principal que deveria guiar a contagem |\n| Duplicação de métrica | Soma inflada por repetir a mesma linha base |\n\n> **Próxima etapa:** consolidar joins com práticas de qualidade para análises avançadas."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m4_3_base_vs_join_count",
+      "title": "Desafio 1 - Base vs join: contagem de linhas",
+      "prompt_markdown": "Retorne em uma única linha o total de linhas da tabela `pedidos` ? o total de linhas após join com `itens_pedido`.\n\n**Requisitos:**\n- Colunas: `linhas_base_pedidos`, `linhas_apos_join`\n- Usar subqueries ou CTE\n- Join por `p.order_id = ip.order_id`",
+      "starter_query": "",
+      "solution_query": "SELECT (SELECT COUNT(*) FROM pedidos) AS linhas_base_pedidos, (SELECT COUNT(*) FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id) AS linhas_apos_join;",
+      "hint_level_1": "Compare COUNT(*) da tabela base com COUNT(*) após o join. Retorne tudo em uma linha.",
+      "hint_level_2": "SELECT (SELECT COUNT(*) FROM pedidos) AS linhas_base_pedidos, (SELECT COUNT(*) FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id) AS linhas_apos_join;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Demonstrar matematicamente a explosao de linhas após join",
+        "expected_columns": [
+          "linhas_base_pedidos",
+          "linhas_apos_join"
+        ],
+        "notes": [
+          "Deve retornar 1 linha com duas métricas",
+          "A contagem após join deve ser maior que a contagem base"
+        ]
+      }
+    },
+    {
+      "id": "ex_m4_3_pedidos_multiplicados",
+      "title": "Desafio 2 - Pedidos com multiplicacao de linhas",
+      "prompt_markdown": "Liste os pedidos que aparecem mais de uma vez após join com `itens_pedido`.\n\n**Requisitos:**\n- Colunas: `order_id`, `linhas_apos_join`, `order_total`\n- Join: `pedidos` x `itens_pedido`\n- Agrupar por pedido\n- Filtrar com `HAVING COUNT(*) > 1`\n- Ordenar por `linhas_apos_join DESC`, depois `order_id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT p.order_id, COUNT(*) AS linhas_apos_join, p.order_total FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id GROUP BY p.order_id, p.order_total HAVING COUNT(*) > 1 ORDER BY linhas_apos_join DESC, p.order_id ASC;",
+      "hint_level_1": "Use GROUP BY por pedido e HAVING COUNT(*) > 1 para encontrar repeticoes.",
+      "hint_level_2": "SELECT p.order_id, COUNT(*) AS linhas_apos_join, p.order_total FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id GROUP BY p.order_id, p.order_total HAVING COUNT(*) > 1 ORDER BY linhas_apos_join DESC, p.order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Identificar pedidos afetados por fan-out no join com itens",
+        "expected_columns": [
+          "order_id",
+          "linhas_apos_join",
+          "order_total"
+        ],
+        "notes": [
+          "Deve usar HAVING COUNT(*) > 1",
+          "Todos os pedidos retornados devem ter multiplicacao no join"
+        ]
+      }
+    },
+    {
+      "id": "ex_m4_3_receita_errada_vs_correta",
+      "title": "Desafio 3 - Receita errada vs correta",
+      "prompt_markdown": "Mostre lado a lado o impacto financeiro do fan-out para pedidos entregues.\n\n**Requisitos:**\n- Colunas: `receita_errada_fanout`, `receita_correta`, `diferença`\n- `receita_errada_fanout`: soma de `p.order_total` após join com `itens_pedido`\n- `receita_correta`: soma de `order_total` direto de `pedidos`\n- Considerar apenas `status_code = 'entregue'`\n- Arredondar com 2 casas\n- Retornar 1 linha",
+      "starter_query": "",
+      "solution_query": "WITH receita_errada AS (SELECT ROUND(SUM(p.order_total), 2) AS total FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id WHERE p.status_code = 'entregue'), receita_correta AS (SELECT ROUND(SUM(order_total), 2) AS total FROM pedidos WHERE status_code = 'entregue') SELECT re.total AS receita_errada_fanout, rc.total AS receita_correta, ROUND(re.total - rc.total, 2) AS diferença FROM receita_errada re CROSS JOIN receita_correta rc;",
+      "hint_level_1": "Calcule dois totais em CTEs separadas (errado com join, correto sem join) e compare em uma única linha.",
+      "hint_level_2": "WITH receita_errada AS (SELECT ROUND(SUM(p.order_total), 2) AS total FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id WHERE p.status_code = 'entregue'), receita_correta AS (SELECT ROUND(SUM(order_total), 2) AS total FROM pedidos WHERE status_code = 'entregue') SELECT re.total AS receita_errada_fanout, rc.total AS receita_correta, ROUND(re.total - rc.total, 2) AS diferença FROM receita_errada re CROSS JOIN receita_correta rc;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Quantificar o impacto do fan-out na receita de pedidos entregues",
+        "expected_columns": [
+          "receita_errada_fanout",
+          "receita_correta",
+          "diferença"
+        ],
+        "notes": [
+          "Deve retornar 1 linha",
+          "A diferença deve ser positiva quando houver duplicação"
+        ]
+      }
+    }
+  ]
+}

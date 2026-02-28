@@ -1,0 +1,152 @@
+{
+  "id": "lesson_04_first_sql_query",
+  "title": "ETL, ELT e Como os Dados Chegam ao Data Warehouse",
+  "lesson_type": "interactive_sql",
+  "objective": "Write your first SQL queries using SELECT to retrieve all columns and specific columns.",
+  "prerequisites": [
+    "lesson_03_oltp_vs_olap"
+  ],
+  "estimated_minutes": 15,
+  "content_markdown": "**Contexto de negócio**: Os dados não aparecem magicamente no data warehouse de análise. Alguém (ou alguma ferramenta) precisa movê-los para lá a partir dos sistemas ao vivo. Entender esse pipeline ajuda os analistas a saberem *por que* os dados às vezes parecem diferentes no data warehouse em comparação com o aplicativo ao vivo.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Explicar ETL (Extract, Transform, Load) e onde as transformações acontecem.\r\n- Explicar ELT (Extract, Load, Transform) e por que agora é a abordagem dominante na nuvem.\r\n- Nomear dois tipos de ferramentas que executam ELT (ex: Fivetran/Airbyte para extração; dbt para transformação).\r\n- Explicar por que um analista pode ver tabelas \"brutas\" vs tabelas \"transformadas\" em um data warehouse.",
+  "dataset_context": {
+    "business_model": "core_sql",
+    "tables_used": [
+      "sales"
+    ],
+    "scenario": "Practice selecting data from the sales table."
+  },
+  "exercises": [
+    {
+      "id": "challenge_1_first_selection",
+      "title": "Challenge 1: First Selection",
+      "prompt_markdown": "### Objective\nSelect all columns from the `sales` table.\n\n### Expected output\n- Columns: `id`, `customer`, `amount`, `date`\n- All 8 rows\n\n### Constraints\n- Query only from `sales`.\n- Do not add filters.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM sales;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "customer": "Ana",
+          "amount": 150,
+          "date": "2024-01-10"
+        },
+        {
+          "id": 2,
+          "customer": "John",
+          "amount": 89.5,
+          "date": "2024-01-11"
+        },
+        {
+          "id": 3,
+          "customer": "Ana",
+          "amount": 200,
+          "date": "2024-01-12"
+        },
+        {
+          "id": 4,
+          "customer": "Maria",
+          "amount": 75.25,
+          "date": "2024-01-13"
+        },
+        {
+          "id": 5,
+          "customer": "John",
+          "amount": 320,
+          "date": "2024-01-14"
+        },
+        {
+          "id": 6,
+          "customer": "Ana",
+          "amount": 45.99,
+          "date": "2024-01-15"
+        },
+        {
+          "id": 7,
+          "customer": "Carlos",
+          "amount": 189,
+          "date": "2024-01-16"
+        },
+        {
+          "id": 8,
+          "customer": "Maria",
+          "amount": 112.5,
+          "date": "2024-01-17"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return the full sales table.",
+        "expected_columns": [
+          "id",
+          "customer",
+          "amount",
+          "date"
+        ],
+        "notes": [
+          "All rows should be present."
+        ]
+      },
+      "hint_level_1": "Use `SELECT *` to return all columns.",
+      "hint_level_2": "The full query is `SELECT * FROM sales;`."
+    },
+    {
+      "id": "challenge_2_targeted_selection",
+      "title": "Challenge 2: Targeted Selection",
+      "prompt_markdown": "### Objective\nSelect only `customer` and `amount` from the `sales` table.\n\n### Expected output\n- Columns: `customer`, `amount`\n- 8 rows\n\n### Constraints\n- Keep the column order as `customer`, then `amount`.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT customer, amount\nFROM sales;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "customer": "Ana",
+          "amount": 150
+        },
+        {
+          "customer": "John",
+          "amount": 89.5
+        },
+        {
+          "customer": "Ana",
+          "amount": 200
+        },
+        {
+          "customer": "Maria",
+          "amount": 75.25
+        },
+        {
+          "customer": "John",
+          "amount": 320
+        },
+        {
+          "customer": "Ana",
+          "amount": 45.99
+        },
+        {
+          "customer": "Carlos",
+          "amount": 189
+        },
+        {
+          "customer": "Maria",
+          "amount": 112.5
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return only customer and amount columns.",
+        "expected_columns": [
+          "customer",
+          "amount"
+        ],
+        "notes": [
+          "Do not include extra columns."
+        ]
+      },
+      "hint_level_1": "List the columns after SELECT: `customer, amount`.",
+      "hint_level_2": "Use `SELECT customer, amount FROM sales;`."
+    }
+  ]
+}

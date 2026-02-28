@@ -1,0 +1,136 @@
+{
+  "id": "lesson_m8_3",
+  "title": "Totais Móveis (Running Totals) e Médias Móveis",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar SUM e AVG como window functions para totais acumulados e médias móveis; usar ROWS BETWEEN para definir a janela.",
+  "prerequisites": [
+    "lesson_m8_2"
+  ],
+  "estimated_minutes": 25,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "O setor financeiro quer receita acumulada ao longo do ano; a equipe de crescimento quer médias móveis para suavizar ruído."
+  },
+  "tabs": [
+    {
+      "id": "tab_conceito",
+      "title": "Total móvel (Running Total)",
+      "type": "content",
+      "content_markdown": "#### O que é um total móvel?\n\nUm **total móvel** (ou running total) é a soma acumulada linha a linha, preservando cada linha individual. Diferente de `GROUP BY`, que colapsa várias linhas em um resumo, o total móvel mantém todas as linhas e adiciona uma coluna com a soma até ali.\n\nSintaxe:\n\n```sql\nSUM(coluna) OVER (ORDER BY coluna_ordem)\n```\n\nSem `PARTITION BY`, a soma é calculada em ordem crescente sobre todas as linhas. Cada linha mostra a soma de todas as linhas anteriores + a atual.\n\n---\n\n#### Exemplo: receita acumulada mensal\n\n```sql\nWITH receita_mensal AS (\n  SELECT\n    DATE_TRUNC('month', created_at)::DATE AS mes_pedido,\n    SUM(order_total) AS receita_mensal\n  FROM pedidos\n  WHERE status_code = 'entregue'\n  GROUP BY 1\n)\nSELECT\n  mes_pedido,\n  receita_mensal,\n  SUM(receita_mensal) OVER (ORDER BY mes_pedido) AS total_acumulado\nFROM receita_mensal\nORDER BY mes_pedido;\n```\n\n[PLACEHOLDER_IMAGEM: Fluxo mostrando total acumulado crescendo linha a linha, preservando cada valor mensal.]"
+    },
+    {
+      "id": "tab_conceito2",
+      "title": "Média móvel e ROWS BETWEEN",
+      "type": "content",
+      "content_markdown": "#### Média móvel (Moving Average)\n\nA **média móvel** suaviza a série temporal calculando a média das últimas N linhas (incluindo a atual). Útil para reduzir ruído (ex: finais de semana) e ver tendências.\n\nPara definir a janela de linhas, use `ROWS BETWEEN`:\n\n```sql\nAVG(coluna) OVER (\n  ORDER BY coluna_ordem\n  ROWS BETWEEN 2 PRECEDING AND CURRENT ROW\n)\n```\n\nIsso calcula a média da linha atual + as 2 anteriores (janela de 3 linhas).\n\n---\n\n#### PARTITION BY + total móvel\n\nPara um total acumulado **por grupo** (ex: por cliente), use `PARTITION BY`:\n\n```sql\nSUM(receita) OVER (\n  PARTITION BY customer_id\n  ORDER BY mes_pedido\n) AS total_acumulado_cliente\n```\n\nO total é reiniciado em cada partição.\n\n[PLACEHOLDER_IMAGEM: Comparação GROUP BY vs total móvel — um colapsa, o outro preserva linhas.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Receita acumulada mensal",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O CFO quer ver a receita mensal com o **total acumulado** ao longo do ano.\n\n> **Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `total_acumulado`. Use `SUM(receita_mensal) OVER (ORDER BY mes_pedido)`. Apenas pedidos entregues."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Total acumulado por cliente",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora calcule o total acumulado de receita **por cliente** (a cada mês, quanto esse cliente gastou no total até ali).\n\n> **Sua missão:** Retorne `customer_id`, `mes_pedido`, `receita_mensal` e `total_acumulado_cliente`. Use `PARTITION BY customer_id` no `SUM(...) OVER`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — Média móvel de 3 meses",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A equipe quer suavizar a receita mensal com uma **média móvel de 3 meses**.\n\n> **Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `media_movel_3m`. Use `AVG(receita_mensal) OVER (ORDER BY mes_pedido ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **SUM(...) OVER (ORDER BY...)** — total acumulado (running total) linha a linha.\n- **AVG(...) OVER (ORDER BY... ROWS BETWEEN N PRECEDING AND CURRENT ROW)** — média móvel das últimas N+1 linhas.\n- **PARTITION BY** — reinicia o cálculo em cada grupo (ex: por cliente).\n- **ROWS BETWEEN** — define a janela física de linhas para o agregado.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|-------|-------------|\n| **Running total** | Soma acumulada que cresce a cada linha |\n| **Média móvel** | Média das últimas N linhas; suaviza a série |\n| **ROWS BETWEEN** | Define quantas linhas antes/depois incluir na janela |\n| **PRECEDING** | Linhas anteriores na ordenação |\n| **CURRENT ROW** | A linha atual |\n\n---\n\n> **Próxima aula:** Análise de funil (módulo 9)."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_receita_acumulada",
+      "title": "Desafio 1 — Receita acumulada mensal",
+      "prompt_markdown": "Retorne a receita mensal (apenas pedidos entregues) com o **total acumulado** ao longo do ano.\n\n**Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `total_acumulado`. Use `SUM(receita_mensal) OVER (ORDER BY mes_pedido)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, SUM(receita_mensal) OVER (ORDER BY mes_pedido) AS total_acumulado FROM receita_mensal ORDER BY mes_pedido;",
+      "hint_level_1": "CTE com receita por mês. No SELECT use SUM(receita_mensal) OVER (ORDER BY mes_pedido) para o total acumulado.",
+      "hint_level_2": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, SUM(receita_mensal) OVER (ORDER BY mes_pedido) AS total_acumulado FROM receita_mensal ORDER BY mes_pedido;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Receita mensal com total acumulado",
+        "expected_columns": [
+          "mes_pedido",
+          "receita_mensal",
+          "total_acumulado"
+        ],
+        "notes": [
+          "Apenas pedidos entregues",
+          "Usar SUM OVER ORDER BY"
+        ]
+      }
+    },
+    {
+      "id": "ex2_acumulado_por_cliente",
+      "title": "Desafio 2 — Total acumulado por cliente",
+      "prompt_markdown": "Calcule a receita mensal por cliente ? o total acumulado **dentro de cada cliente**.\n\n**Sua missão:** Retorne `customer_id`, `mes_pedido`, `receita_mensal` e `total_acumulado_cliente`. Agrupe por customer_id e mês. Use `SUM(...) OVER (PARTITION BY customer_id ORDER BY mes_pedido)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_cliente_mes AS (SELECT customer_id, DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1, 2) SELECT customer_id, mes_pedido, receita_mensal, SUM(receita_mensal) OVER (PARTITION BY customer_id ORDER BY mes_pedido) AS total_acumulado_cliente FROM receita_cliente_mes ORDER BY customer_id, mes_pedido;",
+      "hint_level_1": "CTE: agrupe por customer_id e mes. Depois SUM OVER (PARTITION BY customer_id ORDER BY mes_pedido).",
+      "hint_level_2": "WITH receita_cliente_mes AS (SELECT customer_id, DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1, 2) SELECT customer_id, mes_pedido, receita_mensal, SUM(receita_mensal) OVER (PARTITION BY customer_id ORDER BY mes_pedido) AS total_acumulado_cliente FROM receita_cliente_mes ORDER BY customer_id, mes_pedido;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Receita por cliente por mês com total acumulado por cliente",
+        "expected_columns": [
+          "customer_id",
+          "mes_pedido",
+          "receita_mensal",
+          "total_acumulado_cliente"
+        ],
+        "notes": [
+          "Usar PARTITION BY customer_id"
+        ]
+      }
+    },
+    {
+      "id": "ex3_media_movel",
+      "title": "Desafio 3 — Média móvel de 3 meses",
+      "prompt_markdown": "Calcule a receita mensal com uma **média móvel de 3 meses** (média da linha atual + 2 anteriores).\n\n**Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `media_movel_3m`. Use `AVG(receita_mensal) OVER (ORDER BY mes_pedido ROWS BETWEEN 2 PRECEDING AND CURRENT ROW)`. Arredonde com `ROUND(..., 2)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, ROUND(AVG(receita_mensal) OVER (ORDER BY mes_pedido ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS media_movel_3m FROM receita_mensal ORDER BY mes_pedido;",
+      "hint_level_1": "CTE de receita mensal. Use AVG OVER (ORDER BY mes_pedido ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) para média movel de 3 meses.",
+      "hint_level_2": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, ROUND(AVG(receita_mensal) OVER (ORDER BY mes_pedido ROWS BETWEEN 2 PRECEDING AND CURRENT ROW), 2) AS media_movel_3m FROM receita_mensal ORDER BY mes_pedido;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Receita mensal com média movel de 3 meses",
+        "expected_columns": [
+          "mes_pedido",
+          "receita_mensal",
+          "media_movel_3m"
+        ],
+        "notes": [
+          "Usar ROWS BETWEEN 2 PRECEDING AND CURRENT ROW"
+        ]
+      }
+    }
+  ]
+}

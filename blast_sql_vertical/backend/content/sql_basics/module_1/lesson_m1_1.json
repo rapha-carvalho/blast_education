@@ -1,0 +1,148 @@
+{
+  "id": "lesson_m1_1",
+  "title": "O que é SQL e por que isso importa?",
+  "lesson_type": "interactive_sql",
+  "objective": "Entender o que é SQL, por que é essencial para analistas, e escrever as primeiras queries de consulta em uma base de dados real.",
+  "prerequisites": [],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos"
+    ],
+    "scenario": "A GrooveCommerce é uma plataforma de e-commerce que vende produtos físicos. Você é um analista recém-contratado explorando o banco de dados pela primeira vez."
+  },
+  "tabs": [
+    {
+      "id": "tab_intro",
+      "title": "O que é SQL?",
+      "type": "content",
+      "content_markdown": "#### Você já fez uma pergunta a uma planilha?\n\nImagine que você trabalha como analista financeiro e precisa responder: *Quanto faturamos em março?*\n\nNo Excel, você abre o arquivo, filtra a coluna de datas, soma os valores — clicando em vários menus. Funciona. Mas quando a empresa tem **5 milhões de linhas** e os dados estão em 12 tabelas diferentes, o Excel trava. Ou pior: você recebe uma exportação incompleta e toma decisões com dados errados.\n\nÉ aí que o SQL entra.\n\n> **SQL** (pronuncia-se *esse-quê-éle* ou *síquel*) significa **Structured Query Language** — Linguagem de Consulta Estruturada. É a linguagem que os analistas usam para conversar com bancos de dados.\n\nEm vez de clicar em menus, você *escreve* uma pergunta:\n\n```sql\nSELECT SUM(order_total)\nFROM pedidos\nWHERE created_at >= '2024-03-01'\n  AND created_at < '2024-04-01';\n```\n\nE o banco de dados responde com o número exato — mesmo que sejam 50 milhões de linhas.\n\n---\n\n#### SQL é uma linguagem declarativa — e isso é bom para você\n\nA maioria das linguagens de programação exige que você diga **como** fazer algo, passo a passo. SQL é diferente: você diz **o que** quer, ? o banco de dados descobre como buscar.\n\n| Analogia | Como funciona |\n|---|---|\n| Receita de bolo | Você segue cada passo na ordem certa |\n| GPS | Você diz o destino, ele encontra o caminho |\n\nSQL é como o GPS. Você diz: *quero os 10 clientes que mais compraram* — ? o banco faz o trabalho pesado.\n\n[PLACEHOLDER_IMAGEM: Excel vs SQL — lado a lado: à esquerda, uma pessoa clicando em vários menus do Excel com expressão de frustração; à direita, a mesma pessoa digitando 3 linhas de SQL e recebendo uma tabela de resultado instantânea com expressão de alívio. Dimensões sugeridas: 800 × 400px.]\n\n---\n\n#### Por que SQL e não Python, Power BI ou Excel?\n\nÓtima pergunta. Todas essas ferramentas têm seu lugar — mas SQL é a base de quase todas elas:\n\n- **Power BI / Tableau** buscam os dados via SQL por baixo dos panos\n- **Python (pandas)** funciona muito melhor quando os dados já chegam tratados do banco, via SQL\n- **Excel** atinge seus limites em volume e complexidade rapidamente\n\nSQL é o idioma dos dados. Todo analista, cientista ou engenheiro de dados fala SQL."
+    },
+    {
+      "id": "tab_career",
+      "title": "Por que isso importa?",
+      "type": "content",
+      "content_markdown": "#### SQL é a habilidade número 1 em vagas de dados\n\nNão importa se você quer ser analista financeiro, analista de marketing, cientista de dados ou product manager: **SQL aparece em quase 100% das vagas de dados no Brasil e no mundo.**\n\n[PLACEHOLDER_INFOGRAFICO: Gráfico de barras horizontais mostrando as habilidades mais citadas em vagas de Analytics no LinkedIn Brasil: SQL em primeiro lugar com ~85%, seguido de Excel ~70%, Python ~55%, Power BI ~50%. Dimensões sugeridas: 680 × 320px.]\n\n---\n\n#### O que você vai conseguir fazer depois deste curso\n\não terminar este curso, você será capaz de responder perguntas reais de negócio como:\n\n| Pergunta de negócio | O que o SQL faz |\n|---|---|\n| Qual canal de aquisição traz mais clientes? | Agrupa e conta por canal |\n| Quantos clientes compraram mais de 3 vezes? | Filtra por contagem de pedidos |\n| Como foi nossa receita em relação ao mês passado? | Compara períodos com window functions |\n| Tem duplicata nos nossos pedidos? | Detecta anomalias nos dados |\n\n---\n\n#### O banco de dados que vamos usar: GrooveCommerce\n\nDurante todo o curso, você vai trabalhar com o banco de dados de uma empresa fictícia de e-commerce chamada **GrooveCommerce**.\n\nPor que um e-commerce? Porque ele cobre os três perfis de analista ao mesmo tempo:\n\n- **Analista Financeiro** — receita, descontos, margem, comparações de período\n- **Analista de Marketing** — funis, campanhas, canais de aquisição, retenção\n- **Analista de Dados Júnior** — joins, agregações, qualidade de dados, window functions\n\n[PLACEHOLDER_INFOGRAFICO: Diagrama relacional com as tabelas do banco GrooveCommerce (clientes, pedidos, itens_pedido, produtos, categorias, campanhas, sessões, reembolsos) conectadas por linhas. Estilo mapa amigável e colorido. Dimensões sugeridas: 680 × 420px.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Primeiro SELECT",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Chegou a hora de colocar a mão na massa. Não se preocupe em entender cada palavra agora — o objetivo é **sentir** como é rodar uma query e ver um resultado real.\n\nEm SQL, toda consulta começa com duas palavras:\n- `SELECT` — o **que** você quer ver (colunas)\n- `FROM` — **de onde** os dados vêm (tabela)\n\nPara ver **tudo** de uma tabela, use o asterisco `*`:\n\n```sql\nSELECT *\nFROM clientes;\n```\n\nO ponto e vírgula `;` no final diz ao banco que a instrução acabou."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Colunas específicas",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Ótimo! Agora vá além do `SELECT *`. Liste apenas as colunas que você precisa — isso é uma boa prática e torna suas queries mais eficientes.\n\n> Dica: coloque os nomes das colunas separados por vírgula entre `SELECT` e `FROM`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — ORDER BY e LIMIT",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Muito bem! Agora combine três conceitos em uma única query: selecionar colunas específicas, ordenar os resultados e limitar a quantidade de linhas.\n\n**Novos comandos desta tarefa:**\n- `ORDER BY coluna DESC` — ordena do maior para o menor (decrescente)\n- `LIMIT N` — retorna apenas as N primeiras linhas\n\nEmpresários e analistas usam isso todo dia para monitorar as transações mais recentes."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **SQL é uma linguagem declarativa** — você diz o que quer, não como buscar.\n- **SQL é a base de tudo** nos dados — Power BI, Python e dashboards dependem dele.\n- **Toda query começa com SELECT... FROM...** — as duas palavras mais importantes do SQL.\n- **O asterisco `*` seleciona todas as colunas** — mas você pode especificar só as que precisa.\n- **ORDER BY + LIMIT** permite ver os dados mais relevantes primeiro.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|---|---|\n| **SQL** | Linguagem para consultar bancos de dados relacionais |\n| **Query** | Uma pergunta/consulta escrita em SQL |\n| **SELECT** | Cláusula que define quais colunas retornar |\n| **FROM** | Cláusula que define de qual tabela buscar |\n| **Asterisco `*`** | Curinga que significa \"todas as colunas\" |\n| **ORDER BY** | Ordena os resultados por uma coluna |\n| **LIMIT** | Restringe o número de linhas retornadas |\n| **Banco de dados** | Sistema que armazena e organiza dados em tabelas |\n| **Tabela** | Organização de dados em linhas e colunas (como uma planilha) |\n\n---\n\n> **Próxima aula:** O que é um banco de dados? Tabelas, linhas, colunas e como eles se conectam."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_select_all_customers",
+      "title": "Desafio 1 — Explore a tabela de clientes",
+      "prompt_markdown": "A GrooveCommerce tem uma tabela chamada `clientes` com todos os clientes cadastrados.\n\n**Sua missão:** Escreva uma query para retornar **todas as colunas e todas as linhas** da tabela `clientes`.\n\n> Dica: Use `SELECT *` para pedir todas as colunas de uma vez. Não esqueça do ponto e vírgula no final!",
+      "starter_query": "",
+      "solution_query": "SELECT * FROM clientes;",
+      "hint_level_1": "Uma query SQL sempre começa com SELECT (o que você quer) e FROM (de onde vem). Para pedir TUDO de uma tabela, existe um curinga especial de um só caractere.",
+      "hint_level_2": "Use o asterisco: SELECT * FROM clientes;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar todas as colunas e todas as linhas da tabela clientes",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "created_at",
+          "acquisition_channel",
+          "country"
+        ],
+        "notes": [
+          "A query deve usar FROM clientes",
+          "Deve retornar todas as linhas sem filtro"
+        ]
+      }
+    },
+    {
+      "id": "ex2_select_specific_columns",
+      "title": "Desafio 2 — Escolha apenas algumas colunas",
+      "prompt_markdown": "Ótimo! Agora seja mais específico. Listar **todas** as colunas nem sempre é útil — às vezes você quer apenas algumas informações.\n\n**Sua missão:** Retorne apenas o `first_name`, `last_name` e `email` de todos os clientes.\n\n> Dica: Liste os nomes das colunas separados por vírgula depois do `SELECT`.",
+      "starter_query": "",
+      "solution_query": "SELECT first_name, last_name, email FROM clientes;",
+      "hint_level_1": "Você não precisa de todas as colunas. Liste apenas as que quer, separadas por vírgulas, após o SELECT.",
+      "hint_level_2": "SELECT first_name, last_name, email FROM clientes;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar apenas as colunas first_name, last_name e email da tabela clientes",
+        "expected_columns": [
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "notes": [
+          "Deve retornar exatamente 3 colunas"
+        ]
+      }
+    },
+    {
+      "id": "ex3_recent_orders",
+      "title": "Desafio 3 — Os 10 pedidos mais recentes",
+      "prompt_markdown": "Agora explore a tabela de pedidos. Empresas constantemente precisam ver as **vendas mais recentes** para monitorar o dia a dia.\n\n**Sua missão:** Retorne os **10 pedidos mais recentes** da tabela `pedidos`, mostrando apenas `order_id`, `customer_id`, `created_at` e `order_total`. Ordene do mais recente para o mais antigo.\n\n> Dica: Use `ORDER BY created_at DESC` para ordenar do mais novo ao mais antigo, e `LIMIT 10` para pegar apenas os primeiros 10 resultados.",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, created_at, order_total FROM pedidos ORDER BY created_at DESC LIMIT 10;",
+      "hint_level_1": "Para ver os mais recentes, você precisa ordenar por data em ordem decrescente e parar em 10 linhas.",
+      "hint_level_2": "SELECT order_id, customer_id, created_at, order_total FROM pedidos ORDER BY created_at DESC LIMIT 10;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar os 10 pedidos mais recentes com as colunas order_id, customer_id, created_at e order_total",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "created_at",
+          "order_total"
+        ],
+        "notes": [
+          "Deve retornar exatamente 10 linhas",
+          "Os resultados devem estar ordenados do mais recente ao mais antigo"
+        ]
+      }
+    }
+  ],
+  "infographics": [
+    {
+      "title": "Excel vs SQL",
+      "visual_description": "Lado a lado: Excel com frustração vs SQL com resultado instantâneo.",
+      "layout": "side by side comparison",
+      "flow": "left to right"
+    }
+  ]
+}

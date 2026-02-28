@@ -1,0 +1,142 @@
+{
+  "id": "lesson_m1_5",
+  "title": "Cloud Data Warehouses, Data Lakes e Lakehouses",
+  "lesson_type": "interactive_sql",
+  "objective": "Entender onde os analistas realmente trabalham — cloud DWs, Data Lakes e Lakehouses — e por que SQL funciona nos três ambientes.",
+  "prerequisites": [
+    "lesson_m1_4"
+  ],
+  "estimated_minutes": 12,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos",
+      "produtos"
+    ],
+    "scenario": "A GrooveCommerce armazena seus dados em um cloud data warehouse. Você, como analista, nunca acessa o banco de produção diretamente — você trabalha em cima de tabelas transformadas no DW. Esta aula explica por que isso existe e como funciona."
+  },
+  "tabs": [
+    {
+      "id": "tab_cloud_dw",
+      "title": "Cloud Data Warehouses",
+      "type": "content",
+      "content_markdown": "#### Onde os analistas realmente trabalham?\n\nVocê já aprendeu que os analistas trabalham no **OLAP** (banco analítico), não no OLTP (banco de produção). Mas onde fica esse banco analítico, na prática?\n\nA resposta, para a maioria das empresas modernas, é: **um cloud data warehouse**.\n\n---\n\n#### O que é um Cloud Data Warehouse?\n\nUm cloud data warehouse (DW) é um sistema OLAP hospedado na nuvem, projetado especificamente para análise de grandes volumes de dados. Três características principais o separam de um banco relacional comum:\n\n| Característica | O que significa |\n|---|---|\n| **Armazenamento colunar** | Dados guardados por coluna, não por linha — ótimo para somar, filtrar e agregar |\n| **MPP (Massively Parallel Processing)** | Múltiplos servidores processam a query em paralelo — escala para bilhões de linhas |\n| **SQL nativo** | Você escreve SQL normal — o DW faz o trabalho pesado por baixo |\n\n---\n\n#### Os três principais cloud DWs\n\n| Produto | Empresa | Principal diferencial |\n|---|---|---|\n| **BigQuery** | Google Cloud | Serverless — sem cluster para gerenciar, paga por query executada |\n| **Snowflake** | Snowflake Inc. | Multi-cloud — roda em AWS, GCP e Azure; separação de compute e storage |\n| **Redshift** | Amazon AWS | Profundamente integrado ao ecossistema AWS (S3, Lambda, SageMaker) |\n\n[PLACEHOLDER_IMAGEM: Diagrama comparativo dos 3 principais Cloud Data Warehouses (BigQuery, Snowflake, Redshift) com logos das empresas e diferenciais principais. Estilo profissional, paleta azul/laranja, fundo branco.]\n\n> **Nota importante:** Na prática, todos os três são acessados com SQL. Você aprende SQL uma vez — e trabalha em qualquer um deles.\n\n---\n\n#### DuckDB — nosso DW de prática\n\nNeste curso, usamos o **DuckDB**, um banco de dados analítico embutido. Ele segue o mesmo padrão OLAP dos cloud DWs — armazenamento colunar, SQL analítico — mas roda localmente, sem servidor, sem custo. Tudo que você aprender aqui vale direto para BigQuery, Snowflake ou Redshift."
+    },
+    {
+      "id": "tab_lake_lakehouse",
+      "title": "Data Lake e Lakehouse",
+      "type": "content",
+      "content_markdown": "#### Data Lake, Data Warehouse e Lakehouse — qual a diferença?\n\nAlém do cloud data warehouse, você vai ouvir dois termos com frequência no mercado: **Data Lake** e **Lakehouse**. Veja como eles se comparam:\n\n---\n\n#### Data Lake\n\nUm Data Lake é um repositório de dados brutos em object storage (AWS S3, Google Cloud Storage), em qualquer formato — CSV, JSON, Parquet, imagens, logs.\n\n- **Barato:** armazenamento em S3/GCS é muito mais barato que um DW\n- **Flexível:** qualquer formato cabe\n- **Problema:** difícil de consultar com SQL. Sem schema definido, as queries são lentas e propensas a erro\n\n#### Data Warehouse\n\nO DW é estruturado, otimizado para SQL, mas mais caro e menos flexível para dados não estruturados.\n\n#### Lakehouse — o melhor dos dois\n\nO **Lakehouse** surgiu para combinar o que há de melhor nos dois:\n\n- Dados brutos ficam em object storage (barato como um Data Lake)\n- Mas com uma camada de metadados que habilita SQL, ACID e schema (como um DW)\n\n**Tecnologias de Lakehouse:** Delta Lake (Databricks), Apache Iceberg, Apache Hudi\n\n---\n\n#### Comparativo completo\n\n| Característica | Data Lake | Data Warehouse | Lakehouse |\n|---|---|---|---|\n| **Formato** | Arquivos brutos (CSV, Parquet) | Tabelas estruturadas | Ambos |\n| **Schema** | Schema-on-read | Schema-on-write | On-write com flexibilidade |\n| **SQL** | Limitado (Athena, Presto) | Completo e otimizado | Completo |\n| **Custo storage** | Baixo (S3/GCS) | Alto | Baixo-médio |\n| **ACID** | Não | Sim | Sim (Delta Lake/Iceberg) |\n| **Ferramentas** | S3 + Athena | BigQuery, Snowflake | Databricks, Delta Lake |\n\n[PLACEHOLDER_IMAGEM: Diagrama de evolução mostrando Data Lake, Data Warehouse e Lakehouse como três estágios com ícones, setas de evolução e lista de prós/contras de cada um. Estilo clean, paleta azul/roxo, fundo branco.]\n\n> **Por que isso importa para você?** O SQL que você está aprendendo aqui funciona nos três ambientes. Databricks, por exemplo, usa SparkSQL — sintaxe idêntica ao que você está praticando. Você está aprendendo a linguagem universal dos dados."
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Produtos em estoque",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Hora de colocar em prática o que você aprendeu ao longo de todo o Módulo 1. Este é um **Ponto de Verificação** — três desafios que revisam SELECT, WHERE, ORDER BY e LIMIT com o banco da GrooveCommerce.\n\n**Desafio 1:** O time de operações precisa saber quais produtos estão disponíveis em estoque para exibir no site.\n\n> **Sua missão:** Retorne `product_id`, `name` e `price` de todos os produtos onde `in_stock = true`, ordenados do mais caro ao mais barato."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Clientes por canal",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "**Desafio 2:** O time de marketing quer analisar os clientes que chegaram pelo canal Google para uma campanha de retargeting.\n\n> **Sua missão:** Retorne `customer_id`, `first_name`, `last_name` e `email` de todos os clientes com `acquisition_channel = 'google'`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — Top 5 pedidos",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "**Desafio 3:** O time financeiro quer identificar rapidamente os pedidos de maior valor para priorizar o atendimento.\n\n> **Sua missão:** Retorne `order_id`, `customer_id`, `order_total` e `status_code` dos **5 pedidos com maior valor** (`order_total`), do mais caro ao mais barato."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **Cloud Data Warehouse** = sistema OLAP hospedado na nuvem, com armazenamento colunar, MPP e SQL nativo.\n- **BigQuery, Snowflake e Redshift** são os três principais cloud DWs — todos acessados com SQL.\n- **DuckDB** (o banco que usamos neste curso) segue a mesma arquitetura OLAP dos cloud DWs.\n- **Data Lake** = dados brutos em object storage (S3/GCS) — barato, mas difícil de consultar com SQL.\n- **Lakehouse** = une Data Lake + Data Warehouse: open formats (Parquet/Delta) + SQL + ACID.\n- **SQL funciona nos três ambientes** — é a linguagem universal de dados.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|---|---|\n| **Cloud Data Warehouse** | Sistema OLAP na nuvem, otimizado para SQL analítico |\n| **BigQuery** | Cloud DW do Google — serverless, paga por query |\n| **Snowflake** | Cloud DW multi-cloud — separa compute de storage |\n| **Redshift** | Cloud DW da AWS — integrado ao ecossistema Amazon |\n| **DuckDB** | Banco OLAP embutido — mesma arquitetura dos cloud DWs, roda localmente |\n| **Data Lake** | Repositório de dados brutos em object storage (S3, GCS) |\n| **Lakehouse** | Arquitetura que une Data Lake e Data Warehouse |\n| **Delta Lake** | Formato open-source que adiciona ACID e SQL ao Data Lake (Databricks) |\n| **Apache Iceberg** | Formato open table alternativo ao Delta Lake |\n| **Parquet** | Formato de arquivo colunar amplamente usado em Data Lakes |\n| **Schema-on-read** | Schema definido no momento da leitura (Data Lake) |\n| **Schema-on-write** | Schema definido ao escrever os dados (Data Warehouse) |\n| **MPP** | Massively Parallel Processing — múltiplos servidores processando em paralelo |\n\n---\n\n> **Parabéns! Você concluiu o Módulo 1.** Agora você sabe *onde* os dados vivem e *por que* os analistas usam SQL. No **Módulo 2**, você vai aprender a filtrar e fatiar esses dados com precisão: WHERE, AND, OR, BETWEEN, LIKE e muito mais."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_produtos_em_estoque",
+      "title": "Desafio 1 — Produtos disponíveis em estoque",
+      "prompt_markdown": "O time de operações da GrooveCommerce precisa saber quais produtos estão disponíveis para exibir no site.\n\n**Sua missão:** Retorne `product_id`, `name` e `price` de todos os produtos onde `in_stock = true`, ordenados pelo preço do **mais caro ao mais barato**.\n\n> Dica: Use `WHERE in_stock = true` para filtrar e `ORDER BY price DESC` para ordenar.",
+      "starter_query": "",
+      "solution_query": "SELECT product_id, name, price FROM produtos WHERE in_stock = true ORDER BY price DESC;",
+      "hint_level_1": "Use WHERE para filtrar apenas os produtos em estoque. Para ordenar do mais caro ao mais barato, use ORDER BY com direção DESC (decrescente).",
+      "hint_level_2": "SELECT product_id, name, price FROM produtos WHERE in_stock = true ORDER BY price DESC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar product_id, name e price dos produtos com in_stock = true, ordenados por price DESC",
+        "expected_columns": [
+          "product_id",
+          "name",
+          "price"
+        ],
+        "notes": [
+          "Deve filtrar apenas produtos com in_stock = true",
+          "Deve retornar exatamente 3 colunas",
+          "Deve usar ORDER BY price DESC"
+        ]
+      }
+    },
+    {
+      "id": "ex2_clientes_google",
+      "title": "Desafio 2 — Clientes adquiridos pelo Google",
+      "prompt_markdown": "O time de marketing quer criar uma campanha de retargeting para clientes que vieram pelo canal Google.\n\n**Sua missão:** Retorne `customer_id`, `first_name`, `last_name` e `email` de todos os clientes com `acquisition_channel = 'google'`.\n\n> Dica: Use aspas simples para valores de texto em SQL: `WHERE acquisition_channel = 'google'`",
+      "starter_query": "",
+      "solution_query": "SELECT customer_id, first_name, last_name, email FROM clientes WHERE acquisition_channel = 'google';",
+      "hint_level_1": "Filtre pelo canal de aquisição usando WHERE. Lembre-se de usar aspas simples para strings em SQL, não aspas duplas.",
+      "hint_level_2": "SELECT customer_id, first_name, last_name, email FROM clientes WHERE acquisition_channel = 'google';",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar customer_id, first_name, last_name e email dos clientes com acquisition_channel = 'google'",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "email"
+        ],
+        "notes": [
+          "Deve usar WHERE acquisition_channel = 'google'",
+          "Deve retornar exatamente 4 colunas"
+        ]
+      }
+    },
+    {
+      "id": "ex3_top5_pedidos",
+      "title": "Desafio 3 — Os 5 pedidos de maior valor",
+      "prompt_markdown": "O time financeiro quer identificar os pedidos de maior valor para priorizar o atendimento.\n\n**Sua missão:** Retorne `order_id`, `customer_id`, `order_total` e `status_code` dos **5 pedidos com maior `order_total`**, do mais caro para o mais barato.\n\n> Dica: Use `ORDER BY order_total DESC` e `LIMIT 5`.",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, order_total, status_code FROM pedidos ORDER BY order_total DESC LIMIT 5;",
+      "hint_level_1": "Para pegar apenas os maiores valores, ordene de forma decrescente por order_total e limite a 5 linhas com LIMIT.",
+      "hint_level_2": "SELECT order_id, customer_id, order_total, status_code FROM pedidos ORDER BY order_total DESC LIMIT 5;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar os 5 pedidos com maior order_total em ordem decrescente",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "order_total",
+          "status_code"
+        ],
+        "notes": [
+          "Deve retornar exatamente 5 linhas",
+          "Deve usar ORDER BY order_total DESC",
+          "Deve usar LIMIT 5"
+        ]
+      }
+    }
+  ]
+}

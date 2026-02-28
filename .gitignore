@@ -27,6 +27,26 @@ venv/
 .DS_Store
 Thumbs.db
 
+# Claude Code project sessions (local only)
+.claude/
+
 # Logs
 *.log
 npm-debug.log*
+
+# Production secrets (never commit)
+deploy/.env.prod
+deploy/.env
+**/.env.prod
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+blast_sql_vertical/backend/data/
+
+# Stripe webhook runtime secret (written at runtime by stripe-listener)
+blast_sql_vertical/backend/data/stripe_webhook_secret.txt
+
+# OS
+Thumbs.db

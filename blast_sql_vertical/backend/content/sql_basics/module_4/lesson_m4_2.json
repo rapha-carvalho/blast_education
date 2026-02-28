@@ -1,0 +1,141 @@
+{
+  "id": "lesson_m4_2",
+  "title": "LEFT JOIN: Mantenha Tudo a Esquerda",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar LEFT JOIN para preservar todas as linhas da tabela da esquerda, medir correspondencias e encontrar casos sem match.",
+  "prerequisites": [
+    "lesson_m4_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos"
+    ],
+    "scenario": "Você atua no time de analytics da GrooveCommerce e precisa manter o cadastro completo de clientes mesmo quando não h? pedido correspondente para um recorte específico."
+  },
+  "tabs": [
+    {
+      "id": "tab_left_join_basico",
+      "title": "Como o LEFT JOIN funciona",
+      "type": "content",
+      "content_markdown": "#### Diferenca central para INNER JOIN\n\n`LEFT JOIN` sempre preserva **todas as linhas da tabela da esquerda**.\n\n- Se houver correspondência na tabela da direita, os campos da direita são preenchidos\n- Se não houver correspondência, os campos da direita ficam `NULL`\n\n```sql\nSELECT c.customer_id, c.first_name, p.order_id, p.order_total\nFROM clientes c\nLEFT JOIN pedidos p\n  ON c.customer_id = p.customer_id;\n```\n\n---\n\n#### Leitura de negócio\n\n| Tipo de join | O que acontece com linhas sem match na direita |\n|---|---|\n| `INNER JOIN` | some do resultado |\n| `LEFT JOIN` | permanece com `NULL` na direita |\n\nIsso e essencial para relatórios de base, cobertura e funil.\n\n[PLACEHOLDER_IMAGEM: Diagrama comparando INNER JOIN e LEFT JOIN com foco na preservacao da tabela clientes (lado esquerdo), destacando linhas sem match preenchidas com NULL no resultado.]"
+    },
+    {
+      "id": "tab_left_join_filtros",
+      "title": "ON vs WHERE no LEFT JOIN",
+      "type": "content",
+      "content_markdown": "#### Erro clássico que quebra o LEFT JOIN\n\nQuando você filtra coluna da tabela da direita no `WHERE`, você pode transformar o LEFT JOIN em INNER JOIN sem perceber.\n\n```sql\n-- Pode remover linhas sem match\nSELECT c.customer_id, c.first_name, p.order_id\nFROM clientes c\nLEFT JOIN pedidos p\n  ON c.customer_id = p.customer_id\nWHERE p.status_code = 'entregue';\n```\n\n---\n\n#### Forma segura para preservar todos os clientes\n\nColoque o filtro da tabela da direita na cláusula `ON`:\n\n```sql\nSELECT c.customer_id, c.first_name, p.order_id\nFROM clientes c\nLEFT JOIN pedidos p\n  ON c.customer_id = p.customer_id\n AND p.status_code = 'entregue';\n```\n\nAssim, clientes sem pedido entregue continuam aparecendo com `NULL` na direita.\n\n---\n\n#### Anti-join com LEFT JOIN\n\nPara achar quem **não** tem correspondência, combine LEFT JOIN com `WHERE direita.id IS NULL`:\n\n```sql\nSELECT c.customer_id, c.first_name\nFROM clientes c\nLEFT JOIN pedidos p\n  ON c.customer_id = p.customer_id\n AND p.status_code = 'entregue'\nWHERE p.order_id IS NULL;\n```\n\n[PLACEHOLDER_IMAGEM: Checklist visual ON vs WHERE em LEFT JOIN, incluindo anti-join com IS NULL para encontrar clientes sem pedido entregue.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Base completa de clientes",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time de CRM quer um painel de base com todos os clientes e quantos pedidos cada um possui no histórico.\n\n> **Sua missão:** Use `LEFT JOIN` para manter todos os clientes e conte os pedidos por cliente."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Entregues por cliente sem perder base",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O time de operações precisa contar apenas pedidos entregues, mas sem remover clientes sem entrega.\n\n> **Sua missão:** Use filtro de status na cláusula `ON` para preservar toda a base de clientes."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Clientes sem pedido entregue",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Agora você vai montar uma lista de excecao para follow-up comercial.\n\n> **Sua missão:** Encontre clientes que não possuem nenhum pedido com status `entregue` usando `LEFT JOIN` + `IS NULL`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `LEFT JOIN` preserva todas as linhas da tabela da esquerda.\n- Sem correspondência na direita, os campos da direita ficam `NULL`.\n- Filtros da tabela da direita no `WHERE` podem quebrar a lógica do LEFT JOIN.\n- Para preservar a base, coloque filtros da direita na cláusula `ON`.\n- `LEFT JOIN` + `IS NULL` ? um padrão para achar ausência de correspondência.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `LEFT JOIN` | Join que preserva todas as linhas da tabela da esquerda |\n| `NULL de join` | Campo da tabela da direita sem correspondência |\n| Filtro no `ON` | Mantem linhas da esquerda sem match |\n| Anti-join | Padrão para encontrar registros sem correspondência |\n\n> **Próxima aula:** Depuração de joins quando a contagem de linhas fica incorreta."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m4_2_base_clientes_total_pedidos",
+      "title": "Desafio 1 - Todos os clientes com total de pedidos",
+      "prompt_markdown": "Retorne todos os clientes com a contagem de pedidos do histórico.\n\n**Requisitos:**\n- Tabelas: `clientes` e `pedidos`\n- Join: `LEFT JOIN` por `customer_id`\n- Colunas: `customer_id`, `first_name`, `last_name`, `total_pedidos`\n- Agregação: `COUNT(p.order_id)`\n- Agrupar por `customer_id`, `first_name`, `last_name`\n- Ordenar por `total_pedidos DESC`, depois `customer_id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT c.customer_id, c.first_name, c.last_name, COUNT(p.order_id) AS total_pedidos FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id GROUP BY c.customer_id, c.first_name, c.last_name ORDER BY total_pedidos DESC, c.customer_id ASC;",
+      "hint_level_1": "Comece de clientes e use LEFT JOIN em pedidos. Para não contar linhas nulas, use COUNT(p.order_id).",
+      "hint_level_2": "SELECT c.customer_id, c.first_name, c.last_name, COUNT(p.order_id) AS total_pedidos FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id GROUP BY c.customer_id, c.first_name, c.last_name ORDER BY total_pedidos DESC, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Manter todos os clientes no resultado e contar pedidos por cliente",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "total_pedidos"
+        ],
+        "notes": [
+          "Deve usar LEFT JOIN com clientes na esquerda",
+          "Deve retornar 10 linhas (todos os clientes)",
+          "Top de contagem: cliente 1 com 3 pedidos"
+        ]
+      }
+    },
+    {
+      "id": "ex_m4_2_entregues_preservando_base",
+      "title": "Desafio 2 - Pedidos entregues por cliente com base completa",
+      "prompt_markdown": "Conte pedidos entregues por cliente sem remover clientes sem entrega.\n\n**Requisitos:**\n- Tabelas: `clientes` e `pedidos`\n- Join: `LEFT JOIN` por `customer_id`\n- Filtro de status na cláusula `ON`: `p.status_code = 'entregue'`\n- Colunas: `customer_id`, `first_name`, `pedidos_entregues`\n- Agregação: `COUNT(p.order_id)`\n- Agrupar por `customer_id`, `first_name`\n- Ordenar por `pedidos_entregues DESC`, depois `customer_id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT c.customer_id, c.first_name, COUNT(p.order_id) AS pedidos_entregues FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' GROUP BY c.customer_id, c.first_name ORDER BY pedidos_entregues DESC, c.customer_id ASC;",
+      "hint_level_1": "Se colocar status no WHERE, você pode perder clientes. Coloque p.status_code = 'entregue' no ON.",
+      "hint_level_2": "SELECT c.customer_id, c.first_name, COUNT(p.order_id) AS pedidos_entregues FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' GROUP BY c.customer_id, c.first_name ORDER BY pedidos_entregues DESC, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Contar entregues por cliente preservando base completa de clientes",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "pedidos_entregues"
+        ],
+        "notes": [
+          "Filtro de status deve estar no ON",
+          "Deve retornar 10 linhas",
+          "Cliente 10 deve aparecer com 0 pedidos entregues"
+        ]
+      }
+    },
+    {
+      "id": "ex_m4_2_clientes_sem_entrega",
+      "title": "Desafio 3 - Clientes sem pedido entregue",
+      "prompt_markdown": "Retorne clientes que não possuem nenhum pedido entregue.\n\n**Requisitos:**\n- Tabelas: `clientes` e `pedidos`\n- Join: `LEFT JOIN` por `customer_id` com filtro `p.status_code = 'entregue'` no `ON`\n- Filtro final: `p.order_id IS NULL`\n- Colunas: `customer_id`, `first_name`, `last_name`\n- Ordenar por `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT c.customer_id, c.first_name, c.last_name FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' WHERE p.order_id IS NULL ORDER BY c.customer_id ASC;",
+      "hint_level_1": "Esse ? o padrão anti-join: LEFT JOIN + WHERE p.order_id IS NULL.",
+      "hint_level_2": "SELECT c.customer_id, c.first_name, c.last_name FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' WHERE p.order_id IS NULL ORDER BY c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Encontrar clientes sem qualquer pedido entregue",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name"
+        ],
+        "notes": [
+          "Deve usar LEFT JOIN e filtro IS NULL",
+          "Resultado esperado: 1 linha (cliente 10)",
+          "Ordenação por customer_id ASC"
+        ]
+      }
+    }
+  ]
+}

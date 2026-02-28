@@ -1,0 +1,13 @@
+{
+  "id": "lesson_02_what_is_database",
+  "title": "O que é um Banco de Dados? Tabelas, Linhas e Colunas",
+  "lesson_type": "concept_only",
+  "objective": "Understand what databases are and how they differ from spreadsheets.",
+  "prerequisites": [
+    "lesson_01_what_is_sql"
+  ],
+  "estimated_minutes": 10,
+  "content_markdown": "**Contexto de negócio**: A GrooveCommerce tem um banco de dados com tabelas para clientes, pedidos, produtos e campanhas de marketing. Entender o que cada peça significa é o primeiro passo para fazer perguntas úteis.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Descrever a diferença entre um banco de dados, uma tabela, uma linha ? uma coluna.\r\n- Explicar o que é uma chave primária (o ID exclusivo para cada linha).\r\n- Explicar o que é uma chave estrangeira (uma coluna que conecta uma tabela a outra).\r\n- Descrever por que os tipos de dados (texto, número, data) são importantes ao escrever queries.",
+  "exercises": [],
+  "infographics": []
+}

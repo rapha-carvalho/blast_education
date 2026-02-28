@@ -1,0 +1,138 @@
+{
+  "id": "lesson_m6_2",
+  "title": "COALESCE, NULLIF e Tratamento de Dados Ausentes",
+  "lesson_type": "interactive_sql",
+  "objective": "Tratar valores ausentes e cenarios de divisão insegura com COALESCE e NULLIF para gerar métricas robustas.",
+  "prerequisites": [
+    "lesson_m6_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos"
+    ],
+    "scenario": "Você atua no time de analytics da GrooveCommerce e precisa evitar que valores nulos e divisão por zero comprometam relatórios executivos."
+  },
+  "tabs": [
+    {
+      "id": "tab_coalesce_basico",
+      "title": "COALESCE na prática",
+      "type": "content",
+      "content_markdown": "#### COALESCE: escolha o primeiro valor não nulo\n\n`COALESCE(a, b, c)` retorna o primeiro argumento que não e `NULL`.\n\n```sql\nSELECT\n  customer_id,\n  COALESCE(phone, email, 'sem_contato') AS contato_preferencial\nFROM clientes;\n```\n\nSe `phone` estiver nulo, a query usa `email`. Se ambos forem nulos, usa `'sem_contato'`.\n\n---\n\n#### Onde usar\n\n| Cenário | Exemplo |\n|---|---|\n| Fallback de contato | `COALESCE(phone, email)` |\n| Valor numérico padrão | `COALESCE(valor, 0)` |\n| Label para ausência | `COALESCE(canal, 'desconhecido')` |\n\n---\n\n#### Boa prática\n\n> Sempre pense no \"plano B\" para colunas que podem vir nulas.\n\n[PLACEHOLDER_IMAGEM: Fluxo de fallback com COALESCE mostrando tentativa de phone, depois email, depois label padrão sem_contato.]"
+    },
+    {
+      "id": "tab_nullif_seguro",
+      "title": "NULLIF e divisão segura",
+      "type": "content",
+      "content_markdown": "#### NULLIF: transforma um valor específico em NULL\n\n`NULLIF(x, y)` retorna `NULL` quando `x = y`; caso contrario retorna `x`.\n\nUso clássico: evitar divisão por zero.\n\n```sql\nSELECT\n  SUM(valor) / NULLIF(SUM(quantidade), 0) AS media_segura\nFROM tabela;\n```\n\nSe o denominador for 0, `NULLIF(..., 0)` vira `NULL` ? a divisão não quebra.\n\n---\n\n#### Combinando NULLIF + COALESCE\n\n```sql\nSELECT\n  COALESCE(\n    SUM(valor) / NULLIF(SUM(qtd), 0),\n    0\n  ) AS media_segura_com_padrao\nFROM tabela;\n```\n\nAqui você evita erro e ainda define valor padrão.\n\n---\n\n#### Padrões recomendados\n\n1. Use `NULLIF(denominador, 0)` em qualquer divisão agregada\n2. Use `COALESCE(..., 0)` quando o relatório exige número\n3. Documente quando 0 e realmente adequado como fallback\n\n[PLACEHOLDER_IMAGEM: Diagrama de divisão segura com NULLIF no denominador e COALESCE no resultado final para evitar erro e padronizar saida.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Fallback de contato",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "CRM precisa de um campo único de contato para disparo de comunicacoes.\n\n> **Sua missão:** Use COALESCE para preencher `contato_preferencial` com phone, depois email, depois `sem_contato`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Receita entregue por cliente",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O financeiro quer receita de pedidos entregues por cliente, mantendo todos os clientes na base.\n\n> **Sua missão:** Use LEFT JOIN + COALESCE para retornar 0 quando o cliente não tiver pedido entregue."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Ticket médio seguro",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A liderança quer um ticket médio entregue com fórmula segura para qualquer cenário.\n\n> **Sua missão:** Use NULLIF no denominador para proteger a divisão e retorne métricas em uma linha."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `COALESCE` retorna o primeiro valor não nulo da lista.\n- `NULLIF` converte um valor específico em `NULL`.\n- `NULLIF(..., 0)` evita divisão por zero em relatórios.\n- `COALESCE(..., 0)` padroniza saidas numericas quando necessário.\n- Esses padrões tornam dashboards mais robustos e confiaveis.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `COALESCE` | Retorna o primeiro argumento não nulo |\n| `NULLIF` | Retorna NULL quando dois valores são iguais |\n| Divisao segura | Uso de NULLIF para evitar erro de divisão por zero |\n| Fallback | Valor alternativo em caso de ausência de dado |\n\n> **Próxima aula:** verificacoes de qualidade de dados com SQL."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m6_2_fallback_contato",
+      "title": "Desafio 1 - Contato preferencial com COALESCE",
+      "prompt_markdown": "Crie um campo de contato preferencial para cada cliente.\n\n**Requisitos:**\n- Tabela: `clientes`\n- Colunas: `customer_id`, `first_name`, `last_name`, `contato_preferencial`\n- Regra: `COALESCE(phone, email, 'sem_contato')`\n- Ordenar por `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT customer_id, first_name, last_name, COALESCE(phone, email, 'sem_contato') AS contato_preferencial FROM clientes ORDER BY customer_id ASC;",
+      "hint_level_1": "Use COALESCE com três argumentos na ordem phone, email e fallback textual.",
+      "hint_level_2": "SELECT customer_id, first_name, last_name, COALESCE(phone, email, 'sem_contato') AS contato_preferencial FROM clientes ORDER BY customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Gerar contato preferencial com fallback para campos nulos",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "contato_preferencial"
+        ],
+        "notes": [
+          "Deve retornar 10 linhas",
+          "Clientes com phone nulo devem receber email como fallback"
+        ]
+      }
+    },
+    {
+      "id": "ex_m6_2_receita_entregue_por_cliente",
+      "title": "Desafio 2 - Receita entregue por cliente com base completa",
+      "prompt_markdown": "Retorne receita de pedidos entregues por cliente mantendo todos os clientes na base.\n\n**Requisitos:**\n- Tabelas: `clientes` e `pedidos`\n- Join: `LEFT JOIN` por customer_id com filtro `status_code = 'entregue'` no ON\n- Colunas: `customer_id`, `first_name`, `receita_entregue`\n- Agregação: `ROUND(COALESCE(SUM(p.order_total), 0), 2)`\n- Agrupar por `customer_id`, `first_name`\n- Ordenar por `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT c.customer_id, c.first_name, ROUND(COALESCE(SUM(p.order_total), 0), 2) AS receita_entregue FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' GROUP BY c.customer_id, c.first_name ORDER BY c.customer_id ASC;",
+      "hint_level_1": "Use LEFT JOIN com filtro de status no ON e aplique COALESCE no SUM para manter zero quando não houver entrega.",
+      "hint_level_2": "SELECT c.customer_id, c.first_name, ROUND(COALESCE(SUM(p.order_total), 0), 2) AS receita_entregue FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' GROUP BY c.customer_id, c.first_name ORDER BY c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Consolidar receita entregue por cliente sem perder base e sem nulos",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "receita_entregue"
+        ],
+        "notes": [
+          "Deve retornar 10 linhas",
+          "Cliente 10 deve ter receita_entregue = 0"
+        ]
+      }
+    },
+    {
+      "id": "ex_m6_2_ticket_medio_seguro",
+      "title": "Desafio 3 - Ticket médio entregue com NULLIF",
+      "prompt_markdown": "Retorne em uma linha o ticket médio de pedidos entregues com divisão segura.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Colunas: `receita_entregue`, `qtd_entregues`, `ticket_medio_seguro`\n- `receita_entregue`: `ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2)`\n- `qtd_entregues`: `COUNT(CASE WHEN status_code = 'entregue' THEN 1 END)`\n- `ticket_medio_seguro`: receita_entregue / `NULLIF(qtd_entregues, 0)` arredondado com 2 casas\n- Retornar 1 linha",
+      "starter_query": "",
+      "solution_query": "SELECT ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, COUNT(CASE WHEN status_code = 'entregue' THEN 1 END) AS qtd_entregues, ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END) / NULLIF(COUNT(CASE WHEN status_code = 'entregue' THEN 1 END), 0), 2) AS ticket_medio_seguro FROM pedidos;",
+      "hint_level_1": "Monte primeiro a receita ? a quantidade entregues; depois use NULLIF no denominador da divisão.",
+      "hint_level_2": "SELECT ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, COUNT(CASE WHEN status_code = 'entregue' THEN 1 END) AS qtd_entregues, ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END) / NULLIF(COUNT(CASE WHEN status_code = 'entregue' THEN 1 END), 0), 2) AS ticket_medio_seguro FROM pedidos;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Calcular ticket médio com fórmula protegida contra divisão por zero",
+        "expected_columns": [
+          "receita_entregue",
+          "qtd_entregues",
+          "ticket_medio_seguro"
+        ],
+        "notes": [
+          "Resultado esperado: 2703.40, 11, 245.76",
+          "Deve retornar 1 linha"
+        ]
+      }
+    }
+  ]
+}

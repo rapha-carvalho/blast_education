@@ -1,0 +1,401 @@
+{
+  "id": "lesson_07_order_limit",
+  "title": "Sorting and Limiting Results (ORDER BY & LIMIT)",
+  "lesson_type": "interactive_sql",
+  "objective": "Sort results with ORDER BY and limit rows with LIMIT.",
+  "prerequisites": [
+    "lesson_06_null"
+  ],
+  "estimated_minutes": 12,
+  "content_markdown": "## Core Concept\n\nSorting helps analysis by organizing results.\n\nExample:\n\n```sql\nSELECT *\nFROM filtering.orders\nORDER BY amount DESC;\n```\n\nLimiting results:\n\n```sql\nSELECT *\nFROM filtering.orders\nLIMIT 10;\n```\n\n---\n\n## End of Module 2\n\nIn the next module you will learn:\n\n* Aggregations (`SUM`, `COUNT`, `AVG`)\n* `GROUP BY`\n* Real analytical SQL queries used by analysts every day.",
+  "dataset_context": {
+    "business_model": "core_sql",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.customers"
+    ],
+    "scenario": "Sort and limit query results."
+  },
+  "exercises": [
+    {
+      "id": "ch1_top5_amount",
+      "title": "Challenge 1: Top 5 highest orders by amount",
+      "prompt_markdown": "### Objective\nReturn the top 5 highest orders by `amount` (descending).",
+      "starter_query": "SELECT *\nFROM filtering.orders\nORDER BY amount DESC\nLIMIT 5;",
+      "solution_query": "SELECT *\nFROM filtering.orders\nORDER BY amount DESC\nLIMIT 5;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "customer_id": 1,
+          "amount": 650,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2024-03-15",
+          "delivery_date": "2024-03-18"
+        },
+        {
+          "id": 5,
+          "customer_id": 5,
+          "amount": 550,
+          "city": "São Paulo",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2024-02-01",
+          "delivery_date": "2024-02-05"
+        },
+        {
+          "id": 20,
+          "customer_id": 1,
+          "amount": 480,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-12-25",
+          "delivery_date": "2023-12-28"
+        },
+        {
+          "id": 16,
+          "customer_id": 7,
+          "amount": 420,
+          "city": "Boston",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-05-18",
+          "delivery_date": "2023-05-22"
+        },
+        {
+          "id": 9,
+          "customer_id": 9,
+          "amount": 410,
+          "city": "Guadalajara",
+          "country": "Mexico",
+          "status": "approved",
+          "order_date": "2023-04-15",
+          "delivery_date": "2023-04-20"
+        }
+      ],
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Return top 5 orders by amount descending",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "city",
+          "country",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": [
+          "Row order must be highest to lowest amount."
+        ]
+      },
+      "hint_level_1": "Use ORDER BY amount DESC then LIMIT 5.",
+      "hint_level_2": "ORDER BY amount DESC LIMIT 5"
+    },
+    {
+      "id": "ch2_customers_by_name",
+      "title": "Challenge 2: Customers ordered by name ascending",
+      "prompt_markdown": "### Objective\nReturn customers ordered by `name` ascending.",
+      "starter_query": "SELECT *\nFROM filtering.customers\nORDER BY name ASC;",
+      "solution_query": "SELECT *\nFROM filtering.customers\nORDER BY name ASC;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 4,
+          "name": "Alice Brown",
+          "email": "alice@gmail.com",
+          "country": "Mexico",
+          "phone": null
+        },
+        {
+          "id": 3,
+          "name": "Bob Wilson",
+          "email": null,
+          "country": "Canada",
+          "phone": "555-0102"
+        },
+        {
+          "id": 5,
+          "name": "Carlos Garcia",
+          "email": "carlos@gmail.com",
+          "country": "Brazil",
+          "phone": "555-0103"
+        },
+        {
+          "id": 2,
+          "name": "Jane Doe",
+          "email": "jane@yahoo.com",
+          "country": "USA",
+          "phone": null
+        },
+        {
+          "id": 7,
+          "name": "James Lee",
+          "email": "james@gmail.com",
+          "country": "USA",
+          "phone": "555-0105"
+        },
+        {
+          "id": 9,
+          "name": "Jose Hernandez",
+          "email": null,
+          "country": "Mexico",
+          "phone": "555-0106"
+        },
+        {
+          "id": 1,
+          "name": "John Smith",
+          "email": "john@gmail.com",
+          "country": "USA",
+          "phone": "555-0101"
+        },
+        {
+          "id": 6,
+          "name": "Julia Martinez",
+          "email": "julia@outlook.com",
+          "country": "Argentina",
+          "phone": "555-0104"
+        },
+        {
+          "id": 8,
+          "name": "Mary Johnson",
+          "email": "mary@company.com",
+          "country": "Canada",
+          "phone": null
+        },
+        {
+          "id": 10,
+          "name": "Professional Tools Co",
+          "email": "info@protools.com",
+          "country": "USA",
+          "phone": "555-0107"
+        }
+      ],
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Return customers sorted by name A-Z",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "country",
+          "phone"
+        ],
+        "notes": [
+          "Row order must be alphabetical by name."
+        ]
+      },
+      "hint_level_1": "Use ORDER BY name ASC.",
+      "hint_level_2": "ORDER BY name ASC"
+    },
+    {
+      "id": "ch3_filter_sort_limit",
+      "title": "Challenge 3: Approved orders, sorted by date, limit 20",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.orders` where `status = 'approved'`, sorted by `order_date` descending, limit to 20 rows.",
+      "starter_query": "SELECT *\nFROM filtering.orders\nWHERE status = 'approved'\nORDER BY order_date DESC\nLIMIT 20;",
+      "solution_query": "SELECT *\nFROM filtering.orders\nWHERE status = 'approved'\nORDER BY order_date DESC\nLIMIT 20;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "customer_id": 1,
+          "amount": 650,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2024-03-15",
+          "delivery_date": "2024-03-18"
+        },
+        {
+          "id": 12,
+          "customer_id": 6,
+          "amount": 380,
+          "city": "Cordoba",
+          "country": "Argentina",
+          "status": "approved",
+          "order_date": "2024-01-20",
+          "delivery_date": "2024-01-24"
+        },
+        {
+          "id": 18,
+          "customer_id": 5,
+          "amount": 95,
+          "city": "Brasilia",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2024-02-20",
+          "delivery_date": "2024-02-23"
+        },
+        {
+          "id": 5,
+          "customer_id": 5,
+          "amount": 550,
+          "city": "São Paulo",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2024-02-01",
+          "delivery_date": "2024-02-05"
+        },
+        {
+          "id": 20,
+          "customer_id": 1,
+          "amount": 480,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-12-25",
+          "delivery_date": "2023-12-28"
+        },
+        {
+          "id": 17,
+          "customer_id": 8,
+          "amount": 110,
+          "city": "Calgary",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-11-28",
+          "delivery_date": "2023-12-01"
+        },
+        {
+          "id": 4,
+          "customer_id": 4,
+          "amount": 120,
+          "city": "Mexico City",
+          "country": "Mexico",
+          "status": "approved",
+          "order_date": "2023-11-05",
+          "delivery_date": "2023-11-08"
+        },
+        {
+          "id": 15,
+          "customer_id": 3,
+          "amount": 250,
+          "city": "Montreal",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-10-12",
+          "delivery_date": "2023-10-15"
+        },
+        {
+          "id": 10,
+          "customer_id": 1,
+          "amount": 280,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-09-01",
+          "delivery_date": "2023-09-04"
+        },
+        {
+          "id": 19,
+          "customer_id": 6,
+          "amount": 310,
+          "city": "Mendoza",
+          "country": "Argentina",
+          "status": "approved",
+          "order_date": "2023-08-10",
+          "delivery_date": "2023-08-14"
+        },
+        {
+          "id": 7,
+          "customer_id": 7,
+          "amount": 320,
+          "city": "Chicago",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-08-22",
+          "delivery_date": "2023-08-25"
+        },
+        {
+          "id": 11,
+          "customer_id": 5,
+          "amount": 180,
+          "city": "Rio",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2023-07-30",
+          "delivery_date": "2023-08-02"
+        },
+        {
+          "id": 3,
+          "customer_id": 3,
+          "amount": 350,
+          "city": "Toronto",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-06-20",
+          "delivery_date": "2023-06-25"
+        },
+        {
+          "id": 16,
+          "customer_id": 7,
+          "amount": 420,
+          "city": "Boston",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-05-18",
+          "delivery_date": "2023-05-22"
+        },
+        {
+          "id": 9,
+          "customer_id": 9,
+          "amount": 410,
+          "city": "Guadalajara",
+          "country": "Mexico",
+          "status": "approved",
+          "order_date": "2023-04-15",
+          "delivery_date": "2023-04-20"
+        },
+        {
+          "id": 13,
+          "customer_id": 2,
+          "amount": 75,
+          "city": "LA",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-03-05",
+          "delivery_date": "2023-03-08"
+        },
+        {
+          "id": 22,
+          "customer_id": 3,
+          "amount": 160,
+          "city": "Toronto",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-02-14",
+          "delivery_date": "2023-02-17"
+        }
+      ],
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Return approved orders sorted by date desc, max 20",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "city",
+          "country",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": [
+          "Must be sorted by order_date descending."
+        ]
+      },
+      "hint_level_1": "Combine WHERE, ORDER BY, and LIMIT.",
+      "hint_level_2": "WHERE status = 'approved' ORDER BY order_date DESC LIMIT 20"
+    }
+  ]
+}

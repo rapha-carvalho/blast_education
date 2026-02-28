@@ -1,0 +1,135 @@
+{
+  "id": "lesson_m3_1",
+  "title": "Funções de Agregação: COUNT, SUM, AVG, MIN, MAX",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar funções de agregação para resumir dados numéricos e responder perguntas de negócio como receita total, ticket médio e volume de pedidos.",
+  "prerequisites": [
+    "lesson_m2_5"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.customers"
+    ],
+    "scenario": "A equipe financeira da GrooveCommerce precisa de resumos rapidos: quanta receita foi gerada, qual o ticket médio, qual o menor e maior pedido. Você vai usar funções de agregação para responder com uma única query."
+  },
+  "tabs": [
+    {
+      "id": "tab_agregacao_basica",
+      "title": "COUNT, SUM, AVG, MIN, MAX",
+      "type": "content",
+      "content_markdown": "#### De linhas para resumos\n\nSem agregação, o SQL retorna uma linha por registro. Com funções de agregação, você **colapsa muitas linhas em uma única resposta**.\n\n| Função | O que calcula | Exemplo de pergunta de negócio |\n|---|---|---|\n| `COUNT(*)` | Número de linhas | Quantos pedidos temos? |\n| `SUM(coluna)` | Soma de valores | Qual ? a receita total? |\n| `AVG(coluna)` | Média dos valores | Qual ? o ticket médio? |\n| `MIN(coluna)` | Menor valor | Qual foi o menor pedido? |\n| `MAX(coluna)` | Maior valor | Qual foi o maior pedido? |\n\n---\n\n#### Todas na mesma query\n\nVocê pode combinar varias funções em um único SELECT:\n\n```sql\nSELECT\n  COUNT(*) AS total_pedidos,\n  SUM(amount) AS receita_total,\n  ROUND(AVG(amount), 2) AS ticket_medio,\n  MIN(amount) AS menor_pedido,\n  MAX(amount) AS maior_pedido\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\nEssa query transforma toda uma tabela em **um único resumo executivo**.\n\n---\n\n#### Onde usar cada uma\n\n```sql\n-- Contar clientes cadastrados\nSELECT COUNT(*) AS total_clientes FROM filtering.customers;\n\n-- Receita de pedidos aprovados\nSELECT SUM(amount) AS receita_aprovados\nFROM filtering.orders\nWHERE status = 'approved';\n\n-- Ticket médio com formatação\nSELECT ROUND(AVG(amount), 2) AS ticket_medio\nFROM filtering.orders WHERE status = 'approved';\n```\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando uma tabela de pedidos sendo resumida pelas 5 funções de agregação: COUNT, SUM, AVG, MIN e MAX, com resultados numéricos ao lado de cada função.]"
+    },
+    {
+      "id": "tab_count_avancado",
+      "title": "COUNT(*) vs COUNT(coluna)",
+      "type": "content",
+      "content_markdown": "#### A armadilha mais comum com COUNT\n\nUm erro frequente e usar `COUNT(*)` quando a intenção e contar apenas registros com um campo preenchido. As duas formas dao resultados diferentes:\n\n| Expressao | Comportamento |\n|---|---|\n| `COUNT(*)` | Conta **todas** as linhas, incluindo NULLs |\n| `COUNT(coluna)` | Conta apenas linhas onde coluna **não e NULL** |\n\n```sql\n-- Total de clientes na tabela (inclui NULLs)\nSELECT COUNT(*) AS total_linhas FROM filtering.customers;\n\n-- Clientes com email cadastrado (ignora NULLs no campo email)\nSELECT COUNT(email) AS com_email FROM filtering.customers;\n\n-- Clientes SEM email cadastrado\nSELECT COUNT(*) - COUNT(email) AS sem_email FROM filtering.customers;\n```\n\n---\n\n#### DISTINCT dentro do COUNT\n\nPara contar valores únicos, use `COUNT(DISTINCT coluna)`:\n\n```sql\n-- Quantos países diferentes fizeram pedidos?\nSELECT COUNT(DISTINCT country) AS paises_distintos\nFROM filtering.orders;\n\n-- Quantos clientes distintos fizeram pelo menos 1 pedido aprovado?\nSELECT COUNT(DISTINCT customer_id) AS clientes_ativos\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\n---\n\n#### ROUND para formatar o resultado\n\n`AVG` frequentemente retorna muitas casas decimais. Use `ROUND(valor, casas)` para formatar:\n\n```sql\nSELECT\n  ROUND(AVG(amount), 2) AS ticket_medio\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\n[PLACEHOLDER_IMAGEM: Comparativo lado a lado entre COUNT(*) contando todas as linhas incluindo NULLs, e COUNT(coluna) ignorando NULLs, com tabela de clientes destacando linhas com email nulo.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Resumo Financeiro",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O CFO precisa de um painel de uma linha com os principais KPIs de pedidos aprovados.\n\n> **Sua missão:** Em uma única query, retorne: `total_pedidos` (COUNT), `receita_total` (SUM de amount) e `ticket_medio` (AVG de amount, arredondado com 2 casas), da tabela `filtering.orders` onde `status = 'approved'`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Extremos de Valor",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O time de risco quer saber os extremos dos pedidos: o menor ? o maior valor processado.\n\n> **Sua missão:** Retorne `menor_pedido` (MIN de amount) e `maior_pedido` (MAX de amount) de toda a tabela `filtering.orders`, sem filtro de status."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - COUNT com DISTINCT",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "O time de growth quer saber quantos clientes distintos já realizaram pelo menos um pedido aprovado.\n\n> **Sua missão:** Retorne `clientes_distintos` com `COUNT(DISTINCT customer_id)` da tabela `filtering.orders` onde `status = 'approved'`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `COUNT(*)` conta todas as linhas; `COUNT(coluna)` ignora NULLs.\n- `SUM(coluna)` soma todos os valores numéricos não nulos.\n- `AVG(coluna)` calcula a média — use `ROUND()` para formatar.\n- `MIN()` e `MAX()` funcionam com números, textos e datas.\n- `COUNT(DISTINCT coluna)` conta valores únicos — ideal para clientes ativos.\n- Todas essas funções podem ser combinadas em um único SELECT.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Definição |\n|---|---|\n| `COUNT(*)` | Conta todas as linhas incluindo NULLs |\n| `COUNT(col)` | Conta linhas não nulas naquela coluna |\n| `SUM(col)` | Soma dos valores numéricos não nulos |\n| `AVG(col)` | Média dos valores numéricos não nulos |\n| `MIN(col)` | Menor valor da coluna |\n| `MAX(col)` | Maior valor da coluna |\n| `ROUND(v, n)` | Arredonda valor com n casas decimais |\n| `DISTINCT` | Elimina duplicatas antes de agregar |\n\n> **Próxima aula:** GROUP BY — como segmentar agregações por categoria, país ou status.\""
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m3_1_resumo_financeiro",
+      "title": "Desafio 1 - Resumo financeiro de pedidos aprovados",
+      "prompt_markdown": "O CFO precisa de um resumo de pedidos aprovados em uma única linha.\n\n**Requisitos:**\n- Colunas: `total_pedidos`, `receita_total`, `ticket_medio`\n- Tabela: `filtering.orders`\n- Filtro: `status = 'approved'`\n- `ticket_medio` deve ser arredondado com 2 casas decimais",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(*) AS total_pedidos, SUM(amount) AS receita_total, ROUND(AVG(amount), 2) AS ticket_medio FROM filtering.orders WHERE status = 'approved';",
+      "hint_level_1": "Use COUNT(*), SUM(amount) e AVG(amount) no mesmo SELECT. Envolva o AVG em ROUND() com 2 casas decimais. Filtre por status = 'approved'.",
+      "hint_level_2": "SELECT COUNT(*) AS total_pedidos, SUM(amount) AS receita_total, ROUND(AVG(amount), 2) AS ticket_medio FROM filtering.orders WHERE status = 'approved';",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar resumo financeiro de pedidos aprovados com total, receita e ticket médio",
+        "expected_columns": [
+          "total_pedidos",
+          "receita_total",
+          "ticket_medio"
+        ],
+        "notes": [
+          "Deve usar COUNT(*), SUM e AVG na mesma query",
+          "Filtro obrigatório: status = 'approved'",
+          "ticket_medio deve usar ROUND com 2 casas"
+        ]
+      }
+    },
+    {
+      "id": "ex_m3_1_extremos_valor",
+      "title": "Desafio 2 - Menor e maior pedido",
+      "prompt_markdown": "O time de risco precisa conhecer os extremos de valor.\n\n**Requisitos:**\n- Colunas: `menor_pedido`, `maior_pedido`\n- Tabela: `filtering.orders`\n- Sem filtro de status — todos os pedidos",
+      "starter_query": "",
+      "solution_query": "SELECT MIN(amount) AS menor_pedido, MAX(amount) AS maior_pedido FROM filtering.orders;",
+      "hint_level_1": "Use MIN(amount) e MAX(amount) no mesmo SELECT sem filtro WHERE.",
+      "hint_level_2": "SELECT MIN(amount) AS menor_pedido, MAX(amount) AS maior_pedido FROM filtering.orders;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar o menor e maior valor de pedido de toda a tabela",
+        "expected_columns": [
+          "menor_pedido",
+          "maior_pedido"
+        ],
+        "notes": [
+          "Deve usar MIN e MAX",
+          "Sem filtro WHERE — todos os pedidos"
+        ]
+      }
+    },
+    {
+      "id": "ex_m3_1_count_distinct",
+      "title": "Desafio 3 - Clientes únicos com pedidos aprovados",
+      "prompt_markdown": "O growth team quer saber quantos clientes distintos realizaram pedidos aprovados.\n\n**Requisitos:**\n- Coluna: `clientes_distintos`\n- Tabela: `filtering.orders`\n- Filtro: `status = 'approved'`\n- Usar `COUNT(DISTINCT customer_id)`",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(DISTINCT customer_id) AS clientes_distintos FROM filtering.orders WHERE status = 'approved';",
+      "hint_level_1": "Use COUNT(DISTINCT customer_id) para contar apenas IDs de clientes únicos, não o total de pedidos.",
+      "hint_level_2": "SELECT COUNT(DISTINCT customer_id) AS clientes_distintos FROM filtering.orders WHERE status = 'approved';",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar o número de clientes distintos com pelo menos um pedido aprovado",
+        "expected_columns": [
+          "clientes_distintos"
+        ],
+        "notes": [
+          "Deve usar COUNT(DISTINCT customer_id)",
+          "Filtro: status = 'approved'"
+        ]
+      }
+    }
+  ]
+}

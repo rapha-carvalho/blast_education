@@ -1,0 +1,138 @@
+{
+  "id": "lesson_m9_1",
+  "title": "Análise de Funil de Conversão",
+  "lesson_type": "interactive_sql",
+  "objective": "Construir e interpretar funil de conversão com SQL para medir avancos e quedas entre etapas de cadastro, pedido e entrega.",
+  "prerequisites": [
+    "lesson_m8_3"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos"
+    ],
+    "scenario": "O time de marketing precisa entender quantos clientes avancam de cadastro para pedido, entrega e recorrência para priorizar melhorias na conversão."
+  },
+  "tabs": [
+    {
+      "id": "tab_funil_conceito",
+      "title": "Fundamentos de funil",
+      "type": "content",
+      "content_markdown": "#### O que ? um funil de conversão\n\nFunil ? uma sequência de etapas do cliente em uma jornada de negócio.\n\nNesta aula, vamos usar 4 etapas:\n\n1. `cadastro`: cliente criado na base\n2. `pedido_realizado`: cliente com ao menos 1 pedido\n3. `pedido_entregue`: cliente com ao menos 1 pedido entregue\n4. `cliente_recorrente`: cliente com 2+ pedidos entregues\n\n---\n\n#### Como identificar gargalos\n\n| Sinal | Interpretacao |\n|---|---|\n| Queda forte da etapa 1 para 2 | Baixa ativação após cadastro |\n| Queda forte de pedido para entrega | Problema de operação/pagamento/logística |\n| Baixa recorrência | Dificuldade de reter clientes |\n\n---\n\n#### Formula de conversão entre etapas\n\n`taxa_conversao = (etapa_destino / etapa_origem) * 100`\n\nExemplo: se 10 clientes cadastraram e 7 fizeram pedido, a taxa e 70%.\n\n[PLACEHOLDER_IMAGEM: Diagrama de funil com 4 etapas e setas mostrando conversão entre cadastro, pedido, entrega e recorrência.]"
+    },
+    {
+      "id": "tab_funil_sql",
+      "title": "Montando funil com SQL",
+      "type": "content",
+      "content_markdown": "#### Estratégia SQL para funil\n\nPara evitar contagem duplicada, usamos `COUNT(DISTINCT customer_id)` em cada etapa.\n\n```sql\nWITH base AS (\n  SELECT\n    (SELECT COUNT(*) FROM clientes) AS cadastro,\n    (SELECT COUNT(DISTINCT customer_id) FROM pedidos) AS pedido_realizado,\n    (SELECT COUNT(DISTINCT customer_id) FROM pedidos WHERE status_code = 'entregue') AS pedido_entregue\n)\nSELECT\n  cadastro,\n  pedido_realizado,\n  pedido_entregue,\n  ROUND((pedido_realizado * 100.0) / NULLIF(cadastro, 0), 2) AS tx_cadastro_para_pedido\nFROM base;\n```\n\n---\n\n#### Boas práticas no funil\n\n| Prática | Motivo |\n|---|---|\n| Definir etapas com regra explícita | Evita interpretação ambígua |\n| Usar DISTINCT por cliente | Evita inflar números |\n| Ordenar etapas de forma fixa | Facilita comparação entre períodos |\n| Separar contagens e taxas | Torna validação mais simples |\n\n---\n\n#### Checklist final\n\n- A regra de cada etapa está clara?\n- Existe risco de duplicidade por cliente?\n- As taxas estão com 2 casas decimais?\n- A ordenação permite leitura executiva?\n\n[PLACEHOLDER_IMAGEM: Fluxo SQL mostrando CTE de contagens e bloco final de taxas de conversão.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Contagem por etapa do funil",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você vai construir o funil base da GrooveCommerce.\n\n> **Sua missão:** retorne o total de clientes em cada etapa, com ordem fixa do funil."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Taxas de conversão",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora transforme o funil em métricas de taxa.\n\n> **Sua missão:** calcule as taxas de conversão entre etapas sucessivas em percentual."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Funil por canal",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "O marketing quer saber quais canais geram melhor avanço até entrega.\n\n> **Sua missão:** monte o funil agregado por `acquisition_channel` e compare desempenho."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Funil transforma jornada de cliente em etapas mensuráveis.\n- `COUNT(DISTINCT)` evita inflar a contagem por cliente.\n- Taxas entre etapas mostram onde existe maior perda.\n- Segmentação por canal ajuda priorizar investimento de marketing.\n- SQL de funil precisa ser consistente e auditável.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Funil de conversão | Sequência de etapas com evolução de clientes |\n| Conversão | Percentual que avança para etapa seguinte |\n| Queda de funil | Perda entre etapa origem e etapa destino |\n| Recorrência | Cliente que volta a comprar |\n\n> **Próxima aula:** Retenção e churn com análise por coorte."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m9_1_funil_etapas",
+      "title": "Desafio 1 - Totais por etapa do funil",
+      "prompt_markdown": "Retorne o total de clientes por etapa do funil.\n\n**Requisitos:**\n- Etapas e ordem: `cadastro`, `pedido_realizado`, `pedido_entregue`, `cliente_recorrente`\n- `cadastro`: total de clientes em `clientes`\n- `pedido_realizado`: clientes distintos com pelo menos 1 pedido em `pedidos`\n- `pedido_entregue`: clientes distintos com pelo menos 1 pedido com `status_code = 'entregue'`\n- `cliente_recorrente`: clientes com 2 ou mais pedidos `entregue`\n- Colunas finais: `etapa`, `clientes`\n- Ordenar pela ordem do funil",
+      "starter_query": "",
+      "solution_query": "WITH clientes_base AS (SELECT customer_id FROM clientes), clientes_com_pedido AS (SELECT DISTINCT customer_id FROM pedidos), clientes_com_entrega AS (SELECT DISTINCT customer_id FROM pedidos WHERE status_code = 'entregue'), clientes_recorrentes AS (SELECT customer_id FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id HAVING COUNT(*) >= 2) SELECT etapa, clientes FROM (SELECT 'cadastro' AS etapa, COUNT(*) AS clientes, 1 AS ordem FROM clientes_base UNION ALL SELECT 'pedido_realizado' AS etapa, COUNT(*) AS clientes, 2 AS ordem FROM clientes_com_pedido UNION ALL SELECT 'pedido_entregue' AS etapa, COUNT(*) AS clientes, 3 AS ordem FROM clientes_com_entrega UNION ALL SELECT 'cliente_recorrente' AS etapa, COUNT(*) AS clientes, 4 AS ordem FROM clientes_recorrentes) t ORDER BY ordem ASC;",
+      "hint_level_1": "Use CTEs para cada etapa e una os resultados com UNION ALL. Crie uma coluna auxiliar de ordem.",
+      "hint_level_2": "WITH clientes_base AS (SELECT customer_id FROM clientes), clientes_com_pedido AS (SELECT DISTINCT customer_id FROM pedidos), clientes_com_entrega AS (SELECT DISTINCT customer_id FROM pedidos WHERE status_code = 'entregue'), clientes_recorrentes AS (SELECT customer_id FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id HAVING COUNT(*) >= 2) SELECT etapa, clientes FROM (SELECT 'cadastro' AS etapa, COUNT(*) AS clientes, 1 AS ordem FROM clientes_base UNION ALL SELECT 'pedido_realizado' AS etapa, COUNT(*) AS clientes, 2 AS ordem FROM clientes_com_pedido UNION ALL SELECT 'pedido_entregue' AS etapa, COUNT(*) AS clientes, 3 AS ordem FROM clientes_com_entrega UNION ALL SELECT 'cliente_recorrente' AS etapa, COUNT(*) AS clientes, 4 AS ordem FROM clientes_recorrentes) t ORDER BY ordem ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Construir a base de funil com etapas claras e sem duplicidade por cliente",
+        "expected_columns": [
+          "etapa",
+          "clientes"
+        ],
+        "notes": [
+          "Deve retornar exatamente 4 linhas, uma por etapa",
+          "A ordem das etapas deve seguir o funil solicitado"
+        ]
+      }
+    },
+    {
+      "id": "ex_m9_1_taxas_conversao",
+      "title": "Desafio 2 - Taxas de conversão entre etapas",
+      "prompt_markdown": "Calcule as taxas de conversão entre etapas sucessivas do funil.\n\n**Requisitos:**\n- Use as mesmas definições do Desafio 1\n- Calcule 3 linhas de taxa:\n  - `cadastro` para `pedido_realizado`\n  - `pedido_realizado` para `pedido_entregue`\n  - `pedido_entregue` para `cliente_recorrente`\n- Colunas finais: `etapa_origem`, `etapa_destino`, `taxa_conversao_pct`\n- `taxa_conversao_pct` com `ROUND(..., 2)`\n- Ordenar na sequência acima",
+      "starter_query": "",
+      "solution_query": "WITH base AS (SELECT (SELECT COUNT(*) FROM clientes) AS cadastro, (SELECT COUNT(DISTINCT customer_id) FROM pedidos) AS pedido_realizado, (SELECT COUNT(DISTINCT customer_id) FROM pedidos WHERE status_code = 'entregue') AS pedido_entregue, (SELECT COUNT(*) FROM (SELECT customer_id FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id HAVING COUNT(*) >= 2) r) AS cliente_recorrente) SELECT etapa_origem, etapa_destino, taxa_conversao_pct FROM (SELECT 'cadastro' AS etapa_origem, 'pedido_realizado' AS etapa_destino, ROUND((pedido_realizado * 100.0) / NULLIF(cadastro, 0), 2) AS taxa_conversao_pct, 1 AS ordem FROM base UNION ALL SELECT 'pedido_realizado' AS etapa_origem, 'pedido_entregue' AS etapa_destino, ROUND((pedido_entregue * 100.0) / NULLIF(pedido_realizado, 0), 2) AS taxa_conversao_pct, 2 AS ordem FROM base UNION ALL SELECT 'pedido_entregue' AS etapa_origem, 'cliente_recorrente' AS etapa_destino, ROUND((cliente_recorrente * 100.0) / NULLIF(pedido_entregue, 0), 2) AS taxa_conversao_pct, 3 AS ordem FROM base) t ORDER BY ordem ASC;",
+      "hint_level_1": "Primeiro crie uma CTE com os totais de cada etapa. Depois gere as 3 linhas com UNION ALL.",
+      "hint_level_2": "WITH base AS (SELECT (SELECT COUNT(*) FROM clientes) AS cadastro, (SELECT COUNT(DISTINCT customer_id) FROM pedidos) AS pedido_realizado, (SELECT COUNT(DISTINCT customer_id) FROM pedidos WHERE status_code = 'entregue') AS pedido_entregue, (SELECT COUNT(*) FROM (SELECT customer_id FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id HAVING COUNT(*) >= 2) r) AS cliente_recorrente) SELECT etapa_origem, etapa_destino, taxa_conversao_pct FROM (SELECT 'cadastro' AS etapa_origem, 'pedido_realizado' AS etapa_destino, ROUND((pedido_realizado * 100.0) / NULLIF(cadastro, 0), 2) AS taxa_conversao_pct, 1 AS ordem FROM base UNION ALL SELECT 'pedido_realizado' AS etapa_origem, 'pedido_entregue' AS etapa_destino, ROUND((pedido_entregue * 100.0) / NULLIF(pedido_realizado, 0), 2) AS taxa_conversao_pct, 2 AS ordem FROM base UNION ALL SELECT 'pedido_entregue' AS etapa_origem, 'cliente_recorrente' AS etapa_destino, ROUND((cliente_recorrente * 100.0) / NULLIF(pedido_entregue, 0), 2) AS taxa_conversao_pct, 3 AS ordem FROM base) t ORDER BY ordem ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Traduzir funil em métricas de conversão entre etapas consecutivas",
+        "expected_columns": [
+          "etapa_origem",
+          "etapa_destino",
+          "taxa_conversao_pct"
+        ],
+        "notes": [
+          "Deve retornar exatamente 3 linhas",
+          "As taxas devem estar em percentual com 2 casas decimais"
+        ]
+      }
+    },
+    {
+      "id": "ex_m9_1_funil_canal",
+      "title": "Desafio 3 - Funil por canal de aquisição",
+      "prompt_markdown": "Compare o funil por canal de aquisição.\n\n**Requisitos:**\n- Base principal em `clientes` com `LEFT JOIN` para `pedidos`\n- Agrupar por `acquisition_channel`\n- Colunas finais:\n  - `canal_aquisicao`\n  - `clientes_cadastrados`\n  - `clientes_com_pedido`\n  - `clientes_com_entrega`\n  - `taxa_entrega_sobre_cadastro_pct`\n- `clientes_com_pedido`: `COUNT(DISTINCT p.customer_id)`\n- `clientes_com_entrega`: `COUNT(DISTINCT CASE WHEN p.status_code = 'entregue' THEN p.customer_id END)`\n- `taxa_entrega_sobre_cadastro_pct`: percentual com 2 casas\n- Ordenar por `taxa_entrega_sobre_cadastro_pct` DESC e `canal_aquisicao` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT c.acquisition_channel AS canal_aquisicao, COUNT(DISTINCT c.customer_id) AS clientes_cadastrados, COUNT(DISTINCT p.customer_id) AS clientes_com_pedido, COUNT(DISTINCT CASE WHEN p.status_code = 'entregue' THEN p.customer_id END) AS clientes_com_entrega, ROUND((COUNT(DISTINCT CASE WHEN p.status_code = 'entregue' THEN p.customer_id END) * 100.0) / NULLIF(COUNT(DISTINCT c.customer_id), 0), 2) AS taxa_entrega_sobre_cadastro_pct FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id GROUP BY c.acquisition_channel ORDER BY taxa_entrega_sobre_cadastro_pct DESC, canal_aquisicao ASC;",
+      "hint_level_1": "Parta de clientes para não perder canais sem pedido. Use DISTINCT nas contagens de cliente.",
+      "hint_level_2": "SELECT c.acquisition_channel AS canal_aquisicao, COUNT(DISTINCT c.customer_id) AS clientes_cadastrados, COUNT(DISTINCT p.customer_id) AS clientes_com_pedido, COUNT(DISTINCT CASE WHEN p.status_code = 'entregue' THEN p.customer_id END) AS clientes_com_entrega, ROUND((COUNT(DISTINCT CASE WHEN p.status_code = 'entregue' THEN p.customer_id END) * 100.0) / NULLIF(COUNT(DISTINCT c.customer_id), 0), 2) AS taxa_entrega_sobre_cadastro_pct FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id GROUP BY c.acquisition_channel ORDER BY taxa_entrega_sobre_cadastro_pct DESC, canal_aquisicao ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Segmentar funil por canal para identificar melhor eficiência de conversão",
+        "expected_columns": [
+          "canal_aquisicao",
+          "clientes_cadastrados",
+          "clientes_com_pedido",
+          "clientes_com_entrega",
+          "taxa_entrega_sobre_cadastro_pct"
+        ],
+        "notes": [
+          "Deve retornar uma linha por canal de aquisição",
+          "A taxa deve usar clientes entregues sobre clientes cadastrados no canal"
+        ]
+      }
+    }
+  ]
+}

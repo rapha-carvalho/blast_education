@@ -1,0 +1,140 @@
+{
+  "id": "lesson_m6_3",
+  "title": "Verificacoes de Qualidade de Dados com SQL",
+  "lesson_type": "interactive_sql",
+  "objective": "Aplicar checks de unicidade, integridade referencial e conciliação para detectar problemas de qualidade antes de publicar relatórios.",
+  "prerequisites": [
+    "lesson_m6_2"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "itens_pedido",
+      "clientes",
+      "produtos"
+    ],
+    "scenario": "Antes de liberar dashboards para a diretoria, você precisa executar verificacoes de qualidade para garantir que os dados estão consistentes."
+  },
+  "tabs": [
+    {
+      "id": "tab_qualidade_fundamentos",
+      "title": "Framework de qualidade de dados",
+      "type": "content",
+      "content_markdown": "#### Qualidade de dados antes de análise\n\nAnálise boa com dado ruim gera decisão ruim. Em SQL, um framework simples de qualidade cobre:\n\n1. **Unicidade**: existe duplicação de chave?\n2. **Integridade referencial**: FKs apontam para registros existentes?\n3. **Consistência de negócio**: totais batem entre tabelas relacionadas?\n\n---\n\n#### Exemplo de checagem de unicidade\n\n```sql\nSELECT\n  COUNT(*) AS total_pedidos,\n  COUNT(DISTINCT order_id) AS order_ids_unicos,\n  COUNT(*) - COUNT(DISTINCT order_id) AS order_ids_duplicados\nFROM pedidos;\n```\n\nSe `order_ids_duplicados > 0`, a base precisa de investigação.\n\n---\n\n#### Princípio operacional\n\n> Sempre rode checks de qualidade antes de agregar e apresentar métricas para negócio.\n\n[PLACEHOLDER_IMAGEM: Painel de qualidade com três blocos (unicidade, integridade referencial e consistência), mostrando fluxo de validação antes do dashboard final.]"
+    },
+    {
+      "id": "tab_qualidade_playbook",
+      "title": "Playbook de investigação",
+      "type": "content",
+      "content_markdown": "#### Passo a passo de diagnóstico\n\n1. Meça duplicação de chaves\n2. Verifique registros órfãos em joins\n3. Concilie totais entre nível pedido e nível item\n4. Priorize anomalias por impacto\n\n```sql\n-- Itens sem pedido correspondente\nSELECT COUNT(*) AS itens_sem_pedido\nFROM itens_pedido ip\nLEFT JOIN pedidos p ON ip.order_id = p.order_id\nWHERE p.order_id IS NULL;\n```\n\n---\n\n#### Conciliação financeira\n\nUma checagem valiosa e comparar `order_total` de `pedidos` com a soma de `quantity * unit_price` em `itens_pedido`.\n\n```sql\nWITH itens_por_pedido AS (\n  SELECT order_id, SUM(quantity * unit_price) AS total_itens\n  FROM itens_pedido\n  GROUP BY order_id\n)\nSELECT p.order_id, p.order_total, i.total_itens\nFROM pedidos p\nLEFT JOIN itens_por_pedido i ON p.order_id = i.order_id;\n```\n\n---\n\n#### Resultado esperado de um bom check\n\n- encontrou problema? documente causa e impacto\n- não encontrou problema? registre evidências de validação\n\n[PLACEHOLDER_IMAGEM: Checklist visual de investigação com contagem de duplicados, checagem de órfãos e ranking de divergências financeiras por pedido.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Unicidade da base de pedidos",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você precisa validar se a chave de pedidos está consistente antes de qualquer relatório.\n\n> **Sua missão:** Gere um painel de unicidade e nulos de customer_id em uma linha."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Integridade referencial de itens",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora valide se itens de pedido estão apontando para pedidos e produtos existentes.\n\n> **Sua missão:** Retorne contagens de itens órfãos por pedido e por produto."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Top divergências financeiras",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A liderança quer priorizar rapidamente os casos mais críticos de divergencia.\n\n> **Sua missão:** Liste os 5 pedidos com maior diferença entre `order_total` e soma dos itens."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Qualidade de dados deve ser validada antes de análise executiva.\n- Unicidade protege contra duplicação silenciosa de métricas.\n- Integridade referencial identifica registros órfãos em joins.\n- Conciliação entre tabelas revela inconsistências de negócio.\n- Priorizar anomalias por impacto acelera resolução.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Unicidade | Garantia de que uma chave não se repete indevidamente |\n| Registro órfão | Linha sem correspondência esperada em outra tabela |\n| Integridade referencial | Coerência entre chaves relacionadas |\n| Conciliação | Comparação de métricas entre duas fontes relacionadas |\n\n> **Próxima etapa:** aplicar essas validações em fluxos maiores com CTEs e automação."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m6_3_unicidade_pedidos",
+      "title": "Desafio 1 - Painel de unicidade de pedidos",
+      "prompt_markdown": "Retorne em uma linha um painel de qualidade da tabela `pedidos`.\n\n**Requisitos:**\n- Colunas: `total_pedidos`, `order_ids_unicos`, `order_ids_duplicados`, `pedidos_sem_customer`\n- `total_pedidos`: `COUNT(*)`\n- `order_ids_unicos`: `COUNT(DISTINCT order_id)`\n- `order_ids_duplicados`: `COUNT(*) - COUNT(DISTINCT order_id)`\n- `pedidos_sem_customer`: contagem de `customer_id` nulo\n- Retornar 1 linha",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(*) AS total_pedidos, COUNT(DISTINCT order_id) AS order_ids_unicos, COUNT(*) - COUNT(DISTINCT order_id) AS order_ids_duplicados, SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS pedidos_sem_customer FROM pedidos;",
+      "hint_level_1": "Monte tudo em uma linha com agregações. Use SUM(CASE WHEN... IS NULL THEN 1 ELSE 0 END) para nulos.",
+      "hint_level_2": "SELECT COUNT(*) AS total_pedidos, COUNT(DISTINCT order_id) AS order_ids_unicos, COUNT(*) - COUNT(DISTINCT order_id) AS order_ids_duplicados, SUM(CASE WHEN customer_id IS NULL THEN 1 ELSE 0 END) AS pedidos_sem_customer FROM pedidos;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Validar unicidade e completude básica da chave de pedidos",
+        "expected_columns": [
+          "total_pedidos",
+          "order_ids_unicos",
+          "order_ids_duplicados",
+          "pedidos_sem_customer"
+        ],
+        "notes": [
+          "Resultado esperado: 15, 15, 0, 0",
+          "Deve retornar exatamente 1 linha"
+        ]
+      }
+    },
+    {
+      "id": "ex_m6_3_integridade_itens",
+      "title": "Desafio 2 - Itens órfãos por pedido e produto",
+      "prompt_markdown": "Retorne as contagens de registros órfãos na tabela `itens_pedido`.\n\n**Requisitos:**\n- Colunas: `itens_sem_pedido`, `itens_sem_produto`\n- `itens_sem_pedido`: itens sem match em `pedidos`\n- `itens_sem_produto`: itens sem match em `produtos`\n- Retornar 1 linha",
+      "starter_query": "",
+      "solution_query": "SELECT SUM(CASE WHEN p.order_id IS NULL THEN 1 ELSE 0 END) AS itens_sem_pedido, SUM(CASE WHEN pr.product_id IS NULL THEN 1 ELSE 0 END) AS itens_sem_produto FROM itens_pedido ip LEFT JOIN pedidos p ON ip.order_id = p.order_id LEFT JOIN produtos pr ON ip.product_id = pr.product_id;",
+      "hint_level_1": "Use LEFT JOIN de itens para pedidos e produtos. Conte nulos das chaves da direita com SUM(CASE...).",
+      "hint_level_2": "SELECT SUM(CASE WHEN p.order_id IS NULL THEN 1 ELSE 0 END) AS itens_sem_pedido, SUM(CASE WHEN pr.product_id IS NULL THEN 1 ELSE 0 END) AS itens_sem_produto FROM itens_pedido ip LEFT JOIN pedidos p ON ip.order_id = p.order_id LEFT JOIN produtos pr ON ip.product_id = pr.product_id;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Validar integridade referencial da tabela itens_pedido",
+        "expected_columns": [
+          "itens_sem_pedido",
+          "itens_sem_produto"
+        ],
+        "notes": [
+          "Resultado esperado: 0 e 0",
+          "Deve retornar exatamente 1 linha"
+        ]
+      }
+    },
+    {
+      "id": "ex_m6_3_top_divergencias",
+      "title": "Desafio 3 - Top 5 divergências de conciliação",
+      "prompt_markdown": "Liste os 5 pedidos com maior diferença entre `order_total` e soma de itens.\n\n**Requisitos:**\n- Tabelas: `pedidos` e `itens_pedido`\n- Calcular `total_itens = SUM(quantity * unit_price)` por pedido\n- Colunas finais: `order_id`, `order_total`, `total_itens`, `diferenca_abs`\n- `diferenca_abs = ABS(order_total - total_itens)` arredondado 2 casas\n- Filtrar apenas `diferenca_abs > 0.01`\n- Ordenar por `diferenca_abs DESC`, depois `order_id ASC`\n- Limitar em 5 linhas",
+      "starter_query": "",
+      "solution_query": "WITH itens_por_pedido AS (SELECT order_id, ROUND(SUM(quantity * unit_price), 2) AS total_itens FROM itens_pedido GROUP BY order_id), base AS (SELECT p.order_id, ROUND(p.order_total, 2) AS order_total, COALESCE(i.total_itens, 0) AS total_itens, ROUND(ABS(p.order_total - COALESCE(i.total_itens, 0)), 2) AS diferenca_abs FROM pedidos p LEFT JOIN itens_por_pedido i ON p.order_id = i.order_id) SELECT order_id, order_total, total_itens, diferenca_abs FROM base WHERE diferenca_abs > 0.01 ORDER BY diferenca_abs DESC, order_id ASC LIMIT 5;",
+      "hint_level_1": "Primeiro agregue itens por pedido em uma CTE, depois compare com pedidos e ranqueie por diferença absoluta.",
+      "hint_level_2": "WITH itens_por_pedido AS (SELECT order_id, ROUND(SUM(quantity * unit_price), 2) AS total_itens FROM itens_pedido GROUP BY order_id), base AS (SELECT p.order_id, ROUND(p.order_total, 2) AS order_total, COALESCE(i.total_itens, 0) AS total_itens, ROUND(ABS(p.order_total - COALESCE(i.total_itens, 0)), 2) AS diferenca_abs FROM pedidos p LEFT JOIN itens_por_pedido i ON p.order_id = i.order_id) SELECT order_id, order_total, total_itens, diferenca_abs FROM base WHERE diferenca_abs > 0.01 ORDER BY diferenca_abs DESC, order_id ASC LIMIT 5;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Priorizar pedidos com maior divergencia financeira para investigação",
+        "expected_columns": [
+          "order_id",
+          "order_total",
+          "total_itens",
+          "diferenca_abs"
+        ],
+        "notes": [
+          "Top esperado inicia com pedidos 1011 e 1003",
+          "Deve retornar exatamente 5 linhas"
+        ]
+      }
+    }
+  ]
+}

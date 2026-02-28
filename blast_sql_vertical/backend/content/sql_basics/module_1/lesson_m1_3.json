@@ -1,0 +1,141 @@
+{
+  "id": "lesson_m1_3",
+  "title": "OLTP vs OLAP: Dois Trabalhos, Dois Tipos de Banco de Dados",
+  "lesson_type": "interactive_sql",
+  "objective": "Entender a diferença entre OLTP (banco de dados de produção) e OLAP (banco de dados analítico), e por que analistas trabalham em sistemas diferentes dos sistemas ao vivo.",
+  "prerequisites": [
+    "lesson_m1_2"
+  ],
+  "estimated_minutes": 12,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos",
+      "produtos"
+    ],
+    "scenario": "A GrooveCommerce usa dois sistemas: o OLTP processa pedidos em tempo real, o OLAP é onde a equipe de analytics roda relatórios e dashboards."
+  },
+  "tabs": [
+    {
+      "id": "tab_oltp",
+      "title": "O que é OLTP?",
+      "type": "content",
+      "content_markdown": "#### Dois tipos de banco de dados — dois empregos completamente diferentes\n\nAntes de escrever qualquer query analítica, você precisa entender em qual sistema está trabalhando. Porque isso muda tudo.\n\n---\n\n#### OLTP — Online Transaction Processing\n\n**OLTP** é o banco de dados de produção — o sistema ao vivo que roda a empresa agora, em tempo real.\n\nCada vez que um cliente da GrooveCommerce:\n- Faz um pedido → uma linha é inserida em `pedidos`\n- Atualiza o endereço → uma linha é alterada em `clientes`\n- Cancela um item → uma linha é deletada em `itens_pedido`\n\nIsso acontece centenas ou milhares de vezes por minuto. O OLTP precisa ser **rápido e confiável** para cada transação individual.\n\n| Característica | OLTP |\n|---|---|\n| Tipo de operação | INSERT, UPDATE, DELETE — linha por linha |\n| Volume por query | 1 a poucos registros |\n| Velocidade exigida | Milissegundos |\n| Quem usa | Aplicativo, sistema de pagamento, loja |\n| Exemplos reais | MySQL, PostgreSQL, Oracle |\n\n[PLACEHOLDER_IMAGEM: Diagrama OLTP vs OLAP — comparação lado a lado dos dois tipos de banco de dados]\n\n> **Regra de ouro do OLTP:** Uma query de analista rodando sobre o banco de produção pode derrubar o site. Por isso você **nunca** roda relatórios pesados no OLTP."
+    },
+    {
+      "id": "tab_olap",
+      "title": "O que é OLAP?",
+      "type": "content",
+      "content_markdown": "#### OLAP — Online Analytical Processing\n\n**OLAP** é o banco de dados analítico — uma cópia dos dados do OLTP, otimizada para perguntas de negócio.\n\nEnquanto o OLTP processa uma transação por vez, o OLAP processa **perguntas que abrangem milhões de linhas**:\n\n- \"Qual foi a receita total de fevereiro?\"\n- \"Quais categorias de produto cresceram no último trimestre?\"\n- \"Quais clientes não compraram nos últimos 60 dias?\"\n\n| Característica | OLAP |\n|---|---|\n| Tipo de operação | SELECT com GROUP BY, agregações |\n| Volume por query | Milhões de linhas |\n| Velocidade exigida | Segundos a minutos |\n| Quem usa | Analistas, cientistas de dados, executivos |\n| Exemplos reais | BigQuery, Snowflake, Redshift, DuckDB |\n\n---\n\n#### OLTP vs OLAP — comparação direta\n\n| | OLTP | OLAP |\n|---|---|---|\n| **Objetivo** | Operar o negócio | Analisar o negócio |\n| **Dados** | Atuais, em tempo real | Históricos, consolidados |\n| **Queries** | Rápidas, pequenas | Lentas, pesadas |\n| **Usuários** | Sistemas, aplicativos | Analistas, gestores |\n| **Risco** | Indisponibilidade = prejuízo | Relatório lento = chateação |\n\n[PLACEHOLDER_IMAGEM: Fluxo de dados OLTP → ETL/ELT → Data Warehouse — como os dados chegam ao ambiente analítico]\n\n> **Onde você trabalha como analista?** No OLAP — um Data Warehouse como BigQuery ou Snowflake que recebe uma cópia dos dados do OLTP regularmente."
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Query OLTP",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Vamos ver como uma **query OLTP** se parece: rápida, busca poucos registros, geralmente filtra por um ID específico.\n\nNo banco de produção da GrooveCommerce, um sistema pode precisar buscar os dados de um cliente específico para exibir na tela — esse é o tipo de query que o OLTP foi projetado para atender.\n\n**Características desta query estilo OLTP:**\n- Filtra por uma chave primária (`customer_id = 3`)\n- Retorna apenas 1 linha\n- É executada em milissegundos\n- Não exige nenhuma agregação\n\n> **Sua missão:** Retorne todas as colunas do cliente com `customer_id = 3` da tabela `clientes`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Query OLAP",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora veja como uma **query OLAP** se parece: ela lê muitas linhas para produzir um resumo analítico.\n\nA equipe de analytics da GrooveCommerce quer saber quantos pedidos existem por status. Essa é uma pergunta típica de dashboard — ela precisa varrer **toda** a tabela de pedidos para agrupar e contar.\n\n**Características desta query estilo OLAP:**\n- Lê **todas** as linhas da tabela (sem filtro de PK)\n- Agrega os dados com `COUNT`\n- Agrupa por uma categoria (`status_code`)\n- Produz um resumo, não um registro individual\n\n> **Aviso:** Você ainda não aprendeu `GROUP BY` em detalhes — não se preocupe! O objetivo aqui é *sentir* como uma query analítica é estruturalmente diferente de uma query transacional. O `GROUP BY` será ensinado em detalhes no Módulo 3.\n\n> **Sua missão:** Execute a query abaixo para ver quantos pedidos existem por status:\n```sql\nSELECT status_code, COUNT(*) AS total_pedidos\nFROM pedidos\nGROUP BY status_code;\n```"
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — Analítico por canal",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Mais uma query estilo **OLAP** — desta vez sobre a tabela `clientes`.\n\nO time de marketing quer saber quantos clientes vieram de cada canal de aquisição. Essa é uma pergunta clássica de analytics: ao invés de buscar um cliente específico, você resume **todos** os clientes em grupos.\n\n**Pense na diferença:**\n- OLTP: `WHERE customer_id = 5` → 1 linha, instantâneo\n- OLAP: `GROUP BY acquisition_channel` → resumo de todos os clientes, mais pesado\n\n> **Sua missão:** Retorne o total de clientes agrupado por `acquisition_channel`. Use a estrutura abaixo como guia:\n```sql\nSELECT acquisition_channel, COUNT(*) AS total_clientes\nFROM clientes\nGROUP BY acquisition_channel;\n```"
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **OLTP** (Online Transaction Processing) é o banco de dados de produção — roda a empresa em tempo real, linha por linha.\n- **OLAP** (Online Analytical Processing) é o banco de dados analítico — responde perguntas de negócio varrendo milhões de linhas.\n- **Nunca rode queries analíticas pesadas no OLTP de produção** — isso pode causar lentidão ou queda do sistema.\n- **Analistas trabalham no OLAP** — um Data Warehouse (BigQuery, Snowflake, Redshift) que recebe cópia dos dados do OLTP.\n- Uma **query OLTP** filtra por PK (1 linha, milissegundos). Uma **query OLAP** agrega muitas linhas (segundos a minutos).\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|---|---|\n| **OLTP** | Online Transaction Processing — banco de produção, operações linha a linha |\n| **OLAP** | Online Analytical Processing — banco analítico, agregações em massa |\n| **Data Warehouse** | Sistema OLAP em nuvem onde analistas trabalham (BigQuery, Snowflake, Redshift) |\n| **ETL / ELT** | Processo de mover dados do OLTP para o OLAP |\n| **INSERT / UPDATE / DELETE** | Operações típicas do OLTP |\n| **SELECT + GROUP BY** | Operações típicas do OLAP |\n| **Latência** | Tempo de resposta de uma operação |\n\n---\n\n> **Próxima aula:** ETL, ELT e como os dados chegam do OLTP ao Data Warehouse."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_oltp_lookup",
+      "title": "Desafio 1 — Busca estilo OLTP",
+      "prompt_markdown": "Simule uma query típica de banco de dados **OLTP**: busca por um registro específico usando a chave primária.\n\n**Sua missão:** Retorne **todas as colunas** do cliente com `customer_id = 3` da tabela `clientes`.\n\n> Dica: Use `WHERE customer_id = 3` — um único registro, rápido como o OLTP.",
+      "starter_query": "",
+      "solution_query": "SELECT * FROM clientes WHERE customer_id = 3;",
+      "hint_level_1": "Uma query OLTP filtra por uma chave primária para retornar um único registro. Use SELECT * FROM clientes e adicione um WHERE com o customer_id específico.",
+      "hint_level_2": "SELECT * FROM clientes WHERE customer_id = 3;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar apenas o cliente com customer_id = 3",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "email",
+          "phone",
+          "created_at",
+          "acquisition_channel",
+          "country"
+        ],
+        "notes": [
+          "Deve retornar exatamente 1 linha",
+          "Deve filtrar WHERE customer_id = 3"
+        ]
+      }
+    },
+    {
+      "id": "ex2_olap_count_status",
+      "title": "Desafio 2 — Agregação estilo OLAP",
+      "prompt_markdown": "Agora rode uma query típica de **OLAP**: agrega todas as linhas para produzir um resumo por categoria.\n\n**Sua missão:** Retorne o total de pedidos agrupado por `status_code`, usando `COUNT(*) AS total_pedidos`.\n\n> Dica: Use `GROUP BY status_code` após o `FROM pedidos`.",
+      "starter_query": "",
+      "solution_query": "SELECT status_code, COUNT(*) AS total_pedidos FROM pedidos GROUP BY status_code;",
+      "hint_level_1": "Queries OLAP usam GROUP BY para agrupar linhas e funções de agregação como COUNT para resumir. Selecione status_code e COUNT(*) AS total_pedidos da tabela pedidos, agrupando por status_code.",
+      "hint_level_2": "SELECT status_code, COUNT(*) AS total_pedidos FROM pedidos GROUP BY status_code;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Contar pedidos agrupados por status_code",
+        "expected_columns": [
+          "status_code",
+          "total_pedidos"
+        ],
+        "notes": [
+          "Deve usar GROUP BY status_code",
+          "Deve retornar 3 linhas (entregue, cancelado, pendente)"
+        ]
+      }
+    },
+    {
+      "id": "ex3_olap_channel",
+      "title": "Desafio 3 — Clientes por canal de aquisição",
+      "prompt_markdown": "Uma análise de marketing típica de **OLAP**: quantos clientes vieram de cada canal.\n\n**Sua missão:** Retorne o total de clientes por `acquisition_channel` da tabela `clientes`, com a coluna de contagem chamada `total_clientes`.\n\n> Dica: Siga a mesma estrutura do desafio anterior — `COUNT(*) AS total_clientes` e `GROUP BY acquisition_channel`.",
+      "starter_query": "",
+      "solution_query": "SELECT acquisition_channel, COUNT(*) AS total_clientes FROM clientes GROUP BY acquisition_channel;",
+      "hint_level_1": "Mesma estrutura do desafio anterior: selecione a coluna de agrupamento e COUNT(*) AS total_clientes, depois use GROUP BY acquisition_channel.",
+      "hint_level_2": "SELECT acquisition_channel, COUNT(*) AS total_clientes FROM clientes GROUP BY acquisition_channel;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Contar clientes agrupados por canal de aquisição",
+        "expected_columns": [
+          "acquisition_channel",
+          "total_clientes"
+        ],
+        "notes": [
+          "Deve usar GROUP BY acquisition_channel",
+          "Deve retornar uma linha por canal distinto"
+        ]
+      }
+    }
+  ]
+}

@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: /api
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-}
     ports:
       - "80:80"
     depends_on:
@@ -16,7 +17,48 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    environment:
+      - USER_DB_PATH=/app/data/users.db
+      - AUTH_TOKEN_TTL_HOURS=${AUTH_TOKEN_TTL_HOURS:-168}
+      - INITIAL_ADMIN_EMAIL=${INITIAL_ADMIN_EMAIL:-}
+      - INITIAL_ADMIN_PASSWORD=${INITIAL_ADMIN_PASSWORD:-}
+      - STRICT_CONTENT_VALIDATION=${STRICT_CONTENT_VALIDATION:-1}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+      - STRIPE_WEBHOOK_SECRET_FILE=/app/data/stripe_webhook_secret.txt
+      - STRIPE_PRICE_ID=${STRIPE_PRICE_ID:-}
+      - CHECKOUT_SUCCESS_URL=${CHECKOUT_SUCCESS_URL:-}
+      - CHECKOUT_CANCEL_URL=${CHECKOUT_CANCEL_URL:-}
+      - CHECKOUT_RETURN_URL=${CHECKOUT_RETURN_URL:-}
+      - STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES=${STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES:-}
+      - STRIPE_CHECKOUT_LOCALE=${STRIPE_CHECKOUT_LOCALE:-pt-BR}
+      - STRIPE_CARD_INSTALLMENTS_ENABLED=${STRIPE_CARD_INSTALLMENTS_ENABLED:-1}
+      - STRIPE_WEBHOOK_FORWARD_EVENTS=${STRIPE_WEBHOOK_FORWARD_EVENTS:-checkout.session.completed,payment_intent.succeeded,charge.refunded,customer.subscription.deleted,charge.dispute.created}
+      - STRIPE_AUTOMATIC_TAX_ENABLED=${STRIPE_AUTOMATIC_TAX_ENABLED:-0}
+      - BILLING_COURSE_ID=${BILLING_COURSE_ID:-sql-basics}
+      - ACCESS_DURATION_MONTHS=${ACCESS_DURATION_MONTHS:-6}
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM_EMAIL=${RESEND_FROM_EMAIL:-}
+      - APP_BASE_URL=${APP_BASE_URL:-http://localhost}
+      - PASSWORD_RESET_TOKEN_TTL_MINUTES=${PASSWORD_RESET_TOKEN_TTL_MINUTES:-60}
     expose:
       - "8000"
     volumes:
       - ./backend/content:/app/content:ro
+      - ./backend/data:/app/data
+
+  stripe-listener:
+    image: stripe/stripe-cli:latest
+    depends_on:
+      - backend
+    environment:
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_FORWARD_TO=http://backend:8000/billing/stripe-webhook
+      - STRIPE_WEBHOOK_FORWARD_EVENTS=${STRIPE_WEBHOOK_FORWARD_EVENTS:-checkout.session.completed,payment_intent.succeeded,charge.refunded,customer.subscription.deleted,charge.dispute.created}
+      - STRIPE_WEBHOOK_SECRET_FILE=/shared/stripe_webhook_secret.txt
+    volumes:
+      - ./backend/data:/shared
+      - ./tools/stripe_webhook_listener.sh:/scripts/stripe_webhook_listener.sh:ro
+    entrypoint: ["/bin/sh", "/scripts/stripe_webhook_listener.sh"]
+    restart: unless-stopped

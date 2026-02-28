@@ -1,0 +1,126 @@
+{
+  "id": "lesson_m5_3",
+  "title": "Comparações de Períodos e Coortes",
+  "lesson_type": "interactive_sql",
+  "objective": "Aprender a comparar métricas entre períodos distintos (MoM, YoY) ? a construir análises de coorte básicas para entender retenção de clientes.",
+  "prerequisites": [
+    "lesson_m5_2"
+  ],
+  "estimated_minutes": 20,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "capstone.pedidos",
+      "capstone.clientes"
+    ],
+    "scenario": "O CFO pergunta: 'A receita está crescendo de um mes para o outro?' O time de CX pergunta: 'Dos clientes que fizeram o primeiro pedido em Janeiro de 2024, quantos voltaram a comprar no mês seguinte?' Essas são perguntas clássicas de análise temporal avançada."
+  },
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "tabs": [
+    {
+      "id": "tab_mom",
+      "title": "Comparação MoM",
+      "type": "content",
+      "content_markdown": "#### Comparando Períodos com GROUP BY Temporal\n\nA análise de variação entre períodos consecutivos (Month-over-Month, Quarter-over-Quarter, Year-over-Year) ? uma das mais pedidas em qualquer empresa. O primeiro passo e sempre agrupar por período:\n\n```sql\n-- Receita agrupada por mês\nSELECT\n  CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n  COUNT(*) AS total_pedidos,\n  ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita_liquida\nFROM capstone.pedidos\nWHERE status_pedido = 'entregue'\nGROUP BY 1\nORDER BY 1;\n```\n\nEsse resultado já permite que qualquer ferramenta de BI (Metabase, Looker, Tableau) plote a linha do tempo de receita. Mas e quando queremos ver o **crescimento percentual** direto no SQL?\n\n#### Usando LAG() para Comparar com o Mes Anterior\n\nA função de janela `LAG()` permite acessar o valor da linha anterior sem precisar de subqueries complexas:\n\n```sql\n-- Crescimento MoM com LAG (preview do Módulo 7)\nWITH receita_mes AS (\n  SELECT\n    CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n    ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n  GROUP BY 1\n)\nSELECT\n  mes_ref,\n  receita,\n  LAG(receita) OVER (ORDER BY mes_ref) AS receita_mes_anterior,\n  ROUND(100.0 * (receita - LAG(receita) OVER (ORDER BY mes_ref))\n        / NULLIF(LAG(receita) OVER (ORDER BY mes_ref), 0), 2) AS crescimento_pct\nFROM receita_mes\nORDER BY mes_ref;\n```\n\n*(Nota: `LAG()` ? uma Window Function que será ensinada em detalhe no Módulo 7. Por ora, entenda que ela acessa a linha anterior do resultado ordenado.)*\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando uma tabela de resultados com colunas mes_ref, receita, receita_mes_anterior e crescimento_pct, destacando como o LAG acessa a linha anterior.]"
+    },
+    {
+      "id": "tab_cohort",
+      "title": "Análise de Coorte",
+      "type": "content",
+      "content_markdown": "#### O que ? uma Coorte?\n\nUma **coorte** (do inglês *cohort*) ? um grupo de usuários que compartilham um evento de início no mesmo período. Por exemplo:\n- Clientes que fizeram o **primeiro pedido em Janeiro de 2024** formam a coorte de Janeiro/2024.\n- Clients que se **cadastraram no mesmo trimestre** formam uma coorte trimestral.\n\n#### Por que Coortes São Importantes?\n\nIndicadores como taxa de cancelamento (churn) e retenção são difíceis de entender sem coortes. Se sua receita está crescendo mas os clientes antigos estão saindo, a coorte de clientes mais velhas mostrará queda enquanto as novas coortes mascaram o problema.\n\n#### Construindo uma Coorte Básica\n\nO primeiro passo e identificar a coorte de cada cliente (mes do primeiro pedido):\n\n```sql\n-- Mes do primeiro pedido de cada cliente (mes-coorte)\nSELECT\n  cliente_id,\n  CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE) AS mes_coorte\nFROM capstone.pedidos\nWHERE status_pedido = 'entregue'\n  AND cliente_id IS NOT NULL\nGROUP BY cliente_id;\n```\n\nCom o mes_coorte de cada cliente, podemos contar quantos clientes compuseram cada coorte:\n\n```sql\n-- Tamanho de cada coorte mensal\nWITH primeira_compra AS (\n  SELECT\n    cliente_id,\n    CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE) AS mes_coorte\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n    AND cliente_id IS NOT NULL\n  GROUP BY cliente_id\n)\nSELECT\n  mes_coorte,\n  COUNT(DISTINCT cliente_id) AS clientes_na_coorte\nFROM primeira_compra\nGROUP BY mes_coorte\nORDER BY mes_coorte;\n```\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando clientes sendo agrupados por mês do primeiro pedido formando colunas de coorte, representando como cada novo grupo entra nas análises de retenção.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Serie Temporal",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time financeiro quer o histórico de receita mensal para apresentar ao conselho.\n\n> **Sua missão:** Monte um relatório de receita mensal da `capstone.pedidos`. Use `DATE_TRUNC('month', data_pedido)` convertido com `CAST(... AS DATE)` como `mes_ref`. Some `valor_bruto - desconto_aplicado` (arredonde com `ROUND(..., 2)`) como `receita_liquida`. Filtre apenas pedidos com `status_pedido = 'entregue'`. Agrupe por `mes_ref` e ordene do mais antigo para o mais recente."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Tamanho de Coorte",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O time de CX precisa saber quantos clientes fizeram o primeiro pedido em cada mês.\n\n> **Sua missão:** Use uma CTE chamada `primeira_compra` que extraia o `cliente_id` ? o `CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE)` como `mes_coorte` da `capstone.pedidos` (apenas status `entregue` e `cliente_id IS NOT NULL`, agrupado por `cliente_id`). Depois, selecione o `mes_coorte` e faca `COUNT(DISTINCT cliente_id) AS clientes_na_coorte`. Agrupe por `mes_coorte` e ordene ASC."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Canal por Mes",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "O time de marketing quer saber qual canal_pedido está crescendo mais ao longo dos meses.\n\n> **Sua missão:** Mostre o `CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref`, o `canal_pedido` ? o `COUNT(*) AS total_pedidos` da `capstone.pedidos`. Agrupe por `mes_ref` e `canal_pedido`. Ordene por `mes_ref ASC` e `total_pedidos DESC`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### Análise Temporal Avançada em SQL\n\n- **Agrupamentos Cronológicos**: Combine `DATE_TRUNC` com `GROUP BY` para criar séries temporais prontas para gráficos.\n- **Variação MoM/YoY**: Use `LAG()` (Window Function) para acessar o valor do período anterior sem joins complexos — disponível em detalhe no Módulo 7.\n- **Coortes**: Identifique o mes do *primeiro evento* de cada usuário com `MIN(data_pedido)` e `DATE_TRUNC`. A coorte ? a espinha dorsal das análises de retenção e churn.\n- **NULLIF()**: Evita divisão por zero ao calcular percentuais de crescimento (`NULLIF(valor_anterior, 0)`).\n\n---\n\n#### A Progressão da Análise de Dados\n\n1. Agrupe por período (DATE_TRUNC + GROUP BY) → Enxergue tendências.\n2. Compare períodos (LAG) → Calcule crescimento.\n3. Análise coortes (MIN + DATE_TRUNC por usuário) → Entenda retenção e churn.\n4. Pivote coortes (CASE WHEN + offsets de meses) → Tabela de retenção completa (Módulo 7)."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_m5_3_serie_temporal",
+      "title": "Desafio 1 - Serie Temporal de Receita",
+      "prompt_markdown": "**Relatório Financeiro Mensal**\n\nO CFO precisa do histórico de receita mensal para o conselho.\n\n**Requisitos:**\n- `mes_ref`: `CAST(DATE_TRUNC('month', data_pedido) AS DATE)`\n- `receita_liquida`: `ROUND(SUM(valor_bruto - desconto_aplicado), 2)`\n- Fonte: `capstone.pedidos`\n- Filtro: `status_pedido = 'entregue'`\n- `GROUP BY mes_ref`, `ORDER BY mes_ref ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref, ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita_liquida FROM capstone.pedidos WHERE status_pedido = 'entregue' GROUP BY mes_ref ORDER BY mes_ref;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Serie temporal de receita mensal líquida corretamente agrupada e ordenada",
+        "expected_columns": [
+          "mes_ref",
+          "receita_liquida"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use DATE_TRUNC('month', data_pedido) envolvido em CAST(... AS DATE) para obter a data do primeiro dia de cada mês. Some (valor_bruto - desconto_aplicado) com ROUND e filtre por status = 'entregue'.",
+      "hint_level_2": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref, ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita_liquida FROM capstone.pedidos WHERE status_pedido = 'entregue' GROUP BY mes_ref ORDER BY mes_ref;"
+    },
+    {
+      "id": "ex_m5_3_coorte",
+      "title": "Desafio 2 - Tamanho das Coortes Mensais",
+      "prompt_markdown": "**Quantos clientes estrearam em cada mês?**\n\nO time de CX precisa auditar o volume de novos clientes por coorte.\n\n**Requisitos:**\n- CTE `primeira_compra` com `cliente_id` e `mes_coorte` = `CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE)`\n- Da `capstone.pedidos` onde `status_pedido = 'entregue'` e `cliente_id IS NOT NULL`\n- Agrupado por `cliente_id` dentro da CTE\n- Select final: `mes_coorte` e `COUNT(DISTINCT cliente_id) AS clientes_na_coorte`\n- `GROUP BY mes_coorte`, `ORDER BY mes_coorte ASC`",
+      "starter_query": "",
+      "solution_query": "WITH primeira_compra AS (\n  SELECT cliente_id, CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE) AS mes_coorte\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue' AND cliente_id IS NOT NULL\n  GROUP BY cliente_id\n)\nSELECT mes_coorte, COUNT(DISTINCT cliente_id) AS clientes_na_coorte\nFROM primeira_compra\nGROUP BY mes_coorte\nORDER BY mes_coorte;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Contagem de clientes únicos por mês-coorte de primeiro pedido",
+        "expected_columns": [
+          "mes_coorte",
+          "clientes_na_coorte"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Na CTE, use MIN(data_pedido) dentro de DATE_TRUNC para encontrar o mes do primeiro pedido de cada cliente. No SELECT final, conte os clientes distintos por mês_coorte.",
+      "hint_level_2": "WITH primeira_compra AS (\n  SELECT cliente_id, CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE) AS mes_coorte\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue' AND cliente_id IS NOT NULL\n  GROUP BY cliente_id\n)\nSELECT mes_coorte, COUNT(DISTINCT cliente_id) AS clientes_na_coorte\nFROM primeira_compra\nGROUP BY mes_coorte\nORDER BY mes_coorte;"
+    },
+    {
+      "id": "ex_m5_3_canal_mes",
+      "title": "Desafio 3 - Canal por Mes",
+      "prompt_markdown": "**Qual canal está crescendo?**\n\nO time de marketing quer cruzar canal de aquisição com evolução mensal.\n\n**Requisitos:**\n- `mes_ref`: `CAST(DATE_TRUNC('month', data_pedido) AS DATE)`\n- `canal_pedido`\n- `total_pedidos`: `COUNT(*)`\n- Fonte: `capstone.pedidos`\n- `GROUP BY mes_ref, canal_pedido`\n- `ORDER BY mes_ref ASC, total_pedidos DESC`",
+      "starter_query": "",
+      "solution_query": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref, canal_pedido, COUNT(*) AS total_pedidos FROM capstone.pedidos GROUP BY mes_ref, canal_pedido ORDER BY mes_ref ASC, total_pedidos DESC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Agrupamento duplo por período e canal, ordenado por mês e depois por volume",
+        "expected_columns": [
+          "mes_ref",
+          "canal_pedido",
+          "total_pedidos"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Faca o GROUP BY com duas colunas: mes_ref e canal_pedido. O ORDER BY deve ter dois critérios: primeiro o mes (ASC) e depois o total (DESC).",
+      "hint_level_2": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref, canal_pedido, COUNT(*) AS total_pedidos FROM capstone.pedidos GROUP BY mes_ref, canal_pedido ORDER BY mes_ref ASC, total_pedidos DESC;"
+    }
+  ]
+}

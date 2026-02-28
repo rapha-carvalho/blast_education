@@ -1,0 +1,124 @@
+{
+  "id": "lesson_m5_2",
+  "title": "Aritmética de Datas e Diferencas de Tempo",
+  "lesson_type": "interactive_sql",
+  "objective": "Aprender a realizar operações matemáticas com datas, extrair a data atual e filtrar por janelas dinamicas de tempo.",
+  "prerequisites": [
+    "lesson_m5_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "capstone.pedidos"
+    ],
+    "scenario": "A área de operações precisa entender os prazos de entrega subtraindo datas, ? a área de marketing acompanha pedidos recentes com CURRENT_DATE."
+  },
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "tabs": [
+    {
+      "id": "tab_intro",
+      "title": "Subtraindo Datas",
+      "type": "content",
+      "content_markdown": "#### Diferencial Temporal (Tempo Decorrido)\n\nEm negócios, o tempo que um processo leva eh tao importante quanto o processo em s?. O SQL permite realizar **aritmética direta entre datas**.\n\nPara sabermos o tempo de entrega, basta subtrairmos a data em que o pedido foi feito da data em que ele chegou.\n\n```sql\n-- Calculando o prazo de entrega (lead time)\nSELECT \n  id_pedido, \n  data_entrega, \n  data_pedido,\n  (data_entrega - data_pedido) AS dias_para_entrega\nFROM capstone.pedidos\nWHERE data_entrega IS NOT NULL;\n```\n\nNo PostgreSQL, a subtração simples de duas datas (`DATE '2024-03-10' - DATE '2024-03-01'`) retorna um número inteiro representando os **dias**. Se as colunas possuirem tipo `TIMESTAMP` (com as horas), subtrai-las resultara em um tipo `INTERVAL` (por ex: `9 days 04:30:00`).\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando duas datas ? a subtração matematica gerando 9 dias]"
+    },
+    {
+      "id": "tab_current_date",
+      "title": "O Tempo as NOW()",
+      "type": "content",
+      "content_markdown": "#### A ancoragem no Presente\n\nPara criarmos dashboards automaticos, não podemos escrever uma data fixa no `WHERE`. Felizmente, o SQL tem funções inatas para retornar o exato momento atual:\n\n- **`CURRENT_DATE`**: Devolve o dia atual (ex: `2024-05-18`)\n- **`NOW()`**: Devolve o dia e hora com milissegundos e fuso horario (ex: `2024-05-18 14:32:05.123-03`)\n\n```sql\n-- Verificando quantos dias os pedidos em aberto estão transitando\nSELECT \n  id_pedido,\n  (CURRENT_DATE - CAST(data_pedido AS DATE)) AS dias_ate_hoje\nFROM capstone.pedidos\nWHERE status_pedido = 'enviado';\n```\n\n*(Nota: O uso de `CAST()` ou `::DATE` transforma o Timestamp em uma Data simples, permitindo a subtração retornar um número inteiro de dias.)*\n\n---\n\n#### Filtros Dinamicos de Linha do Tempo\n\nSaber o “hoje” nos permite filtrar intervalos do passado recente, como os clássicos “últimos 30 Dias” usando aritmética na cláusula `WHERE`.\n\n```sql\n-- Filtrando compras do último mes\nSELECT *\nFROM capstone.pedidos\nWHERE data_pedido >= CURRENT_DATE - 30;\n```\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando o relógio CURRENT_DATE e setas definindo uma janela de 30 dias pra tras.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - SLA de Entrega",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Vamos checar nosso SLA (Service Level Agreement) de cumprimento logistico.\n\n> **Sua missão:** Na tabela `capstone.pedidos`, exiba o `pedido_id`. Em seguida, deduza (subtraia) a `data_pedido` da `data_entrega`, e transforme o resultado em dias corridos chamando a nova coluna de `dias_corridos`.\n> Considere só os pedidos com sucesso de entrega (`status_pedido = 'entregue'`)."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Atraso Crítico",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Tudo tem limite. Nos logramos máximo de 5 dias para entregar, caso contrario o frete e reembolsado.\n\n> **Sua missão:** Puxe `pedido_id` cujo prazo total já ocorreu h? mais de 5 dias. Calcule a diferença entre a `data_entrega` ? a `data_pedido` e traga esses onde a diferença passe de 5. `capstone.pedidos` ? a base. Chame essa subtração de `dias_de_atraso` e limite aos entregues (`entregue`). Não esqueça de verificar na condição de WHERE se demorou mais de 5 dias."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Recentes com NOW()",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Vamos ver quem está \"doente\" na base agora mesmo (tabela statica para efeito simulacional, então assumiremos parametro fixo hoje: 2024-03-10.\nNa verdade vamos fazer assim:\n\n> **Sua missão:** Encontre pedidos recentes da `capstone.pedidos` onde a `data_pedido` seja maior ou igual a uma Data fixada como \"hoje\" menos 14 dias: Use a string de data explícita casting `CAST('2024-03-10' AS DATE) - 14`. Traga os campos `pedido_id` e `data_pedido`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O Tempo está do seu lado\n\n- Subtraia duas `DATE`s para colher um inteiro de dias.\n- Subtraia dois `TIMESTAMP`s para colher um tipo `INTERVAL` preciso (dias e horas/minutos).\n- Conheca `CURRENT_DATE`, `CURRENT_TIMESTAMP` e `NOW()` para estabelecer lógicas que funcionem atemporalmente (hoje).\n- Aplique a aritmética (`+ 7`, `- 30`) para projetar marcos e limites nas operações `WHERE` e criar alertas inteligentes (`HAVING(MAX(data_compra) < NOW() - 90)` = alerta de ex-cliente)."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_m5_2_subtraction",
+      "title": "Desafio 1 - SLA de Entrega",
+      "prompt_markdown": "**SLA logistico**\n\nNossa auditoria requer analisar dias pendentes logistico da entrega (data pedido contra data entregue).\n\n**Requisitos:**\n- `pedido_id`\n- Subtração transformado em coluna `dias_corridos`.\n- Fonte `capstone.pedidos`\n- Status = `entregue`",
+      "starter_query": "",
+      "solution_query": "SELECT pedido_id, (CAST(data_entrega AS DATE) - CAST(data_pedido AS DATE)) AS dias_corridos FROM capstone.pedidos WHERE status_pedido = 'entregue';",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "A subtração correta gera tempo em dias",
+        "expected_columns": [
+          "pedido_id",
+          "dias_corridos"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Deducao simples: selecione `pedido_id` e então abra paranteses para subtrair data maior da menor como `(data_entrega - data_pedido) AS dias_corridos`. Se a engine reclamar do TIMESTAMP subtraindo TIMESTAMP para days, envolva-as com um `CAST(... AS DATE)` antes do operador de subtração.",
+      "hint_level_2": "SELECT pedido_id, (CAST(data_entrega AS DATE) - CAST(data_pedido AS DATE)) AS dias_corridos FROM capstone.pedidos WHERE status_pedido = 'entregue';"
+    },
+    {
+      "id": "ex_m5_2_limit",
+      "title": "Desafio 2 - Atraso Crítico",
+      "prompt_markdown": "**E a nossa culpa ou do correio tardio?**\n\nTempo para frete não pode estourar 5 dias.\n\n**Requisitos:**\n- Coluna original `pedido_id`\n- Tempo de frete deduzido de entrega x pedido. Como AS `dias_de_atraso`.\n- Condição na cláusula WHERE onde isso demorou > 5 dias e da base status = `entregue`.",
+      "starter_query": "",
+      "solution_query": "SELECT pedido_id, (CAST(data_entrega AS DATE) - CAST(data_pedido AS DATE)) AS dias_de_atraso FROM capstone.pedidos WHERE status_pedido = 'entregue' AND (CAST(data_entrega AS DATE) - CAST(data_pedido AS DATE)) > 5;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Gere a subtração para seleção e tmb como filtro final de maior d 5",
+        "expected_columns": [
+          "pedido_id",
+          "dias_de_atraso"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Não tem problema repetir formulas lógicas em seu WHERE se não quiser usar CTE alias. Puxe onde (data_entrega - data_pedido) > 5 e filtre por entregue.",
+      "hint_level_2": "SELECT pedido_id, (CAST(data_entrega AS DATE) - CAST(data_pedido AS DATE)) AS dias_de_atraso FROM capstone.pedidos WHERE status_pedido = 'entregue' AND (CAST(data_entrega AS DATE) - CAST(data_pedido AS DATE)) > 5;"
+    },
+    {
+      "id": "ex_m5_2_recent",
+      "title": "Desafio 3 - Recentes Janela",
+      "prompt_markdown": "**última Quinzena Simacional.**\n\nNossa loja foca suas análise relatório num parametro 14 dias (duas ultimas semanas ativas)\n\n**Requisitos:**\n- `pedido_id` e `data_pedido`\n- Extraido da base de `capstone.pedidos`\n- Simulando hj sendo `'2024-03-10'`, puxe onde a de order date eh maior/igual que esse cast menos int 14",
+      "starter_query": "",
+      "solution_query": "SELECT pedido_id, data_pedido FROM capstone.pedidos WHERE data_pedido >= CAST('2024-03-10' AS DATE) - 14;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "A aplicacao de math sobre CAST strings literais atua como ancora.",
+        "expected_columns": [
+          "pedido_id",
+          "data_pedido"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Onde seu WHERE contemple: data_pedido >= CAST('2024-03-10' AS DATE) - 14;",
+      "hint_level_2": "SELECT pedido_id, data_pedido FROM capstone.pedidos WHERE data_pedido >= CAST('2024-03-10' AS DATE) - 14;"
+    }
+  ]
+}

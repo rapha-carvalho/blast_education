@@ -1,0 +1,13 @@
+{
+  "id": "lesson_05_table_structure",
+  "title": "Cloud Data Warehouses, Data Lakes e Lakehouses",
+  "lesson_type": "concept_only",
+  "objective": "Understand table structure, data types, and why they matter for accurate queries.",
+  "prerequisites": [
+    "lesson_04_first_sql_query"
+  ],
+  "estimated_minutes": 8,
+  "content_markdown": "**Contexto de negócio**: Em uma empresa moderna, a equipe de análise quase nunca trabalha diretamente no banco de dados de produção. Eles trabalham em um cloud data warehouse (como Snowflake, BigQuery ou Redshift) e, cada vez mais, em um lakehouse. Saber o que são essas coisas — mesmo de forma conceitual — torna você um analista mais inteligente.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Descrever o que é um cloud data warehouse e nomear três exemplos (como categorias, não endossos de fornecedores).\r\n- Explicar o que é um data lake e por que ele existe ao lado de um data warehouse.\r\n- Explicar o que é um lakehouse e por que ele surgiu (combinando o melhor dos dois).\r\n- Descrever por que o SQL ainda funciona nos três ambientes.",
+  "exercises": [],
+  "infographics": []
+}

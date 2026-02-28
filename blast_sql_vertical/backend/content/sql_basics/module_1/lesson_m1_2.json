@@ -1,0 +1,144 @@
+{
+  "id": "lesson_m1_2",
+  "title": "O que é um Banco de Dados? Tabelas, Linhas e Colunas",
+  "lesson_type": "interactive_sql",
+  "objective": "Entender a estrutura de um banco de dados relacional: tabelas, linhas, colunas, chaves primárias, chaves estrangeiras e tipos de dados.",
+  "prerequisites": [
+    "lesson_m1_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos",
+      "produtos",
+      "itens_pedido"
+    ],
+    "scenario": "A GrooveCommerce tem quatro tabelas interconectadas. Você vai aprender a ler a estrutura desse banco de dados antes de escrever queries mais complexas."
+  },
+  "tabs": [
+    {
+      "id": "tab_intro",
+      "title": "O que é um Banco de Dados?",
+      "type": "content",
+      "content_markdown": "#### Imagine um arquivo físico gigante\n\nAntes de existirem bancos de dados digitais, empresas guardavam informações em arquivos físicos: gavetas cheias de pastas, cada pasta com fichas. Um banco de dados relacional funciona da mesma forma — só que milhões de vezes mais rápido e organizado.\n\n| Arquivo físico | Banco de dados |  \n|---|---|  \n| Armário | **Banco de dados** |\n| Gaveta | **Tabela** |\n| Pasta (ficha) | **Linha (registro)** |\n| Campo na ficha | **Coluna** |\n\n[PLACEHOLDER_IMAGEM: Analogia armário de arquivo → banco de dados: gavetas são tabelas, pastas são linhas, campos são colunas]\n\n---\n\n#### Banco de dados — o container maior\n\nUm **banco de dados** é o conjunto de todas as tabelas de um sistema. A GrooveCommerce tem um único banco de dados que contém as tabelas `clientes`, `pedidos`, `produtos` e `itens_pedido`.\n\n#### Tabela — onde os dados vivem\n\nUma **tabela** armazena um tipo específico de entidade. A tabela `clientes` guarda somente clientes. A tabela `produtos` guarda somente produtos. Misturar entidades na mesma tabela é um erro clássico de modelagem.\n\n#### Linha (registro) — um objeto do mundo real\n\nCada **linha** da tabela `clientes` representa um cliente real. A linha com `customer_id = 1` é a Ana Silva. Cada linha é única e independente das outras.\n\n#### Coluna — um atributo do objeto\n\nCada **coluna** descreve uma característica da entidade. A coluna `email` armazena o e-mail de cada cliente. A coluna `price` armazena o preço de cada produto.\n\n> **Regra de ouro:** linhas são *instâncias*, colunas são *atributos*. Todo analista precisa ter isso claro para escrever queries corretas."
+    },
+    {
+      "id": "tab_schema",
+      "title": "Tabelas, Chaves e Tipos",
+      "type": "content",
+      "content_markdown": "#### Chave Primária (PK) — o identificador único\n\nCada tabela precisa de uma forma de identificar **unicamente** cada linha. Esse é o papel da **chave primária** (Primary Key, ou PK).\n\n- Na tabela `clientes`, a PK é `customer_id`\n- Na tabela `produtos`, a PK é `product_id`\n- Na tabela `pedidos`, a PK é `order_id`\n- Na tabela `itens_pedido`, a PK é `item_id`\n\nNão podem existir duas linhas com o mesmo valor de PK. É como o CPF — único e intransferível.\n\n---\n\n#### Chave Estrangeira (FK) — o link entre tabelas\n\nUma **chave estrangeira** (Foreign Key, ou FK) é uma coluna que *aponta* para a PK de outra tabela. É assim que as tabelas se conectam.\n\n| Tabela | Coluna FK | Aponta para |\n|---|---|---|\n| `pedidos` | `customer_id` | `clientes.customer_id` |\n| `itens_pedido` | `order_id` | `pedidos.order_id` |\n| `itens_pedido` | `product_id` | `produtos.product_id` |\n\n[PLACEHOLDER_IMAGEM: Diagrama relacional do banco GrooveCommerce — 4 tabelas conectadas por chaves primárias e estrangeiras]\n\nIsso significa que cada pedido pertence a um cliente, e cada item de pedido pertence a um pedido ? a um produto.\n\n---\n\n#### Tipos de Dados — por que importam\n\nCada coluna tem um **tipo de dado**. Isso determina o que pode ser armazenado lá e como o banco de dados vai tratar o valor.\n\n| Tipo | Exemplos no banco | O que armazena |\n|---|---|---|\n| `INTEGER` | `customer_id`, `quantity` | Números inteiros |\n| `VARCHAR` | `first_name`, `email`, `category` | Texto livre |\n| `DECIMAL` | `price`, `order_total` | Números com casas decimais |\n| `DATE` | `created_at`, `order_date` | Datas (ano-mês-dia) |\n| `BOOLEAN` | `in_stock` | Verdadeiro ou Falso |\n\n> **Por que isso importa para queries?** Você não pode fazer `price > 'caro'` — texto não se compara com número. E uma data precisa de aspas simples: `WHERE created_at = '2024-01-15'`. Conhecer os tipos ajuda a escrever filtros corretos."
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Explore os produtos",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Vamos explorar a tabela `produtos` da GrooveCommerce para ver na prática o que você aprendeu.\n\nObserve:\n- Qual coluna é a **chave primária** (PK)?\n- Quais são os **tipos de dados** de cada coluna?\n- Quantos produtos existem no catálogo?\n\n```sql\nSELECT *\nFROM produtos;\n```\n\nEscreva essa query no editor e clique em **Executar** para ver o resultado."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Itens de um pedido",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "A tabela `itens_pedido` conecta pedidos a produtos por meio de chaves estrangeiras.\n\nVamos ver os itens de um pedido específico.\n\n**Novas colunas relevantes:**\n- `order_id` — FK que aponta para `pedidos.order_id`\n- `product_id` — FK que aponta para `produtos.product_id`\n- `quantity` — INTEGER: quantas unidades foram compradas\n- `unit_price` — DECIMAL: preço unitário no momento da compra\n\n> Dica: use `WHERE order_id = 1004` para filtrar apenas os itens do pedido 1004."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — Filtre por tipo de dado",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Agora pratique com tipos de dados diferentes.\n\nA tabela `pedidos` tem:\n- `status_code` — VARCHAR: texto como `'entregue'`, `'cancelado'`, `'pendente'`\n- `order_total` — DECIMAL: valor numérico com casas decimais\n- `created_at` — DATE: data como `'2024-01-05'`\n\n**Regra importante:** textos precisam de aspas simples no WHERE. Números não.\n\n```sql\n-- Texto: aspas simples obrigatórias\nWHERE status_code = 'entregue'\n\n-- Número: sem aspas\nWHERE order_total > 200\n```\n\n> Sua missão: retorne todos os pedidos entregues com valor acima de R$ 200."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **Banco de dados** é o container que agrupa todas as tabelas de um sistema.\n- **Tabela** armazena um tipo de entidade (clientes, pedidos, produtos).\n- **Linha (registro)** representa um objeto do mundo real — um cliente, um pedido.\n- **Coluna** é um atributo dessa entidade — nome, preço, data.\n- **Chave Primária (PK)** identifica unicamente cada linha — nunca se repete.\n- **Chave Estrangeira (FK)** conecta uma tabela a outra, criando o relacionamento.\n- **Tipos de dados** definem o que cada coluna armazena — e como filtrar corretamente.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|---|---|\n| **Banco de dados** | Container que armazena todas as tabelas de um sistema |\n| **Tabela** | Coleção de linhas e colunas de um mesmo tipo de entidade |\n| **Linha / Registro** | Uma entrada única em uma tabela |\n| **Coluna** | Um atributo de cada linha |\n| **Chave Primária (PK)** | Coluna com valor único que identifica cada linha |\n| **Chave Estrangeira (FK)** | Coluna que referência a PK de outra tabela |\n| **INTEGER** | Tipo de dado para números inteiros |\n| **VARCHAR** | Tipo de dado para texto |\n| **DECIMAL** | Tipo de dado para números com casas decimais |\n| **DATE** | Tipo de dado para datas |\n| **BOOLEAN** | Tipo de dado para verdadeiro/falso |\n\n---\n\n> **Próxima aula:** OLTP vs OLAP — dois tipos de banco de dados com propósitos completamente diferentes."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_explore_produtos",
+      "title": "Desafio 1 — Explore a tabela de produtos",
+      "prompt_markdown": "A GrooveCommerce tem um catálogo de produtos com 8 itens.\n\n**Sua missão:** Retorne **todas as colunas e todas as linhas** da tabela `produtos`.\n\nObserve a estrutura: qual é a chave primária? Quais tipos de dados você enxerga?",
+      "starter_query": "",
+      "solution_query": "SELECT * FROM produtos;",
+      "hint_level_1": "Use SELECT * para pedir todas as colunas, seguido de FROM ? o nome da tabela.",
+      "hint_level_2": "SELECT * FROM produtos;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar todas as colunas e todas as linhas da tabela produtos",
+        "expected_columns": [
+          "product_id",
+          "name",
+          "category",
+          "price",
+          "in_stock"
+        ],
+        "notes": [
+          "A query deve usar FROM produtos",
+          "Deve retornar 8 linhas (8 produtos)"
+        ]
+      }
+    },
+    {
+      "id": "ex2_itens_pedido_filter",
+      "title": "Desafio 2 — Itens do pedido 1004",
+      "prompt_markdown": "A tabela `itens_pedido` guarda cada produto dentro de cada pedido.\n\n**Sua missão:** Retorne **todas as colunas** da tabela `itens_pedido` onde o `order_id` seja igual a `1004`.\n\n> Dica: use `WHERE order_id = 1004` — `order_id` é um INTEGER, então sem aspas!",
+      "starter_query": "",
+      "solution_query": "SELECT * FROM itens_pedido WHERE order_id = 1004;",
+      "hint_level_1": "Use SELECT * FROM itens_pedido e adicione um WHERE para filtrar apenas o pedido que você quer. Lembre: order_id é um número, sem aspas simples.",
+      "hint_level_2": "SELECT * FROM itens_pedido WHERE order_id = 1004;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar os itens do pedido 1004 da tabela itens_pedido",
+        "expected_columns": [
+          "item_id",
+          "order_id",
+          "product_id",
+          "quantity",
+          "unit_price"
+        ],
+        "notes": [
+          "Deve retornar apenas linhas com order_id = 1004",
+          "A tabela itens_pedido deve ser usada no FROM"
+        ]
+      }
+    },
+    {
+      "id": "ex3_pedidos_entregues_200",
+      "title": "Desafio 3 — Pedidos entregues acima de R$ 200",
+      "prompt_markdown": "Pratique filtros com dois tipos de dado diferentes na mesma query.\n\n**Sua missão:** Retorne o `order_id`, `customer_id`, `status_code` e `order_total` de todos os pedidos que:\n- Foram `'entregue'` (VARCHAR — aspas simples!)\n- E têm `order_total` acima de `200` (DECIMAL — sem aspas!)\n\n> Use `AND` para combinar as duas condições.",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, status_code, order_total FROM pedidos WHERE status_code = 'entregue' AND order_total > 200;",
+      "hint_level_1": "Você precisa de dois filtros no WHERE unidos por AND. Um filtra texto (use aspas simples), o outro filtra número (sem aspas).",
+      "hint_level_2": "SELECT order_id, customer_id, status_code, order_total FROM pedidos WHERE status_code = 'entregue' AND order_total > 200;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos com status 'entregue' e order_total acima de 200",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "status_code",
+          "order_total"
+        ],
+        "notes": [
+          "Deve filtrar WHERE status_code = 'entregue' AND order_total > 200",
+          "Deve retornar exatamente 4 colunas"
+        ]
+      }
+    }
+  ]
+}

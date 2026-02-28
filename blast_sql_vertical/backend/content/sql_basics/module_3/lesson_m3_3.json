@@ -1,0 +1,138 @@
+{
+  "id": "lesson_m3_3",
+  "title": "WHERE vs HAVING: Filtros Pre e Pos-Agregação",
+  "lesson_type": "interactive_sql",
+  "objective": "Diferenciar WHERE e HAVING para aplicar filtros no momento correto da agregação.",
+  "prerequisites": [
+    "lesson_m3_2"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders"
+    ],
+    "scenario": "A diretoria quer relatórios agregados confiaveis. Você precisa saber quando filtrar antes de agrupar (WHERE) e quando filtrar depois do agrupamento (HAVING)."
+  },
+  "tabs": [
+    {
+      "id": "tab_where_vs_having",
+      "title": "Diferenca entre WHERE e HAVING",
+      "type": "content",
+      "content_markdown": "#### O ponto principal\n\n- `WHERE` filtra **linhas** antes do `GROUP BY`.\n- `HAVING` filtra **grupos agregados** depois do `GROUP BY`.\n\n| Cláusula | Momento de execução | Filtra o que? |\n|---|---|---|\n| `WHERE` | antes da agregação | linhas brutas |\n| `HAVING` | depois da agregação | grupos agregados |\n\n```sql\n-- Filtra linhas aprovadas antes de agrupar\nSELECT country, COUNT(*) AS total_pedidos\nFROM filtering.orders\nWHERE status = 'approved'\nGROUP BY country;\n```\n\n```sql\n-- Filtra grupos depois de agregar\nSELECT country, SUM(amount) AS receita_total\nFROM filtering.orders\nGROUP BY country\nHAVING SUM(amount) > 800;\n```\n\n[PLACEHOLDER_IMAGEM: Fluxo SQL mostrando ordem de execução com destaque para WHERE antes do GROUP BY e HAVING depois da agregação.]"
+    },
+    {
+      "id": "tab_quando_usar",
+      "title": "Quando usar cada um",
+      "type": "content",
+      "content_markdown": "#### Regra prática\n\n1. Se o filtro depende de valor de linha (status, data, país), use `WHERE`.\n2. Se o filtro depende de métrica agregada (COUNT, SUM, AVG), use `HAVING`.\n\n---\n\n#### Combinando WHERE + HAVING\n\nEsse ? o caso mais comum em análise real:\n\n```sql\nSELECT country, COUNT(*) AS qtd, ROUND(AVG(amount), 2) AS ticket_medio\nFROM filtering.orders\nWHERE order_date >= '2024-01-01'\n  AND order_date < '2025-01-01'\nGROUP BY country\nHAVING AVG(amount) >= 200\nORDER BY ticket_medio DESC;\n```\n\nNesse exemplo:\n- `WHERE` recorta o período de 2024 (linhas).\n- `HAVING` mantem apenas grupos com ticket médio alto.\n\n---\n\n#### Erro comum\n\nNão use agregação no WHERE:\n\n```sql\n-- errado\nSELECT country, COUNT(*)\nFROM filtering.orders\nWHERE COUNT(*) > 3\nGROUP BY country;\n```\n\nCorreto e mover para HAVING.\n\n[PLACEHOLDER_IMAGEM: Quadro de decisão WHERE vs HAVING com exemplos corretos e erro clássico de usar COUNT no WHERE.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - WHERE antes de agrupar",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O financeiro quer ver a receita de pedidos aprovados por país.\n\n> **Sua missão:** Use WHERE para filtrar status antes do GROUP BY."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - HAVING após agregar",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora a diretoria quer apenas países com receita total relevante.\n\n> **Sua missão:** Filtre os grupos com HAVING usando a soma agregada."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - WHERE + HAVING juntos",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Você vai combinar recorte temporal e filtro de métrica agregada no mesmo relatório.\n\n> **Sua missão:** Use WHERE para 2024 e HAVING para ticket médio alto."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `WHERE` filtra linhas antes da agregação.\n- `HAVING` filtra grupos depois da agregação.\n- Filtros de dimensão (status, data, país) vao no WHERE.\n- Filtros de métrica agregada (SUM, COUNT, AVG) vao no HAVING.\n- Em relatórios reais, WHERE e HAVING costumam ser usados juntos.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `WHERE` | Filtra linhas antes de agrupar |\n| `HAVING` | Filtra grupos após agrupar |\n| Métrica agregada | Resultado de COUNT, SUM, AVG etc. |\n| Ordem de execução | Sequência lógica em que SQL avalia a query |\n\n> **Próxima aula:** COUNT(DISTINCT) para contar valores únicos sem duplicidade."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m3_3_where_pre_group",
+      "title": "Desafio 1 - Receita aprovada por país (WHERE)",
+      "prompt_markdown": "Retorne a receita de pedidos aprovados por país na tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `country`, `receita_aprovada`\n- Filtro de linha: `status = 'approved'`\n- Agregação: `ROUND(SUM(amount), 2)`\n- Agrupar por `country`\n- Ordenar por `receita_aprovada DESC`, depois `country ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT country, ROUND(SUM(amount), 2) AS receita_aprovada FROM filtering.orders WHERE status = 'approved' GROUP BY country ORDER BY receita_aprovada DESC, country ASC;",
+      "hint_level_1": "Filtre status aprovado no WHERE, depois agregue por country com SUM(amount).",
+      "hint_level_2": "SELECT country, ROUND(SUM(amount), 2) AS receita_aprovada FROM filtering.orders WHERE status = 'approved' GROUP BY country ORDER BY receita_aprovada DESC, country ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Aplicar WHERE antes do GROUP BY para somar receita aprovada por país",
+        "expected_columns": [
+          "country",
+          "receita_aprovada"
+        ],
+        "notes": [
+          "Deve usar status = approved no WHERE",
+          "Deve agrupar por country",
+          "Ordenar por receita_aprovada DESC e country ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m3_3_having_post_group",
+      "title": "Desafio 2 - Países com receita total acima de 800 (HAVING)",
+      "prompt_markdown": "Retorne países com receita total acima de 800 considerando todos os pedidos.\n\n**Requisitos:**\n- Colunas: `country`, `receita_total`\n- Agregação: `ROUND(SUM(amount), 2)`\n- Agrupar por `country`\n- Filtrar grupos com `HAVING SUM(amount) > 800`\n- Ordenar por `receita_total DESC`, depois `country ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT country, ROUND(SUM(amount), 2) AS receita_total FROM filtering.orders GROUP BY country HAVING SUM(amount) > 800 ORDER BY receita_total DESC, country ASC;",
+      "hint_level_1": "A condição de soma deve ficar no HAVING, não no WHERE.",
+      "hint_level_2": "SELECT country, ROUND(SUM(amount), 2) AS receita_total FROM filtering.orders GROUP BY country HAVING SUM(amount) > 800 ORDER BY receita_total DESC, country ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Filtrar grupos agregados com HAVING após calcular SUM por país",
+        "expected_columns": [
+          "country",
+          "receita_total"
+        ],
+        "notes": [
+          "Deve usar HAVING SUM(amount) > 800",
+          "A query deve retornar 3 linhas (USA, Canada, Brazil)",
+          "Ordenação por receita_total DESC e country ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m3_3_where_having_combined",
+      "title": "Desafio 3 - Grupos de 2024 com ticket médio >= 300",
+      "prompt_markdown": "Monte um relatório por país e status apenas para 2024 e mantenha apenas grupos com ticket médio alto.\n\n**Requisitos:**\n- Colunas: `country`, `status`, `qtd_pedidos`, `ticket_medio`\n- WHERE: `order_date >= '2024-01-01'` e `order_date < '2025-01-01'`\n- Agrupar por `country`, `status`\n- HAVING: `AVG(amount) >= 300`\n- Agregações: `COUNT(*)` e `ROUND(AVG(amount), 2)`\n- Ordenar por `ticket_medio DESC`, depois `country ASC`, `status ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT country, status, COUNT(*) AS qtd_pedidos, ROUND(AVG(amount), 2) AS ticket_medio FROM filtering.orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-01' GROUP BY country, status HAVING AVG(amount) >= 300 ORDER BY ticket_medio DESC, country ASC, status ASC;",
+      "hint_level_1": "Use WHERE para o recorte de 2024 e HAVING para a média após o agrupamento.",
+      "hint_level_2": "SELECT country, status, COUNT(*) AS qtd_pedidos, ROUND(AVG(amount), 2) AS ticket_medio FROM filtering.orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-01' GROUP BY country, status HAVING AVG(amount) >= 300 ORDER BY ticket_medio DESC, country ASC, status ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Combinar WHERE e HAVING corretamente no mesmo relatório agregado",
+        "expected_columns": [
+          "country",
+          "status",
+          "qtd_pedidos",
+          "ticket_medio"
+        ],
+        "notes": [
+          "WHERE deve aplicar o período de 2024",
+          "HAVING deve filtrar AVG(amount) >= 300",
+          "Resultado esperado com 3 grupos: USA approved, Argentina approved, Brazil approved"
+        ]
+      }
+    }
+  ]
+}

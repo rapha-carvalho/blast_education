@@ -1,0 +1,138 @@
+{
+  "id": "lesson_m6_1",
+  "title": "CASE WHEN: Lógica Condicional em SQL",
+  "lesson_type": "interactive_sql",
+  "objective": "Aplicar CASE WHEN para transformar valores numéricos em categorias e criar métricas condicionais em relatórios.",
+  "prerequisites": [
+    "lesson_m5_3"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "O time de marketing da GrooveCommerce quer classificar pedidos por faixa de valor e gerar indicadores condicionais por status para tomada de decisão."
+  },
+  "tabs": [
+    {
+      "id": "tab_case_basico",
+      "title": "Estrutura do CASE WHEN",
+      "type": "content",
+      "content_markdown": "#### CASE WHEN ? o IF-THEN-ELSE do SQL\n\n`CASE WHEN` permite criar lógica condicional dentro da query, transformando valores em categorias legíveis.\n\n```sql\nSELECT\n  order_id,\n  order_total,\n  CASE\n    WHEN order_total >= 400 THEN 'alto_valor'\n    WHEN order_total >= 150 THEN 'medio_valor'\n    ELSE 'baixo_valor'\n  END AS faixa_valor\nFROM pedidos;\n```\n\n---\n\n#### Ordem das condições importa\n\nO SQL avalia o CASE de cima para baixo e para na primeira condição verdadeira.\n\n| Regra | Resultado |\n|---|---|\n| `>= 400` | `alto_valor` |\n| `>= 150` | `medio_valor` |\n| restante | `baixo_valor` |\n\nSe inverter a ordem, a classificacao pode ficar errada.\n\n[PLACEHOLDER_IMAGEM: Fluxo de decisão do CASE WHEN com três faixas de valor (alto, médio, baixo), destacando avaliacao sequencial das condições.]"
+    },
+    {
+      "id": "tab_case_agregacao",
+      "title": "CASE WHEN com agregações",
+      "type": "content",
+      "content_markdown": "#### CASE WHEN dentro de SUM e COUNT\n\nVocê pode usar CASE para criar métricas condicionais em uma única query.\n\n```sql\nSELECT\n  ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue,\n  ROUND(SUM(CASE WHEN status_code = 'cancelado' THEN order_total ELSE 0 END), 2) AS receita_cancelado,\n  ROUND(SUM(CASE WHEN status_code = 'pendente' THEN order_total ELSE 0 END), 2) AS receita_pendente\nFROM pedidos;\n```\n\n---\n\n#### Padrões comuns\n\n| Objetivo | Padrão SQL |\n|---|---|\n| Somar só uma categoria | `SUM(CASE WHEN condição THEN valor ELSE 0 END)` |\n| Contar só uma categoria | `COUNT(CASE WHEN condição THEN 1 END)` |\n| Classificar linhas | `CASE WHEN ... THEN ... ELSE ... END` |\n\n---\n\n#### Boas práticas\n\n1. Escreva condições do mais específico para o mais geral\n2. Sempre inclua `ELSE` para evitar categorias vazias\n3. Padronize labels para facilitar dashboard\n\n[PLACEHOLDER_IMAGEM: Quadro de referência com três usos de CASE WHEN: classificacao de linhas, soma condicional e contagem condicional.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Classificacao por faixa",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time comercial quer rotular cada pedido por faixa de valor para orientar campanhas.\n\n> **Sua missão:** Crie uma coluna `faixa_valor` com CASE WHEN e retorne os pedidos classificados."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Distribuição das faixas",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Depois da classificacao, a liderança quer ver a distribuição de pedidos por faixa.\n\n> **Sua missão:** Use CASE WHEN + GROUP BY para contar pedidos por categoria."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Receita condicional por status",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Financeiro precisa de um resumo em uma linha da receita por status operacional.\n\n> **Sua missão:** Use SUM com CASE WHEN para separar receita entregue, cancelada e pendente."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `CASE WHEN` implementa lógica condicional dentro do SQL.\n- A ordem das condições altera o resultado final.\n- `ELSE` evita classificacoes incompletas.\n- `CASE` dentro de `SUM` e `COUNT` cria métricas condicionais.\n- Esse padrão e essencial para dashboards, segmentação e qualidade analítica.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `CASE WHEN` | Estrutura condicional para rotular ou transformar dados |\n| `THEN` | Valor retornado quando condição e verdadeira |\n| `ELSE` | Valor padrão quando nenhuma condição e atendida |\n| Soma condicional | Agregação com `SUM(CASE WHEN...)` |\n\n> **Próxima aula:** COALESCE, NULLIF e tratamento de dados ausentes."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m6_1_faixa_valor_pedido",
+      "title": "Desafio 1 - Classificar pedidos por faixa de valor",
+      "prompt_markdown": "Classifique cada pedido em faixas de valor.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Colunas: `order_id`, `status_code`, `order_total`, `faixa_valor`\n- Regra: `order_total >= 400` => `alto_valor`; `order_total >= 150` => `medio_valor`; senão `baixo_valor`\n- Ordenar por `order_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, status_code, order_total, CASE WHEN order_total >= 400 THEN 'alto_valor' WHEN order_total >= 150 THEN 'medio_valor' ELSE 'baixo_valor' END AS faixa_valor FROM pedidos ORDER BY order_id ASC;",
+      "hint_level_1": "Use CASE com duas faixas superiores e ELSE para restante. Ordene por order_id.",
+      "hint_level_2": "SELECT order_id, status_code, order_total, CASE WHEN order_total >= 400 THEN 'alto_valor' WHEN order_total >= 150 THEN 'medio_valor' ELSE 'baixo_valor' END AS faixa_valor FROM pedidos ORDER BY order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Classificar corretamente todos os pedidos em três faixas de valor",
+        "expected_columns": [
+          "order_id",
+          "status_code",
+          "order_total",
+          "faixa_valor"
+        ],
+        "notes": [
+          "Deve retornar 15 linhas",
+          "Deve respeitar a ordem das condições no CASE",
+          "Ordenação obrigatoria por order_id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m6_1_distribuicao_faixas",
+      "title": "Desafio 2 - Contagem de pedidos por faixa",
+      "prompt_markdown": "Mostre quantos pedidos existem em cada faixa de valor.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Colunas: `faixa_valor`, `total_pedidos`\n- Usar CASE WHEN no SELECT\n- Agregação: `COUNT(*)`\n- Agrupar por `faixa_valor`\n- Ordenar por `total_pedidos DESC`, depois `faixa_valor` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT CASE WHEN order_total >= 400 THEN 'alto_valor' WHEN order_total >= 150 THEN 'medio_valor' ELSE 'baixo_valor' END AS faixa_valor, COUNT(*) AS total_pedidos FROM pedidos GROUP BY faixa_valor ORDER BY total_pedidos DESC, faixa_valor ASC;",
+      "hint_level_1": "Repita o CASE no SELECT, agrupe pela faixa e conte com COUNT(*).",
+      "hint_level_2": "SELECT CASE WHEN order_total >= 400 THEN 'alto_valor' WHEN order_total >= 150 THEN 'medio_valor' ELSE 'baixo_valor' END AS faixa_valor, COUNT(*) AS total_pedidos FROM pedidos GROUP BY faixa_valor ORDER BY total_pedidos DESC, faixa_valor ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Consolidar distribuição por faixa de valor com CASE WHEN",
+        "expected_columns": [
+          "faixa_valor",
+          "total_pedidos"
+        ],
+        "notes": [
+          "Resultado esperado: baixo_valor 6, medio_valor 6, alto_valor 3",
+          "Ordenação por total_pedidos DESC e faixa_valor ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m6_1_receita_por_status_condicional",
+      "title": "Desafio 3 - Receita condicional por status",
+      "prompt_markdown": "Retorne em uma linha a receita por status usando CASE WHEN.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Colunas: `receita_entregue`, `receita_cancelado`, `receita_pendente`\n- Usar `SUM(CASE WHEN ... THEN order_total ELSE 0 END)`\n- Arredondar com 2 casas",
+      "starter_query": "",
+      "solution_query": "SELECT ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, ROUND(SUM(CASE WHEN status_code = 'cancelado' THEN order_total ELSE 0 END), 2) AS receita_cancelado, ROUND(SUM(CASE WHEN status_code = 'pendente' THEN order_total ELSE 0 END), 2) AS receita_pendente FROM pedidos;",
+      "hint_level_1": "Crie três somas condicionais separadas, uma para cada status.",
+      "hint_level_2": "SELECT ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, ROUND(SUM(CASE WHEN status_code = 'cancelado' THEN order_total ELSE 0 END), 2) AS receita_cancelado, ROUND(SUM(CASE WHEN status_code = 'pendente' THEN order_total ELSE 0 END), 2) AS receita_pendente FROM pedidos;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Separar receita por status em uma única consulta condicional",
+        "expected_columns": [
+          "receita_entregue",
+          "receita_cancelado",
+          "receita_pendente"
+        ],
+        "notes": [
+          "Resultado esperado: entregue 2703.40, cancelado 260.00, pendente 719.00",
+          "Deve retornar 1 linha"
+        ]
+      }
+    }
+  ]
+}

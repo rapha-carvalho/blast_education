@@ -1,0 +1,142 @@
+{
+  "id": "lesson_m9_2",
+  "title": "Retenção e Churn com SQL",
+  "lesson_type": "interactive_sql",
+  "objective": "Medir retenção e churn de clientes com análise mensal para separar queda natural, perda critica e reativacao.",
+  "prerequisites": [
+    "lesson_m9_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "O time de crescimento precisa acompanhar clientes ativos por mês, retenção de uma janela para a outra e sinais de reativacao."
+  },
+  "tabs": [
+    {
+      "id": "tab_retencao_conceito",
+      "title": "Fundamentos de retenção",
+      "type": "content",
+      "content_markdown": "#### O que ? retenção ? o que ? churn\n\n- `retido`: cliente ativo no mês atual e também no mês anterior.\n- `churn`: cliente ativo no mês anterior que não voltou no mês atual.\n- `reativado`: cliente ativo agora, ausente no mês anterior, mas com histórico antigo.\n\n---\n\n#### Por que isso importa\n\n| Indicador | Leitura de negócio |\n|---|---|\n| Retenção baixa | Perda de base e maior custo para crescer |\n| Churn alto | Queda de receita recorrente |\n| Reativacao alta | Campanhas de reengajamento funcionando |\n\n---\n\n#### Formula de retenção mensal\n\n`taxa_retencao = (clientes_retidos / clientes_mes_anterior) * 100`\n\nExemplo: se 50 clientes estavam ativos no mês anterior e 20 voltaram, retenção = 40%.\n\n[PLACEHOLDER_IMAGEM: Gráfico de cohort mensal com clientes ativos, retidos e churn para visualizar variação entre meses.]"
+    },
+    {
+      "id": "tab_retencao_sql",
+      "title": "Modelando retenção no SQL",
+      "type": "content",
+      "content_markdown": "#### Etapa 1: construir base de cliente por mês\n\n```sql\nWITH clientes_mes AS (\n  SELECT DATE_TRUNC('month', created_at) AS mes_ref, customer_id\n  FROM pedidos\n  GROUP BY 1, 2\n)\nSELECT *\nFROM clientes_mes\nORDER BY mes_ref, customer_id;\n```\n\n---\n\n#### Etapa 2: cruzar mes atual com mês anterior\n\n```sql\nWITH clientes_mes AS (\n  SELECT DATE_TRUNC('month', created_at) AS mes_ref, customer_id\n  FROM pedidos\n  GROUP BY 1, 2\n)\nSELECT cur.mes_ref, cur.customer_id\nFROM clientes_mes cur\nJOIN clientes_mes prev\n  ON cur.customer_id = prev.customer_id\n AND prev.mes_ref = cur.mes_ref - INTERVAL '1 month';\n```\n\n---\n\n#### Boas práticas\n\n| Prática | Motivo |\n|---|---|\n| Normalizar para primeiro dia do mês | Evita comparação inconsistente |\n| Agrupar por cliente e mes | Remove duplicidade por múltiplos pedidos |\n| Usar NULLIF em taxas | Evita erro de divisão por zero |\n| Separar CTEs por objetivo | Facilita revisão da lógica |\n\n[PLACEHOLDER_IMAGEM: Fluxo SQL com CTE de atividade mensal, CTE de retidos e tabela final de métricas.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Base mensal de atividade",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você vai montar o painel mensal que será base para retenção.\n\n> **Sua missão:** consolidar clientes ativos e volume de pedidos por mês."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Retenção e churn mensal",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora transforme atividade em métricas de retenção.\n\n> **Sua missão:** para cada mês após o primeiro, calcule retidos, churn e taxa de retenção."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Clientes novos, retidos e reativados",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A equipe quer entender o perfil de ciclo no mês de março/2024.\n\n> **Sua missão:** classificar cada cliente ativo em marco como `retido`, `reativado` ou `novo`."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Retenção mede continuidade de clientes entre meses.\n- Churn mede perda de base ativa do mês anterior.\n- Reativacao separa clientes que voltaram após ausência.\n- CTE mensal por cliente reduz ruído de pedidos repetidos.\n- Métricas de ciclo ajudam a direcionar ações de crescimento.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Retido | Cliente ativo no mês atual e anterior |\n| Churn | Cliente que não voltou no mês atual |\n| Reativado | Cliente antigo que voltou após pausa |\n| Base ativa | Clientes com atividade no período |\n\n> **Próxima aula:** Relatórios de lucro e perda com SQL."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m9_2_base_mensal",
+      "title": "Desafio 1 - Painel mensal de atividade",
+      "prompt_markdown": "Crie um resumo mensal de atividade de clientes e pedidos.\n\n**Requisitos:**\n- Tabela base: `pedidos`\n- Colunas finais:\n  - `mes_ref` com `DATE_TRUNC('month', created_at)`\n  - `clientes_ativos` = `COUNT(DISTINCT customer_id)`\n  - `total_pedidos` = `COUNT(*)`\n  - `pedidos_entregues` = quantidade de `status_code = 'entregue'`\n  - `pedidos_cancelados` = quantidade de `status_code = 'cancelado'`\n- Ordenar por `mes_ref` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT DATE_TRUNC('month', created_at) AS mes_ref, COUNT(DISTINCT customer_id) AS clientes_ativos, COUNT(*) AS total_pedidos, COUNT(CASE WHEN status_code = 'entregue' THEN 1 END) AS pedidos_entregues, COUNT(CASE WHEN status_code = 'cancelado' THEN 1 END) AS pedidos_cancelados FROM pedidos GROUP BY mes_ref ORDER BY mes_ref ASC;",
+      "hint_level_1": "Agrupe por DATE_TRUNC('month', created_at) e use COUNT(CASE WHEN... THEN 1 END).",
+      "hint_level_2": "SELECT DATE_TRUNC('month', created_at) AS mes_ref, COUNT(DISTINCT customer_id) AS clientes_ativos, COUNT(*) AS total_pedidos, COUNT(CASE WHEN status_code = 'entregue' THEN 1 END) AS pedidos_entregues, COUNT(CASE WHEN status_code = 'cancelado' THEN 1 END) AS pedidos_cancelados FROM pedidos GROUP BY mes_ref ORDER BY mes_ref ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Consolidar uma visão mensal consistente de atividade",
+        "expected_columns": [
+          "mes_ref",
+          "clientes_ativos",
+          "total_pedidos",
+          "pedidos_entregues",
+          "pedidos_cancelados"
+        ],
+        "notes": [
+          "Deve retornar 3 linhas (jan, fev, mar de 2024)",
+          "Deve manter ordenação cronologica"
+        ]
+      }
+    },
+    {
+      "id": "ex_m9_2_retencao_churn",
+      "title": "Desafio 2 - Retenção e churn mês a mês",
+      "prompt_markdown": "Calcule retenção e churn considerando clientes ativos de um mes para o seguinte.\n\n**Requisitos:**\n- Criar CTE `clientes_mes` com `mes_ref` e `customer_id`únicos por mês\n- Para cada `mes_ref` após o primeiro, retornar:\n  - `clientes_mes_anterior`\n  - `clientes_mes_atual`\n  - `clientes_retidos`\n  - `clientes_churn` (`clientes_mes_anterior - clientes_retidos`)\n  - `taxa_retencao_pct` com 2 casas\n- Colunas finais: `mes_ref`, `clientes_mes_anterior`, `clientes_mes_atual`, `clientes_retidos`, `clientes_churn`, `taxa_retencao_pct`\n- Ordenar por `mes_ref` ASC",
+      "starter_query": "",
+      "solution_query": "WITH clientes_mes AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, customer_id FROM pedidos GROUP BY 1, 2), meses AS (SELECT DISTINCT mes_ref FROM clientes_mes), base AS (SELECT m.mes_ref, (SELECT COUNT(*) FROM clientes_mes p WHERE p.mes_ref = m.mes_ref - INTERVAL '1 month') AS clientes_mes_anterior, (SELECT COUNT(*) FROM clientes_mes c WHERE c.mes_ref = m.mes_ref) AS clientes_mes_atual, (SELECT COUNT(*) FROM clientes_mes c JOIN clientes_mes p ON c.customer_id = p.customer_id AND p.mes_ref = m.mes_ref - INTERVAL '1 month' WHERE c.mes_ref = m.mes_ref) AS clientes_retidos FROM meses m WHERE m.mes_ref > (SELECT MIN(mes_ref) FROM meses)) SELECT mes_ref, clientes_mes_anterior, clientes_mes_atual, clientes_retidos, clientes_mes_anterior - clientes_retidos AS clientes_churn, ROUND((clientes_retidos * 100.0) / NULLIF(clientes_mes_anterior, 0), 2) AS taxa_retencao_pct FROM base ORDER BY mes_ref ASC;",
+      "hint_level_1": "Monte clientes únicos por mês e compare `mes_ref` atual com `mes_ref - INTERVAL '1 month'`.",
+      "hint_level_2": "WITH clientes_mes AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, customer_id FROM pedidos GROUP BY 1, 2), meses AS (SELECT DISTINCT mes_ref FROM clientes_mes), base AS (SELECT m.mes_ref, (SELECT COUNT(*) FROM clientes_mes p WHERE p.mes_ref = m.mes_ref - INTERVAL '1 month') AS clientes_mes_anterior, (SELECT COUNT(*) FROM clientes_mes c WHERE c.mes_ref = m.mes_ref) AS clientes_mes_atual, (SELECT COUNT(*) FROM clientes_mes c JOIN clientes_mes p ON c.customer_id = p.customer_id AND p.mes_ref = m.mes_ref - INTERVAL '1 month' WHERE c.mes_ref = m.mes_ref) AS clientes_retidos FROM meses m WHERE m.mes_ref > (SELECT MIN(mes_ref) FROM meses)) SELECT mes_ref, clientes_mes_anterior, clientes_mes_atual, clientes_retidos, clientes_mes_anterior - clientes_retidos AS clientes_churn, ROUND((clientes_retidos * 100.0) / NULLIF(clientes_mes_anterior, 0), 2) AS taxa_retencao_pct FROM base ORDER BY mes_ref ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Calcular continuidade e perda da base ativa entre meses",
+        "expected_columns": [
+          "mes_ref",
+          "clientes_mes_anterior",
+          "clientes_mes_atual",
+          "clientes_retidos",
+          "clientes_churn",
+          "taxa_retencao_pct"
+        ],
+        "notes": [
+          "Deve retornar 2 linhas (fev e mar de 2024)",
+          "Taxa de retenção deve estar em percentual com 2 casas"
+        ]
+      }
+    },
+    {
+      "id": "ex_m9_2_status_marco",
+      "title": "Desafio 3 - Segmentação de ciclo em marco",
+      "prompt_markdown": "Classifique os clientes ativos em marco/2024 em `retido`, `reativado` ou `novo`.\n\n**Requisitos:**\n- Base mensal por cliente em CTE `clientes_mes`\n- `mes_atual`: clientes ativos em `DATE '2024-03-01'`\n- `mes_anterior`: clientes ativos em `DATE '2024-02-01'`\n- `historico_previo`: clientes com atividade antes de `DATE '2024-02-01'`\n- Regra de classificacao:\n  - `retido`: ativo em marco e fevereiro\n  - `reativado`: ativo em marco, ausente em fevereiro, mas presente no historico_previo\n  - `novo`: ativo em marco e sem histórico anterior\n- Colunas finais: `customer_id`, `nome_cliente`, `status_retencao_marco`\n- Ordenar por status (`retido`, `reativado`, `novo`) e `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "WITH clientes_mes AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, customer_id FROM pedidos GROUP BY 1, 2), mes_atual AS (SELECT customer_id FROM clientes_mes WHERE mes_ref = DATE '2024-03-01'), mes_anterior AS (SELECT customer_id FROM clientes_mes WHERE mes_ref = DATE '2024-02-01'), historico_previo AS (SELECT DISTINCT customer_id FROM clientes_mes WHERE mes_ref < DATE '2024-02-01') SELECT c.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, CASE WHEN a.customer_id IS NOT NULL THEN 'retido' WHEN h.customer_id IS NOT NULL THEN 'reativado' ELSE 'novo' END AS status_retencao_marco FROM mes_atual m JOIN clientes c ON m.customer_id = c.customer_id LEFT JOIN mes_anterior a ON m.customer_id = a.customer_id LEFT JOIN historico_previo h ON m.customer_id = h.customer_id ORDER BY CASE WHEN a.customer_id IS NOT NULL THEN 1 WHEN h.customer_id IS NOT NULL THEN 2 ELSE 3 END, c.customer_id ASC;",
+      "hint_level_1": "Classifique com CASE após montar três conjuntos: atual, anterior e histórico.",
+      "hint_level_2": "WITH clientes_mes AS (SELECT DATE_TRUNC('month', created_at) AS mes_ref, customer_id FROM pedidos GROUP BY 1, 2), mes_atual AS (SELECT customer_id FROM clientes_mes WHERE mes_ref = DATE '2024-03-01'), mes_anterior AS (SELECT customer_id FROM clientes_mes WHERE mes_ref = DATE '2024-02-01'), historico_previo AS (SELECT DISTINCT customer_id FROM clientes_mes WHERE mes_ref < DATE '2024-02-01') SELECT c.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, CASE WHEN a.customer_id IS NOT NULL THEN 'retido' WHEN h.customer_id IS NOT NULL THEN 'reativado' ELSE 'novo' END AS status_retencao_marco FROM mes_atual m JOIN clientes c ON m.customer_id = c.customer_id LEFT JOIN mes_anterior a ON m.customer_id = a.customer_id LEFT JOIN historico_previo h ON m.customer_id = h.customer_id ORDER BY CASE WHEN a.customer_id IS NOT NULL THEN 1 WHEN h.customer_id IS NOT NULL THEN 2 ELSE 3 END, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Diferenciar aquisição, continuidade e retorno de clientes no mês alvo",
+        "expected_columns": [
+          "customer_id",
+          "nome_cliente",
+          "status_retencao_marco"
+        ],
+        "notes": [
+          "Deve retornar apenas clientes ativos em marco de 2024",
+          "Classificacao deve respeitar regras de retido, reativado e novo"
+        ]
+      }
+    }
+  ]
+}

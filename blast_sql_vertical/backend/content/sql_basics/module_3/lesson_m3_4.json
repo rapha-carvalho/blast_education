@@ -1,0 +1,131 @@
+{
+  "id": "lesson_m3_4",
+  "title": "COUNT(DISTINCT) e Valores únicos",
+  "lesson_type": "interactive_sql",
+  "objective": "Aprender a contar valores únicos com COUNT(DISTINCT) ignorando duplicatas e usando GROUP BY.",
+  "prerequisites": [
+    "lesson_m3_3"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.customers"
+    ],
+    "scenario": "A equipe de marketing quer métricas reais de clientes únicos, não apenas volume de transações."
+  },
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "tabs": [
+    {
+      "id": "tab_distinct_intro",
+      "title": "O que ? COUNT(DISTINCT)",
+      "type": "content",
+      "content_markdown": "#### Contagens Reais\n\nNo marketing, uma pergunta fundamental e: **Quantos clientes únicos compraram ontem?**\n\nSe 10 clientes fizeram 50 compras totais, um simples `COUNT(*)` ou `COUNT(customer_id)` retornara 50 (número de transações). Isso cria uma falsa ilusão de engajamento generalizado.\n\nPara saber o número real de indivíduos, precisamos do **`DISTINCT`**.\n\n```sql\n-- Retorna 50 (todas as compras)\nSELECT COUNT(customer_id) FROM filtering.orders;\n\n-- Retorna 10 (somente clientes unicos)\nSELECT COUNT(DISTINCT customer_id) FROM filtering.orders;\n```\n\n---\n\n#### A anatomia do comando\n\nO `DISTINCT` e colocado *dentro* dos parênteses da função `COUNT`. Ele força o banco de dados a remover as duplicatas daquela coluna específica antes de fazer a contagem.\n\n> ⚠️ **Não confunda:** `COUNT(DISTINCT coluna)` e muito diferente de usar `SELECT DISTINCT coluna`. O primeiro retorna apenas **um número** (a quantidade). O segundo retorna **uma lista inteira** de valores sem repetição.\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando uma tabela simples de customer_id com valores repetidos e arrows apontando para a diferença entre COUNT(customer_id) que retorna o total e COUNT(DISTINCT) que conta apenas os únicos.]"
+    },
+    {
+      "id": "tab_distinct_groupby",
+      "title": "Agrupando únicos",
+      "type": "content",
+      "content_markdown": "#### Clientes ativos por país\n\nO poder real do `COUNT(DISTINCT)` aparece quando o combinamos com o `GROUP BY`. Em vez de buscar os clientes únicos de toda a tabela, podemos buscar **quantos clientes únicos existem por categoria**.\n\n```sql\n-- Quantos clientes distintos compraram em cada país?\nSELECT \n  country, \n  COUNT(DISTINCT customer_id) AS clientes_unicos,\n  COUNT(*) AS total_pedidos\nFROM filtering.orders\nGROUP BY country;\n```\n\nNesta query, para cada país (`GROUP BY country`), o SQL descobre o número total de pedidos (`COUNT(*)`) e descobre quantos usuários distintos fizeram aqueles pedidos (`COUNT(DISTINCT customer_id)`).\n\n---\n\n#### Removendo ambiguidades\n\nImagine um relatório de cidades onde atuamos. Como garantir que cada cidade apareca e seja contada corretamente se houverem milhares de entregas nelas?\n\n```sql\n-- Conta cidades unicas onde entregamos com status 'approved'\nSELECT COUNT(DISTINCT city) AS cidades_atendidas\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\n[PLACEHOLDER_IMAGEM: Diagrama detalhando a diferença entre total_pedidos e clientes_unicos para diferentes países usando COUNT e COUNT(DISTINCT) com GROUP BY.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 -únicos Globais",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O marketing está desenhando um relatório de engajamento e quer a visão global primeiro.\n\n> **Sua missão:** Retorne `total_pedidos` (COUNT(*)) e `clientes_unicos` (COUNT(DISTINCT)) de toda a tabela `filtering.orders` para pedidos aprovados (`status = 'approved'`)."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Países Ativos",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Quantos mercados diferentes a GrooveCommerce conquistou com pelo menos uma entrega aprovada?\n\n> **Sua missão:** Descubra o número de `paises_diferentes` (country) usando `COUNT(DISTINCT)` na tabela `filtering.orders` para `status = 'approved'`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Penetracao por País",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Agora vamos cruzar dados agrupados com contagens de únicos.\n\n> **Sua missão:** Mostre cada `country`, o `total_pedidos` longo e os `clientes_unicos` (DISTINCT de `customer_id`), da tabela `filtering.orders`. Agrupe (`GROUP BY`) e ordene do país com mais pedidos para o de menos."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### Você aprendeu novos padrões\n\n- O **`COUNT(DISTINCT coluna)`** elimina duplicatas na coluna antes de gerar a soma.\n- Ele e fundamental para medir engajamento humano (como número de clientes ou usuários) e não apenas volume de ocorrencias (número de cliques, vendas ou eventos).\n- E possível usa-lo na tabela inteira, ou fatiado por um `GROUP BY`.\n- Consultar `COUNT(DISTINCT)` e comum em qualquer query que avalia Penetracao ou Usuários Ativos Diarios/Mensais.\n\n---\n\n#### Glossário do SQL Analitico M3.4\n\n| Função/Expressao | O que faz no SQL |\n|---|---| \n| `COUNT(*)` | Conta TODAS as linhas agrupadas |\n| `COUNT(coluna)` | Conta linhas validas (ignorando NULLs) |\n| `COUNT(DISTINCT)` | Conta linhas validas (ignorando repeticoes E NULLs) |\n| `GROUP BY x` | Executa essas três contagens acima DENTRO do balde x |\n\n> **Mestre Jedis:** Combinar tudo isso vai levar você rapidamente as respostas que Diretores buscam em SQL."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_m3_4_globais",
+      "title": "Desafio 1 - Contagem de clienes globais em pedidos aprovados",
+      "prompt_markdown": "**Diferenciando ordens e pessoas**\n\nO marketing precisa dessas duas métricas juntas: quantas compras de sucesso vs quantas pessoas distintas fizeram essas compras.\n\n**Requisitos:**\n- `total_pedidos` (usando COUNT(*))\n- `clientes_unicos` (usando COUNT(DISTINCT customer_id))\n- Tabela `filtering.orders`\n- Apenas com status = 'approved'",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(*) AS total_pedidos, COUNT(DISTINCT customer_id) AS clientes_unicos FROM filtering.orders WHERE status = 'approved';",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Obter ordens e clientes únicos globais",
+        "expected_columns": [
+          "total_pedidos",
+          "clientes_unicos"
+        ],
+        "notes": [
+          "Verifique a formatação do COUNT(DISTINCT)",
+          "Apenas pedidos aprovados."
+        ]
+      },
+      "hint_level_1": "Filtre pelo status. No SELECT digite COUNT(*) seguido de uma virgula, e na segunda expressao escreva COUNT(DISTINCT customer_id).",
+      "hint_level_2": "SELECT COUNT(*) AS total_pedidos, COUNT(DISTINCT customer_id) AS clientes_unicos FROM filtering.orders WHERE status = 'approved';"
+    },
+    {
+      "id": "ex_m3_4_paises",
+      "title": "Desafio 2 - Total de países engajados",
+      "prompt_markdown": "**Quantos lugares entregaram resultados?**\n\nA empresa não quer a lista de países, mas o número puro (quantidade de países diferentes atendidos com sucesso).\n\n**Requisitos:**\n- `paises_diferentes` (usando COUNT(DISTINCT country))\n- Tabela `filtering.orders`\n- Somente status = 'approved'",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(DISTINCT country) AS paises_diferentes FROM filtering.orders WHERE status = 'approved';",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Obter a contagem final de países únicos para pedidos aprovados",
+        "expected_columns": [
+          "paises_diferentes"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Uma função agregação simples. Substitua o customer_id pelo country.",
+      "hint_level_2": "SELECT COUNT(DISTINCT country) AS paises_diferentes FROM filtering.orders WHERE status = 'approved';"
+    },
+    {
+      "id": "ex_m3_4_groupby",
+      "title": "Desafio 3 - Combinando GROUP BY e DISTINCT",
+      "prompt_markdown": "**Agrupando para gerar funis regionais**\n\nAgora vamos construir o grid (tabela). Ao agrupar os resultados, divida as contagens de total e únicos por cada país.\n\n**Requisitos:**\n- Colunas: `country`, `total_pedidos`, `clientes_unicos`\n- Tabela `filtering.orders`\n- Sem nenhum WHERE (pegar todos)\n- Agrupar por `country`\n- Classificar em Ordem Decrescente pelo `total_pedidos`.",
+      "starter_query": "",
+      "solution_query": "SELECT country, COUNT(*) AS total_pedidos, COUNT(DISTINCT customer_id) AS clientes_unicos FROM filtering.orders GROUP BY country ORDER BY total_pedidos DESC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Gerar estatisticasinicas e totais por país em ordem de tamanho",
+        "expected_columns": [
+          "country",
+          "total_pedidos",
+          "clientes_unicos"
+        ],
+        "notes": [
+          "GROUP BY country",
+          "ORDER BY total_pedidos DESC"
+        ]
+      },
+      "hint_level_1": "No SELECT comece por `country`, chame as funções, depois `FROM`, e chame as clausulas `GROUP BY country` e `ORDER BY total_pedidos DESC`.",
+      "hint_level_2": "SELECT country, COUNT(*) AS total_pedidos, COUNT(DISTINCT customer_id) AS clientes_unicos FROM filtering.orders GROUP BY country ORDER BY total_pedidos DESC;"
+    }
+  ]
+}

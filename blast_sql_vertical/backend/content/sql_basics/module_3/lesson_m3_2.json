@@ -1,0 +1,138 @@
+{
+  "id": "lesson_m3_2",
+  "title": "GROUP BY: Agregando por Categoria",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar GROUP BY para segmentar agregações por dimensões de negócio como status e país.",
+  "prerequisites": [
+    "lesson_m3_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders"
+    ],
+    "scenario": "O time executivo quer entender como o desempenho muda por categoria de negócio (status e país), em vez de olhar apenas totais gerais."
+  },
+  "tabs": [
+    {
+      "id": "tab_groupby_basico",
+      "title": "GROUP BY com uma coluna",
+      "type": "content",
+      "content_markdown": "#### De resumo geral para resumo por categoria\n\nSem `GROUP BY`, funções como `COUNT` e `SUM` retornam um único total.\nCom `GROUP BY`, você quebra o total em grupos e gera uma linha por categoria.\n\n| Sem GROUP BY | Com GROUP BY |\n|---|---|\n| 1 linha (total geral) | varias linhas (uma por grupo) |\n| responde \"quanto no total\" | responde \"quanto por categoria\" |\n\n```sql\nSELECT status, COUNT(*) AS total_pedidos\nFROM filtering.orders\nGROUP BY status\nORDER BY total_pedidos DESC, status ASC;\n```\n\nEssa query responde: quantos pedidos existem em cada status.\n\n---\n\n#### Regra fundamental\n\n> Toda coluna no `SELECT` que **não** estiver dentro de função de agregação deve aparecer no `GROUP BY`.\n\n[PLACEHOLDER_IMAGEM: Comparativo visual entre agregação sem GROUP BY (1 linha total) e com GROUP BY por status (múltiplas linhas), destacando a mudança de granularidade.]"
+    },
+    {
+      "id": "tab_groupby_multiplas",
+      "title": "GROUP BY com múltiplas colunas",
+      "type": "content",
+      "content_markdown": "#### Segmentação mais detalhada\n\nVocê pode agrupar por mais de uma coluna para aprofundar a leitura.\n\n```sql\nSELECT country, status, COUNT(*) AS qtd_pedidos\nFROM filtering.orders\nGROUP BY country, status\nORDER BY country ASC, status ASC;\n```\n\nAgora cada linha representa a combinação `country + status`.\n\n---\n\n#### Padrão recomendado\n\n1. Defina a dimensão (ou dimensões) de grupo\n2. Escolha as métricas agregadas (`COUNT`, `SUM`, `AVG`, etc.)\n3. Ordene para facilitar leitura de negócio\n\n| Objetivo | Exemplo |\n|---|---|\n| volume por grupo | `COUNT(*)` |\n| receita por grupo | `SUM(amount)` |\n| ticket médio por grupo | `AVG(amount)` |\n\n---\n\n#### Erro comum\n\nSe você tentar selecionar uma coluna detalhada sem agregar nem agrupar, a query deve falhar ou produzir comportamento incorreto dependendo do banco.\n\n```sql\n-- errado: id não está agregado e não está no GROUP BY\nSELECT status, id, COUNT(*)\nFROM filtering.orders\nGROUP BY status;\n```\n\n[PLACEHOLDER_IMAGEM: Quadro de boas práticas para GROUP BY com uma e duas colunas, incluindo checklist de SELECT, GROUP BY e ORDER BY.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Pedidos por status",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time de operações precisa de um painel simples para ver o volume de pedidos por status.\n\n> **Sua missão:** Retorne o total de pedidos por status com ordenação por volume."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Receita aprovada por país",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O financeiro quer comparar a receita apenas de pedidos aprovados em cada país.\n\n> **Sua missão:** Some o valor de pedidos aprovados por país e ordene do maior para o menor."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Segmentação país + status",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A diretoria quer um corte mais granular para combinar dimensão geografica e operacional.\n\n> **Sua missão:** Agrupe por país e status e retorne volume e ticket médio por grupo."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `GROUP BY` muda a granularidade de análise para categoria.\n- Sem GROUP BY, agregações retornam total geral.\n- Com GROUP BY, cada grupo vira uma linha.\n- Você pode agrupar por uma ou varias colunas.\n- `ORDER BY` após agregação facilita leitura executiva.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `GROUP BY` | Cláusula que agrupa linhas por dimensão |\n| Granularidade | Nivel de detalhe do resultado |\n| Dimensão | Coluna usada para segmentar análise |\n| Métrica agregada | Resultado de COUNT, SUM, AVG, etc. |\n\n> **Próxima aula:** WHERE vs HAVING para filtrar antes e depois da agregação."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m3_2_pedidos_por_status",
+      "title": "Desafio 1 - Total de pedidos por status",
+      "prompt_markdown": "Retorne o volume de pedidos por status na tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `status`, `total_pedidos`\n- Agregação: `COUNT(*)`\n- Agrupar por `status`\n- Ordenar por `total_pedidos DESC`, depois `status ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT status, COUNT(*) AS total_pedidos FROM filtering.orders GROUP BY status ORDER BY total_pedidos DESC, status ASC;",
+      "hint_level_1": "Selecione status e COUNT(*), depois aplique GROUP BY status e ordene pelo total.",
+      "hint_level_2": "SELECT status, COUNT(*) AS total_pedidos FROM filtering.orders GROUP BY status ORDER BY total_pedidos DESC, status ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar volume de pedidos por status com ordenação por maior volume",
+        "expected_columns": [
+          "status",
+          "total_pedidos"
+        ],
+        "notes": [
+          "Deve usar COUNT(*) com GROUP BY status",
+          "A query deve retornar 3 linhas: approved 17, pending 3, rejected 2",
+          "Ordenar por total_pedidos DESC e status ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m3_2_receita_aprovada_pais",
+      "title": "Desafio 2 - Receita aprovada por país",
+      "prompt_markdown": "Retorne a receita de pedidos aprovados por país na tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `country`, `receita_aprovada`\n- Filtro: `status = 'approved'`\n- Agregação: `ROUND(SUM(amount), 2)`\n- Agrupar por `country`\n- Ordenar por `receita_aprovada DESC`, depois `country ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT country, ROUND(SUM(amount), 2) AS receita_aprovada FROM filtering.orders WHERE status = 'approved' GROUP BY country ORDER BY receita_aprovada DESC, country ASC;",
+      "hint_level_1": "Filtre status approved antes de agrupar e some amount por country com ROUND.",
+      "hint_level_2": "SELECT country, ROUND(SUM(amount), 2) AS receita_aprovada FROM filtering.orders WHERE status = 'approved' GROUP BY country ORDER BY receita_aprovada DESC, country ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar receita aprovada por país, ordenada da maior para a menor",
+        "expected_columns": [
+          "country",
+          "receita_aprovada"
+        ],
+        "notes": [
+          "Deve filtrar status = approved",
+          "Deve agrupar por country e somar amount",
+          "Ordenar por receita_aprovada DESC e country ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m3_2_pais_status_ticket",
+      "title": "Desafio 3 - Volume e ticket médio por país e status",
+      "prompt_markdown": "Crie uma visão segmentada por país e status na tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `country`, `status`, `qtd_pedidos`, `ticket_medio`\n- Agregações: `COUNT(*)` e `ROUND(AVG(amount), 2)`\n- Agrupar por `country`, `status`\n- Ordenar por `country ASC`, `status ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT country, status, COUNT(*) AS qtd_pedidos, ROUND(AVG(amount), 2) AS ticket_medio FROM filtering.orders GROUP BY country, status ORDER BY country ASC, status ASC;",
+      "hint_level_1": "Inclua country e status no SELECT e no GROUP BY; calcule COUNT e AVG para cada combinação.",
+      "hint_level_2": "SELECT country, status, COUNT(*) AS qtd_pedidos, ROUND(AVG(amount), 2) AS ticket_medio FROM filtering.orders GROUP BY country, status ORDER BY country ASC, status ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar volume e ticket médio por combinação de país e status",
+        "expected_columns": [
+          "country",
+          "status",
+          "qtd_pedidos",
+          "ticket_medio"
+        ],
+        "notes": [
+          "Deve usar GROUP BY country, status",
+          "Deve calcular COUNT(*) e AVG(amount) com ROUND(2)",
+          "Ordenar por country ASC e status ASC"
+        ]
+      }
+    }
+  ]
+}

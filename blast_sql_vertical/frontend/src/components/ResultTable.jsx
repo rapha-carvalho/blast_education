@@ -4,10 +4,10 @@ export default function ResultTable({ columns, rows, error }) {
       <div
         style={{
           padding: "1rem",
-          background: "#3d1f1f",
-          border: "1px solid #f85149",
+          background: "#fce8e6",
+          border: "1px solid #ea4335",
           borderRadius: "6px",
-          color: "#f85149",
+          color: "#c5221f",
         }}
       >
         {error}
@@ -19,22 +19,23 @@ export default function ResultTable({ columns, rows, error }) {
     <div
       style={{
         overflow: "auto",
-        border: "1px solid #30363d",
+        border: "1px solid rgba(0,0,0,0.1)",
         borderRadius: "6px",
-        background: "#0d1117",
+        background: "#ffffff",
       }}
     >
       <table style={{ width: "100%", borderCollapse: "collapse" }}>
         <thead>
-          <tr style={{ background: "#161b22" }}>
+          <tr style={{ background: "#f8f9fa" }}>
             {columns.map((col) => (
               <th
                 key={col}
                 style={{
                   padding: "0.5rem 0.75rem",
                   textAlign: "left",
-                  borderBottom: "1px solid #30363d",
+                  borderBottom: "1px solid rgba(0,0,0,0.1)",
                   fontWeight: 600,
+                  color: "#1a1a1a",
                 }}
               >
                 {col}
@@ -50,7 +51,8 @@ export default function ResultTable({ columns, rows, error }) {
                   key={j}
                   style={{
                     padding: "0.5rem 0.75rem",
-                    borderBottom: "1px solid #21262d",
+                    borderBottom: "1px solid rgba(0,0,0,0.05)",
+                    color: "#5f6368"
                   }}
                 >
                   {cell != null ? String(cell) : "NULL"}

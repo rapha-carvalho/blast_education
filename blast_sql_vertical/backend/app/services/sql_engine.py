@@ -1,9 +1,12 @@
+import logging
 import re
 from pathlib import Path
 
 import duckdb
 import sqlparse
 from sqlparse.tokens import DML
+
+logger = logging.getLogger(__name__)
 
 from app.config import CONTENT_DIR, MAX_QUERY_LENGTH
 
@@ -47,9 +50,9 @@ def _is_safe_select_only(query: str) -> str | None:
         first_token = stmt.token_first(skip_ws=True, skip_cm=False)
         if first_token is None:
             return "Invalid query"
-        if first_token.ttype is DML and first_token.value.upper() == "SELECT":
+        if first_token.value.upper() in ("SELECT", "WITH"):
             return None
-        return "Only SELECT statements are allowed"
+        return "Only SELECT or WITH statements are allowed"
     except Exception:
         return "Query could not be parsed"
 
@@ -85,7 +88,12 @@ def get_connection(session_id: str) -> duckdb.DuckDBPyConnection:
             for stmt in seed.split(";"):
                 stmt = stmt.strip()
                 if stmt:
-                    conn.execute(stmt)
+                    try:
+                        conn.execute(stmt)
+                    except Exception as exc:
+                        preview = stmt[:120].replace("\n", " ")
+                        logger.error("Seed SQL failed: %s | stmt: %s", exc, preview)
+                        raise RuntimeError(f"Seed initialisation failed: {exc}") from exc
         _SESSIONS[session_id] = conn
     return _SESSIONS[session_id]
 
@@ -105,3 +113,16 @@ def execute_query(session_id: str, query: str) -> tuple[list[str], list[list]] |
         return cols, []
     except Exception as e:
         return None, str(e)
+
+
+def get_schema_details(session_id: str, schema_name: str) -> list[dict]:
+    conn = get_connection(session_id)
+    try:
+        res = conn.execute(
+            "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = ?",
+            [schema_name]
+        ).fetchall()
+        return [{"table": r[0], "column": r[1], "type": r[2]} for r in res]
+    except Exception as e:
+        logger.error(f"Error fetching schema: {e}")
+        return []

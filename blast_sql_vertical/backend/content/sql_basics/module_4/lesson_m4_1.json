@@ -1,0 +1,147 @@
+{
+  "id": "lesson_m4_1",
+  "title": "INNER JOIN: Apenas Registros Correspondentes",
+  "lesson_type": "interactive_sql",
+  "objective": "Conectar pedidos e clientes com INNER JOIN para montar visoes unificadas e evitar erros de leitura por falta de correspondência.",
+  "prerequisites": [
+    "lesson_m3_4"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "Você atua no time de analytics da GrooveCommerce e precisa unir dados de pedidos com dados cadastrais de clientes para criar relatórios operacionais e comerciais."
+  },
+  "tabs": [
+    {
+      "id": "tab_inner_join_basico",
+      "title": "Como o INNER JOIN funciona",
+      "type": "content",
+      "content_markdown": "#### Por que JOIN e obrigatório em análise real\n\nEm dados de negócio, as informações quase nunca ficam em uma única tabela.\n\n- `pedidos` guarda transações (valor, status, data)\n- `clientes` guarda perfil (nome, canal de aquisição, país)\n\nPara responder perguntas como \"quem comprou\" e \"quanto comprou\", você precisa juntar tabelas.\n\n```sql\nSELECT p.order_id, c.first_name, c.last_name, p.order_total\nFROM pedidos p\nINNER JOIN clientes c\n  ON p.customer_id = c.customer_id;\n```\n\n---\n\n#### Regra do INNER JOIN\n\n`INNER JOIN` retorna **apenas linhas com correspondência nos dois lados**.\n\n| Tabela A | Tabela B | Resultado no INNER JOIN |\n|---|---|---|\n| Tem chave correspondente | Tem chave correspondente | entra no resultado |\n| Tem chave correspondente | Não tem correspondente | fica de fora |\n| Não tem correspondente | Tem chave correspondente | fica de fora |\n\n[PLACEHOLDER_IMAGEM: Diagrama visual de INNER JOIN entre pedidos e clientes, destacando que apenas interseção de chaves customer_id entra no resultado.]"
+    },
+    {
+      "id": "tab_inner_join_alias",
+      "title": "ON, aliases e erros comuns",
+      "type": "content",
+      "content_markdown": "#### Escrevendo joins legíveis\n\nUse aliases para encurtar as tabelas e deixar a query clara:\n\n```sql\nSELECT\n  p.order_id,\n  p.status_code,\n  p.order_total,\n  c.first_name,\n  c.last_name\nFROM pedidos p\nINNER JOIN clientes c\n  ON p.customer_id = c.customer_id;\n```\n\n---\n\n#### ON define a regra de correspondência\n\nA cláusula `ON` e onde você declara a chave do join.\n\n| Join | Cláusula ON |\n|---|---|\n| pedidos x clientes | `p.customer_id = c.customer_id` |\n\nSem `ON`, o banco não sabe como relacionar as tabelas.\n\n---\n\n#### Erros comuns\n\n1. Juntar pela coluna errada\n2. Esquecer prefixo de tabela em colunas repetidas (`customer_id`)\n3. Achar que INNER JOIN traz \"tudo\" de ambos os lados\n\n> Sempre valide contagem de linhas antes e depois do join para evitar leitura incorreta.\n\n[PLACEHOLDER_IMAGEM: Checklist de boas práticas para INNER JOIN com foco em aliases, cláusula ON e ambiguidade de colunas.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Pedidos com nome do cliente",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time de atendimento quer um relatório único com dados do pedido e identificação do cliente.\n\n> **Sua missão:** Junte `pedidos` e `clientes` por `customer_id` e retorne os principais campos de cada tabela."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Entregues de alto valor",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O financeiro quer revisar pedidos entregues de maior impacto para auditoria de receita.\n\n> **Sua missão:** Com INNER JOIN, filtre pedidos `entregue` com `order_total >= 200` e ordene por valor decrescente."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Clientes recorrentes",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Growth quer identificar clientes com recorrência para campanha de fidelizacao.\n\n> **Sua missão:** Use INNER JOIN e agregação para listar clientes com pelo menos 2 pedidos."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `INNER JOIN` une tabelas e traz apenas linhas com correspondência.\n- A cláusula `ON` define como as tabelas se conectam.\n- Aliases (`p`, `c`) tornam queries de join mais legíveis.\n- Colunas repetidas devem ser qualificadas com nome/alias da tabela.\n- Validar contagem após join evita erro de interpretação.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `INNER JOIN` | Junta duas tabelas pela interseção de chaves |\n| `ON` | Regra de correspondência do join |\n| Alias | Nome curto da tabela na query |\n| Chave de relacionamento | Coluna usada para conectar tabelas |\n\n> **Próxima aula:** LEFT JOIN para manter toda a tabela da esquerda, mesmo sem correspondência."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m4_1_pedidos_clientes",
+      "title": "Desafio 1 - Pedidos com identificação de cliente",
+      "prompt_markdown": "Retorne uma visão unificada de pedidos e clientes.\n\n**Requisitos:**\n- Tabelas: `pedidos` e `clientes`\n- Join: `INNER JOIN` por `customer_id`\n- Colunas: `order_id`, `customer_id`, `first_name`, `last_name`, `status_code`, `order_total`\n- Ordenar por `order_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT p.order_id, p.customer_id, c.first_name, c.last_name, p.status_code, p.order_total FROM pedidos p INNER JOIN clientes c ON p.customer_id = c.customer_id ORDER BY p.order_id ASC;",
+      "hint_level_1": "Use aliases p e c. Relacione as tabelas por p.customer_id = c.customer_id e ordene por p.order_id.",
+      "hint_level_2": "SELECT p.order_id, p.customer_id, c.first_name, c.last_name, p.status_code, p.order_total FROM pedidos p INNER JOIN clientes c ON p.customer_id = c.customer_id ORDER BY p.order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Conectar pedidos e clientes em um relatório único com INNER JOIN",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "first_name",
+          "last_name",
+          "status_code",
+          "order_total"
+        ],
+        "notes": [
+          "Deve usar INNER JOIN com ON p.customer_id = c.customer_id",
+          "A query deve retornar 15 linhas",
+          "Ordenação obrigatoria por order_id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m4_1_entregues_alto_valor",
+      "title": "Desafio 2 - Pedidos entregues de alto valor",
+      "prompt_markdown": "Liste pedidos entregues com maior valor para auditoria financeira.\n\n**Requisitos:**\n- Tabelas: `pedidos` e `clientes`\n- Join: `INNER JOIN` por `customer_id`\n- Filtros: `status_code = 'entregue'` e `order_total >= 200`\n- Colunas: `order_id`, `first_name`, `last_name`, `status_code`, `order_total`\n- Ordenar por `order_total DESC`, depois `order_id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT p.order_id, c.first_name, c.last_name, p.status_code, p.order_total FROM pedidos p INNER JOIN clientes c ON p.customer_id = c.customer_id WHERE p.status_code = 'entregue' AND p.order_total >= 200 ORDER BY p.order_total DESC, p.order_id ASC;",
+      "hint_level_1": "Aplique o filtro no WHERE após o INNER JOIN. Use dois critérios de ordenação.",
+      "hint_level_2": "SELECT p.order_id, c.first_name, c.last_name, p.status_code, p.order_total FROM pedidos p INNER JOIN clientes c ON p.customer_id = c.customer_id WHERE p.status_code = 'entregue' AND p.order_total >= 200 ORDER BY p.order_total DESC, p.order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Filtrar pedidos entregues e de maior valor após unir pedidos e clientes",
+        "expected_columns": [
+          "order_id",
+          "first_name",
+          "last_name",
+          "status_code",
+          "order_total"
+        ],
+        "notes": [
+          "Deve usar INNER JOIN por customer_id",
+          "Deve aplicar os dois filtros no WHERE",
+          "A query deve retornar 5 linhas"
+        ]
+      }
+    },
+    {
+      "id": "ex_m4_1_clientes_recorrentes",
+      "title": "Desafio 3 - Clientes com 2 ou mais pedidos",
+      "prompt_markdown": "Identifique clientes recorrentes com base no número de pedidos.\n\n**Requisitos:**\n- Tabelas: `clientes` e `pedidos`\n- Join: `INNER JOIN` por `customer_id`\n- Colunas: `customer_id`, `first_name`, `last_name`, `total_pedidos`, `receita_total`\n- Agregações: `COUNT(*)` e `ROUND(SUM(order_total), 2)`\n- Filtrar grupos com `HAVING COUNT(*) >= 2`\n- Ordenar por `total_pedidos DESC`, depois `customer_id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT c.customer_id, c.first_name, c.last_name, COUNT(*) AS total_pedidos, ROUND(SUM(p.order_total), 2) AS receita_total FROM clientes c INNER JOIN pedidos p ON c.customer_id = p.customer_id GROUP BY c.customer_id, c.first_name, c.last_name HAVING COUNT(*) >= 2 ORDER BY total_pedidos DESC, c.customer_id ASC;",
+      "hint_level_1": "Agrupe por cliente, conte pedidos e use HAVING para manter apenas quem tem 2 ou mais.",
+      "hint_level_2": "SELECT c.customer_id, c.first_name, c.last_name, COUNT(*) AS total_pedidos, ROUND(SUM(p.order_total), 2) AS receita_total FROM clientes c INNER JOIN pedidos p ON c.customer_id = p.customer_id GROUP BY c.customer_id, c.first_name, c.last_name HAVING COUNT(*) >= 2 ORDER BY total_pedidos DESC, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar clientes recorrentes com contagem de pedidos e receita total",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "total_pedidos",
+          "receita_total"
+        ],
+        "notes": [
+          "Deve usar INNER JOIN e GROUP BY por cliente",
+          "Deve usar HAVING COUNT(*) >= 2",
+          "A query deve retornar 4 linhas (clientes 1, 2, 3 e 4)"
+        ]
+      }
+    }
+  ]
+}

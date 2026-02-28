@@ -1,0 +1,139 @@
+{
+  "id": "lesson_m7_1",
+  "title": "Subqueries na Prática",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar subqueries em WHERE, FROM e SELECT para montar filtros dinamicos e análises mais expressivas.",
+  "prerequisites": [
+    "lesson_m6_3"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes",
+      "itens_pedido"
+    ],
+    "scenario": "O time de analytics precisa comparar pedidos e clientes com medias dinamicas sem criar tabelas auxiliares permanentes."
+  },
+  "tabs": [
+    {
+      "id": "tab_subquery_where",
+      "title": "Subquery no WHERE",
+      "type": "content",
+      "content_markdown": "#### Filtrando com valor dinamico\n\nSubquery no `WHERE` permite filtrar usando um valor calculado em tempo real.\n\n```sql\nSELECT order_id, customer_id, order_total\nFROM pedidos\nWHERE status_code = 'entregue'\n  AND order_total > (\n    SELECT AVG(order_total)\n    FROM pedidos\n    WHERE status_code = 'entregue'\n  );\n```\n\nNesse caso, o filtro usa a média dos pedidos entregues como referência.\n\n---\n\n#### Quando esse padrão e util\n\n| Cenário | Ganho |\n|---|---|\n| Filtro acima/abaixo da média | Sem hardcode de limite |\n| Comparação com benchmark interno | Consulta autoajustável |\n| Regra que muda com os dados | Menos manutenção manual |\n\n---\n\n#### Ponto de atenção\n\n> Subquery em WHERE deve retornar valor compatível com a comparação (`=`, `>`, `IN`, etc.).\n\n[PLACEHOLDER_IMAGEM: Fluxo visual da subquery no WHERE calculando média de pedidos entregues e aplicando filtro no conjunto principal.]"
+    },
+    {
+      "id": "tab_subquery_from_select",
+      "title": "Subquery no FROM e SELECT",
+      "type": "content",
+      "content_markdown": "#### Subquery como tabela virtual (FROM)\n\nNo `FROM`, a subquery vira uma tabela temporaria para reuso de lógica.\n\n```sql\nSELECT c.customer_id, c.first_name, r.receita_entregue\nFROM (\n  SELECT customer_id, SUM(order_total) AS receita_entregue\n  FROM pedidos\n  WHERE status_code = 'entregue'\n  GROUP BY customer_id\n) r\nJOIN clientes c ON r.customer_id = c.customer_id;\n```\n\n---\n\n#### Subquery correlacionada (SELECT)\n\nSubquery correlacionada depende da linha atual da query externa.\n\n```sql\nSELECT\n  p.order_id,\n  p.customer_id,\n  p.order_total,\n  (SELECT AVG(p2.order_total)\n   FROM pedidos p2\n   WHERE p2.customer_id = p.customer_id\n     AND p2.status_code = 'entregue') AS media_cliente_entregue\nFROM pedidos p\nWHERE p.status_code = 'entregue';\n```\n\n---\n\n#### Boas práticas\n\n1. Nomeie aliases de forma clara para evitar ambiguidade\n2. Garanta que subqueries escalares retornem um único valor\n3. Evite duplicar lógica complexa quando puder usar CTE\n\n[PLACEHOLDER_IMAGEM: Comparativo entre subquery no FROM e subquery correlacionada no SELECT, com destaque para contexto de execução.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Pedidos acima da média",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você vai identificar pedidos entregues com valor acima da média entregue.\n\n> **Sua missão:** usar subquery no WHERE para filtrar dinamicamente."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Clientes acima da média de receita",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora você vai usar subquery no FROM para criar uma base de receita por cliente.\n\n> **Sua missão:** retornar apenas clientes com receita entregue acima da média de receita por cliente."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Pedido acima da média do proprio cliente",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A equipe quer encontrar pedidos excepcionais dentro do histórico de cada cliente.\n\n> **Sua missão:** usar subquery correlacionada para comparar pedido com a média entregue do proprio cliente."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Subquery no `WHERE` cria filtros baseados em calculos dinamicos.\n- Subquery no `FROM` organiza resultados intermediarios como tabela virtual.\n- Subquery correlacionada usa contexto da linha atual.\n- Comparações com média interna reduzem hardcode de limites.\n- Subqueries bem estruturadas aumentam poder analitico sem perder clareza.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Subquery escalar | Retorna um único valor |\n| Subquery no FROM | Tabela virtual derivada de outra consulta |\n| Subquery correlacionada | Depende da linha da consulta externa |\n| Filtro dinamico | Regra baseada em calculo no momento da execução |\n\n> **Próxima aula:** CTEs para organizar consultas em etapas nomeadas."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m7_1_pedidos_acima_media",
+      "title": "Desafio 1 - Pedidos entregues acima da média",
+      "prompt_markdown": "Retorne pedidos entregues acima da média de valor dos pedidos entregues.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Filtrar `status_code = 'entregue'`\n- Condição: `order_total` maior que média dos `order_total` entregues\n- Colunas finais: `order_id`, `customer_id`, `order_total`\n- Ordenar por `order_total` DESC, depois `order_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, order_total FROM pedidos WHERE status_code = 'entregue' AND order_total > (SELECT AVG(order_total) FROM pedidos WHERE status_code = 'entregue') ORDER BY order_total DESC, order_id ASC;",
+      "hint_level_1": "Use uma subquery escalar no WHERE para calcular a média de pedidos entregues.",
+      "hint_level_2": "SELECT order_id, customer_id, order_total FROM pedidos WHERE status_code = 'entregue' AND order_total > (SELECT AVG(order_total) FROM pedidos WHERE status_code = 'entregue') ORDER BY order_total DESC, order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Filtrar pedidos com benchmark dinamico de média entregue",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "order_total"
+        ],
+        "notes": [
+          "Deve considerar apenas status entregue no calculo da média",
+          "Ordenação obrigatoria por order_total DESC e order_id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m7_1_clientes_receita_acima_media",
+      "title": "Desafio 2 - Clientes com receita entregue acima da média",
+      "prompt_markdown": "Use subquery no FROM para consolidar receita entregue por cliente e filtre os que estão acima da média.\n\n**Requisitos:**\n- Subquery no FROM com `customer_id` e `receita_entregue` (`SUM(order_total)`) para pedidos entregues\n- Join com `clientes` por `customer_id`\n- Filtrar `receita_entregue` maior que média da receita por cliente entregue\n- Colunas finais: `customer_id`, `first_name`, `receita_entregue`\n- Aplicar `ROUND(receita_entregue, 2)`\n- Ordenar por `receita_entregue` DESC, depois `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT c.customer_id, c.first_name, ROUND(r.receita_entregue, 2) AS receita_entregue FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) r JOIN clientes c ON r.customer_id = c.customer_id WHERE r.receita_entregue > (SELECT AVG(m.receita_entregue) FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) m) ORDER BY receita_entregue DESC, c.customer_id ASC;",
+      "hint_level_1": "Crie uma tabela virtual no FROM com receita por cliente e compare com a média dessa propria tabela virtual.",
+      "hint_level_2": "SELECT c.customer_id, c.first_name, ROUND(r.receita_entregue, 2) AS receita_entregue FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) r JOIN clientes c ON r.customer_id = c.customer_id WHERE r.receita_entregue > (SELECT AVG(m.receita_entregue) FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) m) ORDER BY receita_entregue DESC, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Aplicar subquery no FROM para consolidacao intermediaria reutilizavel",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "receita_entregue"
+        ],
+        "notes": [
+          "Deve retornar somente clientes acima da média de receita entregue",
+          "Ordenação por receita_entregue DESC e customer_id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m7_1_correlacionada_media_cliente",
+      "title": "Desafio 3 - Pedido acima da média do proprio cliente",
+      "prompt_markdown": "Encontre pedidos entregues cujo valor esteja acima da média entregue do proprio cliente.\n\n**Requisitos:**\n- Tabela principal: `pedidos p`\n- Considerar apenas `p.status_code = 'entregue'`\n- Subquery correlacionada por `customer_id` para calcular média entregue do cliente\n- Colunas finais: `order_id`, `customer_id`, `order_total`, `media_cliente_entregue`\n- `media_cliente_entregue` com `ROUND(..., 2)`\n- Ordenar por `customer_id` ASC, `order_total` DESC, `order_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT p.order_id, p.customer_id, p.order_total, ROUND((SELECT AVG(p2.order_total) FROM pedidos p2 WHERE p2.customer_id = p.customer_id AND p2.status_code = 'entregue'), 2) AS media_cliente_entregue FROM pedidos p WHERE p.status_code = 'entregue' AND p.order_total > (SELECT AVG(p2.order_total) FROM pedidos p2 WHERE p2.customer_id = p.customer_id AND p2.status_code = 'entregue') ORDER BY p.customer_id ASC, p.order_total DESC, p.order_id ASC;",
+      "hint_level_1": "Use a mesma subquery correlacionada no SELECT e no WHERE, sempre filtrando p2 por customer_id da linha atual.",
+      "hint_level_2": "SELECT p.order_id, p.customer_id, p.order_total, ROUND((SELECT AVG(p2.order_total) FROM pedidos p2 WHERE p2.customer_id = p.customer_id AND p2.status_code = 'entregue'), 2) AS media_cliente_entregue FROM pedidos p WHERE p.status_code = 'entregue' AND p.order_total > (SELECT AVG(p2.order_total) FROM pedidos p2 WHERE p2.customer_id = p.customer_id AND p2.status_code = 'entregue') ORDER BY p.customer_id ASC, p.order_total DESC, p.order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Aplicar subquery correlacionada para benchmark individual por cliente",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "order_total",
+          "media_cliente_entregue"
+        ],
+        "notes": [
+          "Deve retornar apenas pedidos acima da média entregue do proprio cliente",
+          "A média deve ser calculada no contexto de cada customer_id"
+        ]
+      }
+    }
+  ]
+}

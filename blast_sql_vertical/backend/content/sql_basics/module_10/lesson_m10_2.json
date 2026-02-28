@@ -1,0 +1,141 @@
+{
+  "id": "lesson_m10_2",
+  "title": "Escrevendo SQL Legível e Sustentável",
+  "lesson_type": "interactive_sql",
+  "objective": "Escrever consultas legíveis, modulares e fáceis de manter usando convenções de nome, CTEs e estrutura consistente.",
+  "prerequisites": [
+    "lesson_m10_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "Seu time vai manter suas consultas por meses. A meta desta aula e produzir SQL claro, auditável e pronto para colaboração."
+  },
+  "tabs": [
+    {
+      "id": "tab_legibilidade_padrao",
+      "title": "Padrão de legibilidade em SQL",
+      "type": "content",
+      "content_markdown": "#### SQL legível reduz erro e acelera manutenção\n\nEm times reais, uma query rara vez e usada só por quem escreveu. Por isso, clareza importa tanto quanto resultado correto.\n\nPadrao recomendado:\n\n1. Quebras de linha por bloco lógico (`SELECT`, `FROM`, `WHERE`, `GROUP BY`, `ORDER BY`)\n2. Alias claros de tabela (`p` para pedidos, `c` para clientes)\n3. Nomes de colunas de saida orientados a negócio\n4. Ordenação explícita e determinística\n\n```sql\nSELECT\n  p.order_id,\n  p.customer_id,\n  c.first_name || ' ' || c.last_name AS nome_cliente,\n  p.order_total AS valor_pedido\nFROM pedidos p\nJOIN clientes c ON p.customer_id = c.customer_id\nWHERE p.status_code = 'entregue'\nORDER BY p.created_at ASC, p.order_id ASC;\n```\n\n[PLACEHOLDER_IMAGEM: Comparativo entre query compactada e query formatada com blocos claros, mostrando ganho de leitura e manutenção.]"
+    },
+    {
+      "id": "tab_ctes_sustentavel",
+      "title": "CTEs com nomes semânticos",
+      "type": "content",
+      "content_markdown": "#### Uma ideia por CTE\n\nCTEs ajudam a dividir raciocínio complexo em etapas nomeadas.\n\n```sql\nWITH pedidos_entregues AS (\n  SELECT order_id, customer_id, created_at, order_total\n  FROM pedidos\n  WHERE status_code = 'entregue'\n),\nresumo_cliente AS (\n  SELECT customer_id, COUNT(*) AS qtd_pedidos, SUM(order_total) AS receita_total\n  FROM pedidos_entregues\n  GROUP BY customer_id\n)\nSELECT *\nFROM resumo_cliente;\n```\n\n---\n\n#### Boas práticas de manutenção\n\n| Prática | Evite |\n|---|---|\n| CTE com nome de negócio (`resumo_cliente`) | `temp1`, `q2`, `cte_final2` |\n| Alias explícito em colunas finais | nomes ambíguos |\n| Comentario curto em regra não óbvia | comentario redundante |\n\n---\n\n#### Checklist de revisão\n\n- O nome da CTE explica o papel dela?\n- As colunas finais estão prontas para dashboard?\n- Existe alguma regra de negócio oculta sem explicação?\n\n[PLACEHOLDER_IMAGEM: Diagrama de query modular com duas CTEs (base e resumo), setas de fluxo e nomes semânticos destacando legibilidade.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Consulta legível de pedidos",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você vai criar uma consulta clara para uso em auditoria operacional.\n\n> **Sua missão:** Retorne pedidos entregues com nome completo do cliente e colunas de saida amigaveis."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Resumo mensal com CTE",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora monte um resumo mensal de receita entregue usando uma base nomeada.\n\n> **Sua missão:** Use CTE `pedidos_entregues` e agregue por mês de referência."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Segmentação de clientes",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A equipe de CRM quer segmentação pronta para campanha.\n\n> **Sua missão:** Construa uma query modular com CTEs e classifique clientes por faixa de receita entregue."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Legibilidade e parte de qualidade técnica em SQL.\n- Blocos bem formatados reduzem ambiguidade.\n- CTEs com nomes de negócio facilitam manutenção.\n- Alias claros tornam joins e agregações auditáveis.\n- Query sustentável acelera colaboração no time.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| SQL legível | Consulta organizada para leitura e revisão fácil |\n| CTE semântica | Etapa nomeada por função de negócio |\n| Alias claro | Nome curto e compreensível para tabela/coluna |\n| Query sustentável | Consulta que evolui sem perda de clareza |\n\n> **Próxima etapa:** aplicar essas práticas no Master Challenge final."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m10_2_consulta_legivel",
+      "title": "Desafio 1 - Pedidos entregues com saida amigavel",
+      "prompt_markdown": "Retorne pedidos entregues com dados do cliente em formato legível.\n\n**Requisitos:**\n- Tabelas: `pedidos` e `clientes`\n- Join por `customer_id`\n- Colunas finais: `order_id`, `customer_id`, `nome_cliente`, `data_pedido`, `valor_pedido`\n- Filtro: `status_code = 'entregue'`\n- Ordenar por `data_pedido` ASC, depois `order_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT p.order_id, p.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, p.created_at AS data_pedido, p.order_total AS valor_pedido FROM pedidos p JOIN clientes c ON p.customer_id = c.customer_id WHERE p.status_code = 'entregue' ORDER BY p.created_at ASC, p.order_id ASC;",
+      "hint_level_1": "Use alias p e c, concatene nome e sobrenome e renomeie colunas com alias de negócio.",
+      "hint_level_2": "SELECT p.order_id, p.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, p.created_at AS data_pedido, p.order_total AS valor_pedido FROM pedidos p JOIN clientes c ON p.customer_id = c.customer_id WHERE p.status_code = 'entregue' ORDER BY p.created_at ASC, p.order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Entregar consulta clara com colunas de saida prontas para consumo",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "nome_cliente",
+          "data_pedido",
+          "valor_pedido"
+        ],
+        "notes": [
+          "Deve retornar pedidos entregues ordenados por data",
+          "Deve manter aliases de saida solicitados"
+        ]
+      }
+    },
+    {
+      "id": "ex_m10_2_resumo_mensal_cte",
+      "title": "Desafio 2 - Receita mensal entregue com CTE",
+      "prompt_markdown": "Use CTE para criar resumo mensal de pedidos entregues.\n\n**Requisitos:**\n- CTE `pedidos_entregues` com colunas `order_id`, `created_at`, `order_total`\n- Filtro na CTE: `status_code = 'entregue'`\n- Resultado final com colunas: `mes_ref`, `qtd_pedidos`, `receita_total`\n- `mes_ref`: `DATE_TRUNC('month', created_at)`\n- Agregações: `COUNT(*)` e `ROUND(SUM(order_total), 2)`\n- Ordenar por `mes_ref` ASC",
+      "starter_query": "",
+      "solution_query": "WITH pedidos_entregues AS (SELECT order_id, created_at, order_total FROM pedidos WHERE status_code = 'entregue') SELECT DATE_TRUNC('month', created_at) AS mes_ref, COUNT(*) AS qtd_pedidos, ROUND(SUM(order_total), 2) AS receita_total FROM pedidos_entregues GROUP BY mes_ref ORDER BY mes_ref ASC;",
+      "hint_level_1": "Crie a CTE com filtro de status e agregue por DATE_TRUNC('month', created_at).",
+      "hint_level_2": "WITH pedidos_entregues AS (SELECT order_id, created_at, order_total FROM pedidos WHERE status_code = 'entregue') SELECT DATE_TRUNC('month', created_at) AS mes_ref, COUNT(*) AS qtd_pedidos, ROUND(SUM(order_total), 2) AS receita_total FROM pedidos_entregues GROUP BY mes_ref ORDER BY mes_ref ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Organizar lógica com CTE semântica e gerar agregado mensal claro",
+        "expected_columns": [
+          "mes_ref",
+          "qtd_pedidos",
+          "receita_total"
+        ],
+        "notes": [
+          "Deve retornar 3 linhas (jan, fev, mar de 2024)",
+          "Ordenação por mês_ref ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m10_2_segmentacao_cliente",
+      "title": "Desafio 3 - Segmentação de clientes por receita",
+      "prompt_markdown": "Monte uma query modular para segmentar clientes por receita entregue.\n\n**Requisitos:**\n- CTE `pedidos_entregues` filtrando `status_code = 'entregue'`\n- CTE `resumo_cliente` com `qtd_pedidos_entregues` e `receita_entregue` por `customer_id`\n- Resultado final com colunas: `customer_id`, `nome_cliente`, `qtd_pedidos_entregues`, `receita_entregue`, `faixa_cliente`\n- `faixa_cliente`: `alto` se receita >= 600; `médio` se receita >= 250; senão `baixo`\n- Incluir todos os clientes (`LEFT JOIN`) e usar `COALESCE` para zeros\n- Ordenar por `receita_entregue` DESC, depois `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "WITH pedidos_entregues AS (SELECT customer_id, order_total FROM pedidos WHERE status_code = 'entregue'), resumo_cliente AS (SELECT customer_id, COUNT(*) AS qtd_pedidos_entregues, ROUND(SUM(order_total), 2) AS receita_entregue FROM pedidos_entregues GROUP BY customer_id) SELECT c.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, COALESCE(r.qtd_pedidos_entregues, 0) AS qtd_pedidos_entregues, COALESCE(r.receita_entregue, 0) AS receita_entregue, CASE WHEN COALESCE(r.receita_entregue, 0) >= 600 THEN 'alto' WHEN COALESCE(r.receita_entregue, 0) >= 250 THEN 'medio' ELSE 'baixo' END AS faixa_cliente FROM clientes c LEFT JOIN resumo_cliente r ON c.customer_id = r.customer_id ORDER BY receita_entregue DESC, c.customer_id ASC;",
+      "hint_level_1": "Separe em duas CTEs (base e resumo), depois junte com clientes e aplique CASE para faixa.",
+      "hint_level_2": "WITH pedidos_entregues AS (SELECT customer_id, order_total FROM pedidos WHERE status_code = 'entregue'), resumo_cliente AS (SELECT customer_id, COUNT(*) AS qtd_pedidos_entregues, ROUND(SUM(order_total), 2) AS receita_entregue FROM pedidos_entregues GROUP BY customer_id) SELECT c.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, COALESCE(r.qtd_pedidos_entregues, 0) AS qtd_pedidos_entregues, COALESCE(r.receita_entregue, 0) AS receita_entregue, CASE WHEN COALESCE(r.receita_entregue, 0) >= 600 THEN 'alto' WHEN COALESCE(r.receita_entregue, 0) >= 250 THEN 'medio' ELSE 'baixo' END AS faixa_cliente FROM clientes c LEFT JOIN resumo_cliente r ON c.customer_id = r.customer_id ORDER BY receita_entregue DESC, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Produzir query modular e sustentável para segmentação de clientes",
+        "expected_columns": [
+          "customer_id",
+          "nome_cliente",
+          "qtd_pedidos_entregues",
+          "receita_entregue",
+          "faixa_cliente"
+        ],
+        "notes": [
+          "Deve retornar 10 linhas (todos os clientes)",
+          "Clientes sem receita devem aparecer com zero"
+        ]
+      }
+    }
+  ]
+}

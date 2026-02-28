@@ -1,0 +1,144 @@
+{
+  "id": "lesson_m2_3",
+  "title": "BETWEEN e IN",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar BETWEEN para filtrar intervalos e IN para filtrar listas de valores de forma concisa.",
+  "prerequisites": [
+    "lesson_m2_2"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.products"
+    ],
+    "scenario": "Você trabalha no time de analytics da GrooveCommerce e precisa construir filtros compactos para relatórios de intervalo de valores e listas de países."
+  },
+  "tabs": [
+    {
+      "id": "tab_between",
+      "title": "BETWEEN",
+      "type": "content",
+      "content_markdown": "#### BETWEEN: filtrando intervalos de forma compacta\n\nQuando você precisa filtrar valores dentro de um intervalo, pode usar dois operadores de comparação encadeados — ou usar `BETWEEN`, que ? mais legível e conciso:\n\n| Forma | Exemplo |\n|---|---|\n| AND encadeado | `WHERE amount >= 100 AND amount <= 400` |\n| BETWEEN | `WHERE amount BETWEEN 100 AND 400` |\n\nAmbas as formas retornam exatamente os mesmos resultados.\n\n---\n\n#### Intervalo numérico\n\n```sql\nSELECT id, amount, country, status\nFROM filtering.orders\nWHERE amount BETWEEN 100 AND 400\nORDER BY amount ASC, id ASC;\n```\n\nEssa query retorna pedidos cujo valor está entre 100 e 400 — incluindo os dois extremos.\n\n---\n\n#### BETWEEN com datas\n\nBETWEEN funciona igualmente bem com datas. Basta usar o formato `'YYYY-MM-DD'`:\n\n```sql\nSELECT id, order_date, amount, country\nFROM filtering.orders\nWHERE order_date BETWEEN '2023-07-01' AND '2023-12-31'\nORDER BY order_date ASC, id ASC;\n```\n\nEssa query retorna todos os pedidos feitos no segundo semestre de 2023.\n\n---\n\n#### Atenção: BETWEEN e inclusivo\n\n> Os **dois limites** são incluidos no resultado. `BETWEEN 100 AND 400` equivale a `>= 100 AND <= 400`.\n\n| Valor | Incluido? |\n|---|---|\n| 99 | Não |\n| 100 | **Sim** |\n| 250 | **Sim** |\n| 400 | **Sim** |\n| 401 | Não |\n\n[PLACEHOLDER_IMAGEM: Diagrama de intervalo fechado numa reta numerica mostrando BETWEEN 100 AND 400, com marcadores nos extremos indicando que 100 e 400 estão incluidos, e valores fora do intervalo marcados como excluidos.]"
+    },
+    {
+      "id": "tab_in",
+      "title": "IN e NOT IN",
+      "type": "content",
+      "content_markdown": "#### IN: filtrando listas de valores\n\nQuando você precisa filtrar por varios valores do mesmo campo, pode usar varios `OR` — ou usar `IN`, que ? muito mais limpo:\n\n```sql\n-- Verboso: varios OR encadeados\nWHERE country = 'USA'\n   OR country = 'Canada'\n   OR country = 'Mexico'\n\n-- Compacto: IN com lista\nWHERE country IN ('USA', 'Canada', 'Mexico')\n```\n\nAmbas as formas retornam os mesmos resultados.\n\n---\n\n#### IN — busca em lista\n\n```sql\nSELECT id, country, amount, status\nFROM filtering.orders\nWHERE country IN ('USA', 'Canada')\nORDER BY country ASC, amount ASC;\n```\n\nEssa query retorna apenas pedidos dos EUA ou do Canada.\n\n---\n\n#### NOT IN — exclusao de lista\n\nUse `NOT IN` para excluir um conjunto específico de valores:\n\n```sql\nSELECT id, name, category, price\nFROM filtering.products\nWHERE category NOT IN ('Accessories')\nORDER BY category ASC, price ASC;\n```\n\nEssa query retorna todos os produtos exceto os da categoria Accessories.\n\n---\n\n#### Quando usar IN vs OR\n\n| Situacao | Recomendacao |\n|---|---|\n| 2 valores | OR (mais direto) |\n| 3 ou mais valores | **IN** (mais legível) |\n| Excluir uma lista | **NOT IN** |\n\n> **Regra prática:** prefira `IN` sempre que tiver 3 ou mais valores — o codigo fica muito mais fácil de ler e manter.\n\n[PLACEHOLDER_IMAGEM: Comparativo visual lado a lado: coluna esquerda mostrando varios OR encadeados (verboso, 6 linhas) vs coluna direita com IN contendo os mesmos valores (compacto, 2 linhas), destacando a reducao de codigo e ganho de legibilidade.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - BETWEEN numérico",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time financeiro precisa de um relatório com pedidos de valor médio — nem muito baratos, nem muito caros.\n\n> **Sua missão:** Retorne `id`, `amount`, `country` e `status` dos pedidos com `amount` entre 100 e 400 (inclusive), ordenados por `amount` crescente e depois por `id` crescente."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - BETWEEN datas",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O time de marketing quer analisar o desempenho de vendas no segundo semestre de 2023.\n\n> **Sua missão:** Retorne `id`, `order_date`, `amount` e `country` dos pedidos realizados entre `2023-07-01` e `2023-12-31` (inclusive), ordenados por `order_date` crescente e depois por `id` crescente."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - IN combinado",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "O time de expansão quer analisar pedidos de valor médio na América do Norte.\n\n> **Sua missão:** Retorne `id`, `country`, `amount` e `status` de pedidos do `USA` ou `Canada` com `amount` entre 100 e 500 (inclusive), usando `IN` para os países e `BETWEEN` para o intervalo, ordenados por `country` crescente, depois `amount` crescente, depois `id` crescente."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `BETWEEN A AND B` ? um atalho compacto para `>= A AND <= B` — ambos os extremos são **incluidos**.\n- BETWEEN funciona com números, datas e qualquer tipo de dado ordenavel.\n- `IN (v1, v2, v3)` substitui varios `OR` encadeados — use quando tiver 3 ou mais valores.\n- `NOT IN (v1, v2)` exclui um conjunto específico de valores da consulta.\n- Prefira `IN` para listas e `BETWEEN` para intervalos — o codigo fica mais legível e fácil de manter.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Definição |\n|---|---|\n| `BETWEEN` | Operador que filtra valores dentro de um intervalo fechado (inclusivo nos extremos) |\n| `IN` | Operador que filtra linhas cujo valor pertence a uma lista especificada |\n| `NOT IN` | Operador que exclui linhas cujo valor pertence a uma lista especificada |\n| `Intervalo fechado` | Intervalo que inclui os dois extremos (100 a 400 inclui 100 e 400) |\n| `Lista de valores` | Conjunto de valores separados por virgula usado com IN e NOT IN |\n\n> **Próxima aula:** IS NULL e IS NOT NULL — como lidar com valores ausentes nos dados."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m2_3_between_numerico",
+      "title": "Desafio 1 - BETWEEN: Pedidos entre 100 e 400",
+      "prompt_markdown": "O time financeiro precisa de pedidos de valor médio.\n\n**Requisitos:**\n- Colunas: `id`, `amount`, `country`, `status`\n- Tabela: `filtering.orders`\n- Filtro: `amount BETWEEN 100 AND 400`\n- Ordenar por `amount` ASC, depois `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, amount, country, status FROM filtering.orders WHERE amount BETWEEN 100 AND 400 ORDER BY amount ASC, id ASC;",
+      "hint_level_1": "Use BETWEEN para definir o intervalo de valores. Lembre-se que BETWEEN e inclusivo — os dois limites (100 e 400) entram no resultado.",
+      "hint_level_2": "SELECT id, amount, country, status FROM filtering.orders WHERE amount BETWEEN 100 AND 400 ORDER BY amount ASC, id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos com amount entre 100 e 400, ordenados por amount e id",
+        "expected_columns": [
+          "id",
+          "amount",
+          "country",
+          "status"
+        ],
+        "notes": [
+          "Deve usar BETWEEN para o filtro de intervalo",
+          "A query deve retornar 10 linhas (ids 17, 4, 22, 11, 15, 10, 19, 7, 3, 12 ordenados por amount)",
+          "A ordenação deve ser por amount ASC, id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_3_between_datas",
+      "title": "Desafio 2 - BETWEEN: Pedidos do 2o semestre de 2023",
+      "prompt_markdown": "O time de marketing quer analisar vendas do segundo semestre de 2023.\n\n**Requisitos:**\n- Colunas: `id`, `order_date`, `amount`, `country`\n- Tabela: `filtering.orders`\n- Filtro: `order_date BETWEEN '2023-07-01' AND '2023-12-31'`\n- Ordenar por `order_date` ASC, depois `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, order_date, amount, country FROM filtering.orders WHERE order_date BETWEEN '2023-07-01' AND '2023-12-31' ORDER BY order_date ASC, id ASC;",
+      "hint_level_1": "Use BETWEEN com datas no formato 'YYYY-MM-DD'. O segundo semestre vai de 2023-07-01 até 2023-12-31.",
+      "hint_level_2": "SELECT id, order_date, amount, country FROM filtering.orders WHERE order_date BETWEEN '2023-07-01' AND '2023-12-31' ORDER BY order_date ASC, id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos do segundo semestre de 2023, ordenados por data",
+        "expected_columns": [
+          "id",
+          "order_date",
+          "amount",
+          "country"
+        ],
+        "notes": [
+          "Deve usar BETWEEN com datas no formato correto",
+          "A query deve retornar 9 linhas (ids 11, 19, 7, 10, 15, 4, 17, 8, 20 ordenados por order_date)",
+          "A ordenação deve ser por order_date ASC, id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_3_in_between_combinados",
+      "title": "Desafio 3 - IN + BETWEEN: América do Norte com valor médio",
+      "prompt_markdown": "O time de expansão quer analisar pedidos de valor médio na América do Norte.\n\n**Requisitos:**\n- Colunas: `id`, `country`, `amount`, `status`\n- Tabela: `filtering.orders`\n- Filtros: `country IN ('USA', 'Canada')` AND `amount BETWEEN 100 AND 500`\n- Ordenar por `country` ASC, depois `amount` ASC, depois `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, country, amount, status FROM filtering.orders WHERE country IN ('USA', 'Canada') AND amount BETWEEN 100 AND 500 ORDER BY country ASC, amount ASC, id ASC;",
+      "hint_level_1": "Combine IN para filtrar os dois países e BETWEEN para o intervalo de valor. Use AND para ligar os dois filtros.",
+      "hint_level_2": "SELECT id, country, amount, status FROM filtering.orders WHERE country IN ('USA', 'Canada') AND amount BETWEEN 100 AND 500 ORDER BY country ASC, amount ASC, id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos de USA ou Canada com amount entre 100 e 500, ordenados por country e amount",
+        "expected_columns": [
+          "id",
+          "country",
+          "amount",
+          "status"
+        ],
+        "notes": [
+          "Deve usar IN para filtrar os países",
+          "Deve usar BETWEEN para o intervalo de valor",
+          "A query deve retornar 8 linhas (Canada: ids 17, 22, 15, 3; USA: ids 10, 7, 16, 20)",
+          "A ordenação deve ser por country ASC, amount ASC, id ASC"
+        ]
+      }
+    }
+  ]
+}

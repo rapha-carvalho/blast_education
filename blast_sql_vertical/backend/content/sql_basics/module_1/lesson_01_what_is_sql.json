@@ -1,0 +1,11 @@
+{
+  "id": "lesson_01_what_is_sql",
+  "title": "O que é SQL e por que isso importa?",
+  "lesson_type": "concept_only",
+  "objective": "Understand what SQL is and why it exists for communicating with databases.",
+  "prerequisites": [],
+  "estimated_minutes": 10,
+  "content_markdown": "**Contexto de negócio**: Todas as empresas — de uma startup de entrega de comida a uma grande varejista — operam com dados armazenados em bancos de dados. O SQL é a linguagem universal que os analistas usam para fazer perguntas a esses bancos de dados.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Explicar o SQL em linguagem simples para um colega não técnico.\r\n- Descrever a diferença entre \"clicar em filtros no Excel\" vs \"escrever uma query\".\r\n- Explicar o que significa \"linguagem declarativa\" sem jargões técnicos.\r\n- Identificar três tipos de perguntas de negócio que exigem SQL.",
+  "exercises": [],
+  "infographics": []
+}

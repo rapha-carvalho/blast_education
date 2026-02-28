@@ -1,0 +1,144 @@
+{
+  "id": "lesson_m1_4",
+  "title": "ETL, ELT e Como os Dados Chegam ao Data Warehouse",
+  "lesson_type": "interactive_sql",
+  "objective": "Entender como os dados se movem de sistemas OLTP para o Data Warehouse: a diferença entre ETL e ELT, as ferramentas modernas do stack de dados, ? a diferença entre tabelas brutas e transformadas.",
+  "prerequisites": [
+    "lesson_m1_3"
+  ],
+  "estimated_minutes": 12,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos",
+      "produtos",
+      "itens_pedido"
+    ],
+    "scenario": "A GrooveCommerce usa um pipeline ELT moderno: Fivetran copia os dados do OLTP para o BigQuery, ? o dbt transforma esses dados em tabelas limpas para os analistas. Vamos explorar o que isso significa na prática."
+  },
+  "tabs": [
+    {
+      "id": "tab_etl",
+      "title": "ETL — O Pipeline Tradicional",
+      "type": "content",
+      "content_markdown": "#### Por que os dados não chegam sozinhos ao Data Warehouse?\n\nVocê aprendeu que os analistas trabalham no **OLAP** (Data Warehouse), não no **OLTP** (banco de produção). Mas como os dados chegam lá? Alguém — ou alguma ferramenta — precisa copiá-los e prepará-los.\n\nEsse processo tem um nome: **pipeline de dados**. E existe desde antes da era da nuvem.\n\n---\n\n#### ETL — Extract, Transform, Load\n\n**ETL** foi o padrão por décadas. A ordem importa:\n\n1. **Extract** — Extrai os dados do sistema de origem (OLTP, APIs, CSVs)\n2. **Transform** — Transforma e limpa os dados *antes* de carregá-los\n3. **Load** — Carrega os dados já transformados no Data Warehouse\n\n| Etapa | O que acontece | Onde acontece |\n|---|---|---|\n| Extract | Lê os dados do OLTP | Servidor de ETL |\n| Transform | Limpa, une, renomeia | Servidor de ETL (fora do DW) |\n| Load | Carrega dados prontos no Data Warehouse |\n\n[PLACEHOLDER_IMAGEM: Diagrama ETL — fluxo Extract → Transform (servidor externo) → Load no Data Warehouse]\n\n**Problema do ETL:** O servidor de transformação ficava entre o OLTP ? o DW. Era lento, caro e difícil de manter. Se a transformação quebrasse, nada chegava ao DW.\n\n> **Ferramentas ETL antigas:** Informatica, IBM DataStage, SQL Server SSIS — todas exigiam servidores dedicados e equipes especializadas."
+    },
+    {
+      "id": "tab_elt",
+      "title": "ELT — O Padrão Moderno",
+      "type": "content",
+      "content_markdown": "#### ELT — Extract, Load, Transform\n\nCom a chegada dos **cloud data warehouses** (BigQuery, Snowflake, Redshift), surgiu uma abordagem mais inteligente: carregar primeiro, transformar depois.\n\n1. **Extract** — Extrai os dados brutos da fonte (OLTP, API)\n2. **Load** — Carrega os dados *brutos* direto no Data Warehouse\n3. **Transform** — Transforma os dados *dentro* do próprio Data Warehouse usando SQL\n\n| Etapa | O que acontece | Onde acontece |\n|---|---|---|\n| Extract | Lê os dados do OLTP | Ferramenta de ingestão |\n| Load | Carrega dados brutos | Data Warehouse (schema `raw`) |\n| Transform | Limpa e une usando SQL | Data Warehouse (schema `analytics`) |\n\n---\n\n#### Por que ELT venceu?\n\n- **Cloud warehouses são baratos para armazenar dados brutos** — não precisa mais filtrar antes\n- **SQL nativo é mais acessível** que linguagens de transformação proprietárias\n- **O analista pode participar** — dbt permite que analistas (não só engenheiros) escrevam as transformações\n- **Reprocessamento fácil** — dados brutos estão sempre disponíveis para re-transformar\n\n---\n\n#### O stack moderno de ELT\n\n| Função | Ferramenta(s) | O que faz |\n|---|---|---|\n| **Ingestão** | Fivetran, Airbyte, Stitch | Extrai e carrega dados do OLTP para o DW automaticamente |\n| **Transformação** | dbt (data build tool) | Transforma dados brutos em tabelas limpas usando SQL |\n| **Armazenamento** | BigQuery, Snowflake, Redshift | Cloud Data Warehouse onde tudo fica |\n| **Consumo** | Looker, Tableau, Metabase | Dashboards e relatórios para os analistas e gestores |\n\n[PLACEHOLDER_IMAGEM: Stack moderno de ELT — Fivetran/Airbyte (ingestão) + dbt (transformação) + BigQuery/Snowflake (armazenamento) + Looker (consumo)]\n\n> **O analista de dados moderno** usa SQL para escrever transformações no dbt e explorar dados no BigQuery ou Snowflake — não em servidores de ETL."
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Tabela bruta vs transformada",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "No ELT, os dados chegam ao Data Warehouse em duas camadas:\n\n- **Camada bruta (raw):** dados exatamente como vieram do OLTP — sem limpeza, sem joins\n- **Camada transformada (analytics):** dados limpos, unidos e prontos para análise\n\nA tabela `pedidos` que você está usando simula uma **tabela transformada**: cada coluna tem nomes claros, dados consistentes, sem nulos inesperados.\n\nUma **tabela bruta** seria algo como `raw_orders` com nomes de coluna como `id`, `cust_id`, `dt`, `stat` — difícil de ler sem documentação.\n\n**Sua missão:** Explore a tabela `pedidos` — quantos pedidos únicos existem? Retorne **todas as colunas** e todas as linhas para inspecionar a estrutura.\n\n> Dica: `SELECT * FROM pedidos;`"
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Dados brutos precisam de limpeza",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Um analista que trabalha com dados **pós-ELT** (tabela transformada) consegue escrever queries simples. Mas às vezes você precisa entender a qualidade dos dados brutos.\n\nUma verificação clássica de qualidade: **há pedidos sem `customer_id`?** Em dados brutos, chaves FKs às vezes são `NULL` por erros de integração.\n\n**Sua missão:** Retorne todos os pedidos onde `customer_id` **não é nulo**, listando `order_id`, `customer_id`, `status_code` e `order_total`.\n\nIsso simula uma etapa de validação que um analista faria ao receber uma tabela bruta nova.\n\n> Dica: Use `WHERE customer_id IS NOT NULL`"
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — Identificar dados transformáveis",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Uma das primeiras tarefas ao transformar dados no dbt é identificar registros que precisam de tratamento especial. Por exemplo: pedidos com status diferente de 'entregue' são 'pendentes' de ação.\n\nEm um pipeline ELT, o dbt criaria uma tabela transformada chamada `pedidos_pendentes` a partir de uma query como esta.\n\n**Sua missão:** Retorne o `order_id`, `customer_id`, `created_at` e `status_code` de todos os pedidos que **não** têm status `'entregue'`, ordenados por `created_at` mais recente.\n\n> Dica: Use `WHERE status_code != 'entregue'` e `ORDER BY created_at DESC`"
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **ETL** (Extract, Transform, Load) — abordagem tradicional: dados são transformados *antes* de chegar ao Data Warehouse.\n- **ELT** (Extract, Load, Transform) — abordagem moderna: dados brutos chegam primeiro ao DW, transformações happecem dentro do DW com SQL.\n- **Por que ELT venceu:** cloud warehouses baratos + SQL acessível + analistas podem participar das transformações com dbt.\n- **Ferramentas de ingestão** (Fivetran, Airbyte): automatizam o Extract + Load do OLTP para o DW.\n- **dbt** (data build tool): permite que analistas escrevam transformações em SQL de forma versionada e testada.\n- **Tabelas brutas vs transformadas:** no DW, dados brutos ficam no schema `raw`; analistas trabalham no schema `analytics` com tabelas limpas.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|---|---|\n| **ETL** | Extract, Transform, Load — pipeline tradicional, transforma antes de carregar |\n| **ELT** | Extract, Load, Transform — pipeline moderno, carrega bruto e transforma no DW |\n| **Pipeline de dados** | Fluxo automatizado de dados de uma fonte para um destino |\n| **Fivetran / Airbyte** | Ferramentas de ingestão que copiam dados do OLTP para o DW |\n| **dbt** | Data Build Tool — escreve transformações SQL versionadas no DW |\n| **Tabela bruta (raw)** | Dados exatamente como chegaram da fonte, sem limpeza |\n| **Tabela transformada** | Dados limpos, unidos e prontos para análise |\n| **Schema** | Namespace que agrupa tabelas relacionadas no DW (ex: `raw`, `analytics`) |\n\n---\n\n> **Próxima aula:** Cloud Data Warehouses, Data Lakes e Lakehouses — onde exatamente os analistas trabalham e por quê."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_explore_pedidos",
+      "title": "Desafio 1 — Inspecione a tabela transformada",
+      "prompt_markdown": "A tabela `pedidos` simula uma **tabela transformada** no Data Warehouse — dados limpos e padronizados após o pipeline ELT.\n\n**Sua missão:** Retorne **todas as colunas e todas as linhas** da tabela `pedidos` para inspecionar a estrutura.",
+      "starter_query": "",
+      "solution_query": "SELECT * FROM pedidos;",
+      "hint_level_1": "Use SELECT * FROM seguido do nome da tabela que você quer inspecionar.",
+      "hint_level_2": "SELECT * FROM pedidos;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar todas as colunas e linhas da tabela pedidos",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "created_at",
+          "status_code",
+          "order_total"
+        ],
+        "notes": [
+          "Deve retornar 15 linhas",
+          "Deve usar FROM pedidos"
+        ]
+      }
+    },
+    {
+      "id": "ex2_null_check",
+      "title": "Desafio 2 — Validação de qualidade (IS NOT NULL)",
+      "prompt_markdown": "Em dados brutos, é comum encontrar FKs nulas por erros de integração. Uma das primeiras etapas de transformação no dbt é filtrar esses registros.\n\n**Sua missão:** Retorne `order_id`, `customer_id`, `status_code` e `order_total` de todos os pedidos onde `customer_id` **não é nulo**.\n\n> Dica: Use `WHERE customer_id IS NOT NULL`",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, status_code, order_total FROM pedidos WHERE customer_id IS NOT NULL;",
+      "hint_level_1": "Para verificar que um valor não é nulo, use IS NOT NULL no WHERE. Selecione apenas as 4 colunas pedidas.",
+      "hint_level_2": "SELECT order_id, customer_id, status_code, order_total FROM pedidos WHERE customer_id IS NOT NULL;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos com customer_id não nulo",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "status_code",
+          "order_total"
+        ],
+        "notes": [
+          "Deve usar WHERE customer_id IS NOT NULL",
+          "Deve retornar exatamente 4 colunas"
+        ]
+      }
+    },
+    {
+      "id": "ex3_not_delivered",
+      "title": "Desafio 3 — Pedidos não entregues (candidatos a transformação)",
+      "prompt_markdown": "No dbt, uma transformação comum é criar uma tabela `pedidos_pendentes` com os pedidos que precisam de atenção.\n\n**Sua missão:** Retorne `order_id`, `customer_id`, `created_at` e `status_code` de todos os pedidos com status diferente de `'entregue'`, ordenados por `created_at` do mais recente ao mais antigo.",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, created_at, status_code FROM pedidos WHERE status_code != 'entregue' ORDER BY created_at DESC;",
+      "hint_level_1": "Use WHERE status_code!= 'entregue' para excluir pedidos entregues, e ORDER BY created_at DESC para ordenar do mais recente.",
+      "hint_level_2": "SELECT order_id, customer_id, created_at, status_code FROM pedidos WHERE status_code != 'entregue' ORDER BY created_at DESC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos com status diferente de 'entregue'",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "created_at",
+          "status_code"
+        ],
+        "notes": [
+          "Deve usar WHERE status_code!= 'entregue'",
+          "Deve incluir ORDER BY created_at DESC",
+          "Deve retornar 4 colunas"
+        ]
+      }
+    }
+  ]
+}

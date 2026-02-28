@@ -1,0 +1,139 @@
+{
+  "id": "lesson_m10_1",
+  "title": "Escrevendo SQL de Alto Desempenho",
+  "lesson_type": "interactive_sql",
+  "objective": "Aplicar práticas de performance em SQL, reduzindo leitura desnecessaria de dados e priorizando filtros e joins eficientes.",
+  "prerequisites": [
+    "lesson_m9_3"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "Você precisa preparar consultas para um dashboard executivo com baixa latencia. O objetivo e entregar respostas corretas com custo e tempo menores."
+  },
+  "tabs": [
+    {
+      "id": "tab_perf_fundamentos",
+      "title": "Princípios de SQL eficiente",
+      "type": "content",
+      "content_markdown": "#### Performance começa na escrita da query\n\nMesmo com banco moderno, uma query mal escrita pode ler muito mais dados do que precisa.\n\nPrincípios práticos:\n\n1. Selecione apenas colunas necessárias\n2. Filtre cedo (WHERE) com condições seletivas\n3. Evite função na coluna filtrada quando possível\n4. Limite resultados em exploracao inicial\n\n---\n\n#### Exemplo de filtro eficiente por data\n\n```sql\nSELECT order_id, created_at, order_total\nFROM pedidos\nWHERE created_at >= '2024-02-01'\n  AND created_at < '2024-03-01';\n```\n\nEsse padrão de intervalo costuma performar melhor que aplicar função de mes no `WHERE`.\n\n---\n\n#### Sinais de consulta cara\n\n| Sinal | Causa comum |\n|---|---|\n| Tempo alto | Leitura de dados em excesso |\n| Memoria alta | JOIN sem filtro previo |\n| Resultado gigante | SELECT * sem necessidade |\n\n[PLACEHOLDER_IMAGEM: Infográfico de boas práticas de performance SQL: projeção mínima, filtro cedo, intervalo de datas e limitacao de volume.]"
+    },
+    {
+      "id": "tab_perf_joins",
+      "title": "Joins e agregações com menor custo",
+      "type": "content",
+      "content_markdown": "#### Reduza a base antes de juntar tabelas\n\nQuando possível, filtre a tabela fato antes do JOIN para diminuir o volume processado.\n\n```sql\nWITH base AS (\n  SELECT order_id, customer_id, order_total\n  FROM pedidos\n  WHERE status_code = 'entregue'\n    AND created_at >= '2024-01-01'\n    AND created_at < '2024-04-01'\n)\nSELECT c.customer_id, c.first_name, SUM(base.order_total) AS receita\nFROM base\nJOIN clientes c ON base.customer_id = c.customer_id\nGROUP BY c.customer_id, c.first_name;\n```\n\n---\n\n#### Padrões de alto desempenho\n\n| Objetivo | Padrão |\n|---|---|\n| Reduzir linhas antes do JOIN | CTE de base filtrada |\n| Evitar recálculo | Reusar CTE intermediaria |\n| Ordenar menos | ORDER BY apenas no resultado final |\n\n---\n\n#### Checklist antes de publicar\n\n- Esta query usa somente colunas necessárias?\n- Filtros de data e status estão no WHERE da base?\n- O JOIN está no nível de granularidade correto?\n- ORDER BY aparece apenas quando agrega valor de leitura?\n\n[PLACEHOLDER_IMAGEM: Diagrama de pipeline otimizado: filtro na tabela pedidos, depois join com clientes, depois agregação final.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Filtro seletivo por período",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Você recebeu uma consulta lenta para pedidos entregues de fevereiro.\n\n> **Sua missão:** Retorne apenas colunas essenciais com filtro de intervalo de data e ordenação determinística."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Base reduzida antes do join",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora você precisa gerar receita por cliente para pedidos entregues do trimestre, sem carregar linhas desnecessarias.\n\n> **Sua missão:** Use CTE de base filtrada e depois JOIN com clientes para agregar receita."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Top pedido por cliente",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A liderança quer o maior pedido entregue de cada cliente para uma ação comercial.\n\n> **Sua missão:** Filtre a base entregue e use janela para trazer um pedido por cliente com ranking."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Performance começa na modelagem da consulta.\n- Selecionar menos colunas reduz leitura e custo.\n- Filtrar cedo melhora eficiência de joins e agregações.\n- Intervalo de datas no WHERE ? um padrão robusto de performance.\n- CTEs ajudam a organizar base reduzida e reutilizar lógica.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Projeção mínima | Selecionar somente colunas necessárias |\n| Filtro seletivo | Condição que reduz significativamente as linhas |\n| Base filtrada | Subconjunto de dados preparado antes do JOIN |\n| Custo de query | Recursos de leitura/processamento consumidos |\n\n> **Próxima aula:** SQL legível e sustentável para manutenção em equipe."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m10_1_filtro_seletivo",
+      "title": "Desafio 1 - Pedidos entregues de fevereiro",
+      "prompt_markdown": "Retorne pedidos entregues de fevereiro de 2024 com filtro eficiente.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Colunas: `order_id`, `customer_id`, `created_at`, `order_total`\n- Filtros: `status_code = 'entregue'` e `created_at >= '2024-02-01'` e `created_at < '2024-03-01'`\n- Ordenar por `created_at` ASC, depois `order_id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT order_id, customer_id, created_at, order_total FROM pedidos WHERE status_code = 'entregue' AND created_at >= '2024-02-01' AND created_at < '2024-03-01' ORDER BY created_at ASC, order_id ASC;",
+      "hint_level_1": "Use intervalo de datas com limite inferior e superior. Evite SELECT *.",
+      "hint_level_2": "SELECT order_id, customer_id, created_at, order_total FROM pedidos WHERE status_code = 'entregue' AND created_at >= '2024-02-01' AND created_at < '2024-03-01' ORDER BY created_at ASC, order_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Aplicar filtro seletivo e retornar apenas colunas necessárias",
+        "expected_columns": [
+          "order_id",
+          "customer_id",
+          "created_at",
+          "order_total"
+        ],
+        "notes": [
+          "Deve retornar somente pedidos entregues de fevereiro",
+          "Ordenação por created_at e order_id"
+        ]
+      }
+    },
+    {
+      "id": "ex_m10_1_base_filtrada_join",
+      "title": "Desafio 2 - Receita entregue por cliente com base filtrada",
+      "prompt_markdown": "Monte uma consulta com base reduzida antes do JOIN para calcular receita entregue por cliente no trimestre.\n\n**Requisitos:**\n- Criar CTE `base` com colunas `order_id`, `customer_id`, `order_total` de pedidos `entregue` entre 2024-01-01 e 2024-04-01 (limite superior exclusivo)\n- Join da CTE com `clientes` por `customer_id`\n- Colunas finais: `customer_id`, `first_name`, `qtd_pedidos`, `receita_total`\n- Agregações: `COUNT(*)` e `ROUND(SUM(order_total), 2)`\n- Ordenar por `receita_total` DESC, depois `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "WITH base AS (SELECT order_id, customer_id, order_total FROM pedidos WHERE status_code = 'entregue' AND created_at >= '2024-01-01' AND created_at < '2024-04-01') SELECT c.customer_id, c.first_name, COUNT(*) AS qtd_pedidos, ROUND(SUM(base.order_total), 2) AS receita_total FROM base JOIN clientes c ON base.customer_id = c.customer_id GROUP BY c.customer_id, c.first_name ORDER BY receita_total DESC, c.customer_id ASC;",
+      "hint_level_1": "Filtre primeiro em uma CTE e só depois faca o JOIN com clientes para agregar.",
+      "hint_level_2": "WITH base AS (SELECT order_id, customer_id, order_total FROM pedidos WHERE status_code = 'entregue' AND created_at >= '2024-01-01' AND created_at < '2024-04-01') SELECT c.customer_id, c.first_name, COUNT(*) AS qtd_pedidos, ROUND(SUM(base.order_total), 2) AS receita_total FROM base JOIN clientes c ON base.customer_id = c.customer_id GROUP BY c.customer_id, c.first_name ORDER BY receita_total DESC, c.customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Aplicar padrão de base filtrada antes do join e consolidar receita por cliente",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "qtd_pedidos",
+          "receita_total"
+        ],
+        "notes": [
+          "Deve usar CTE base com filtro de status e data",
+          "Ordenação por receita_total DESC e customer_id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m10_1_top_pedido_cliente",
+      "title": "Desafio 3 - Maior pedido entregue por cliente",
+      "prompt_markdown": "Retorne o maior pedido entregue de cada cliente com ranking.\n\n**Requisitos:**\n- Criar CTE `base` filtrando `status_code = 'entregue'`\n- Criar CTE `ranked` com `ROW_NUMBER()` particionado por `customer_id` e ordenado por `order_total DESC`, `order_id ASC`\n- Resultado final com colunas: `customer_id`, `order_id`, `order_total`\n- Filtrar `rn = 1`\n- Ordenar por `order_total` DESC, depois `customer_id` ASC",
+      "starter_query": "",
+      "solution_query": "WITH base AS (SELECT order_id, customer_id, order_total FROM pedidos WHERE status_code = 'entregue'), ranked AS (SELECT customer_id, order_id, order_total, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_total DESC, order_id ASC) AS rn FROM base) SELECT customer_id, order_id, order_total FROM ranked WHERE rn = 1 ORDER BY order_total DESC, customer_id ASC;",
+      "hint_level_1": "Use duas CTEs: uma para base filtrada e outra para ranking por cliente.",
+      "hint_level_2": "WITH base AS (SELECT order_id, customer_id, order_total FROM pedidos WHERE status_code = 'entregue'), ranked AS (SELECT customer_id, order_id, order_total, ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY order_total DESC, order_id ASC) AS rn FROM base) SELECT customer_id, order_id, order_total FROM ranked WHERE rn = 1 ORDER BY order_total DESC, customer_id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Combinar filtro, janela e ordenação para extrair top pedido por cliente",
+        "expected_columns": [
+          "customer_id",
+          "order_id",
+          "order_total"
+        ],
+        "notes": [
+          "Deve retornar 1 pedido por cliente com entrega",
+          "Ordenação por order_total DESC e customer_id ASC"
+        ]
+      }
+    }
+  ]
+}

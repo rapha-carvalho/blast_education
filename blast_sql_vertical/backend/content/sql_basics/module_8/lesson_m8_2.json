@@ -1,0 +1,136 @@
+{
+  "id": "lesson_m8_2",
+  "title": "LAG e LEAD: Comparando Linhas no Tempo",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar LAG e LEAD para comparar valores entre linhas adjacentes; calcular variações absoluta e percentual entre períodos.",
+  "prerequisites": [
+    "lesson_m8_1"
+  ],
+  "estimated_minutes": 25,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "pedidos",
+      "clientes"
+    ],
+    "scenario": "O CFO quer análises mês a mês: receita atual, receita do mês anterior e variação percentual. LAG e LEAD tornam isso trivial."
+  },
+  "tabs": [
+    {
+      "id": "tab_conceito",
+      "title": "LAG — Valor da linha anterior",
+      "type": "content",
+      "content_markdown": "#### O que é LAG?\n\n`LAG` é uma window function que retorna o valor de uma coluna na **linha anterior**, segundo a ordem definida em `OVER (ORDER BY ...)`. Perfeito para comparações mês a mês, semana a semana ou entre períodos consecutivos.\n\nSintaxe:\n\n```sql\nLAG(coluna, 1) OVER (ORDER BY coluna_ordem)\n```\n\nO segundo argumento (1) indica quantas linhas \"para trás\" olhar. `LAG(coluna, 2)` pega a linha duas posições acima.\n\nNa primeira linha da ordenação, `LAG` retorna `NULL` — não há linha anterior.\n\n---\n\n#### Exemplo: receita mensal com mês anterior\n\n```sql\nWITH receita_mensal AS (\n  SELECT\n    DATE_TRUNC('month', created_at)::DATE AS mes_pedido,\n    SUM(order_total) AS receita_mensal\n  FROM pedidos\n  WHERE status_code = 'entregue'\n  GROUP BY 1\n)\nSELECT\n  mes_pedido,\n  receita_mensal,\n  LAG(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_mes_anterior\nFROM receita_mensal\nORDER BY mes_pedido;\n```\n\n[PLACEHOLDER_IMAGEM: Fluxo mostrando LAG trazendo o valor da linha anterior na ordem temporal.]"
+    },
+    {
+      "id": "tab_conceito2",
+      "title": "LEAD e variação percentual",
+      "type": "content",
+      "content_markdown": "#### LEAD — Valor da linha seguinte\n\n`LEAD` faz o oposto de `LAG`: retorna o valor da **próxima** linha na ordenação.\n\n```sql\nLEAD(coluna, 1) OVER (ORDER BY coluna_ordem)\n```\n\nNa última linha, `LEAD` retorna `NULL`.\n\n---\n\n#### Cálculo de variação percentual\n\nPara comparar mês atual com mês anterior:\n\n```sql\nROUND(\n  (receita_mensal - receita_mes_anterior)::numeric /\n  NULLIF(receita_mes_anterior, 0) * 100, 1\n) AS variacao_percentual\n```\n\n> **Importante:** Use `NULLIF(receita_mes_anterior, 0)` para evitar divisão por zero quando o mês anterior teve receita zero.\n\n[PLACEHOLDER_IMAGEM: Tabela MoM mostrando mes, receita, mês anterior e variação percentual.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Receita mensal com LAG",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O CFO quer uma tabela de receita mensal (apenas pedidos entregues) com a receita do mês anterior ao lado.\n\n> **Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `receita_mes_anterior`. Use `DATE_TRUNC('month', created_at)::DATE` para agrupar por mês e `LAG(receita_mensal) OVER (ORDER BY mes_pedido)`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Variação percentual MoM",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora adicione a variação percentual em relação ao mês anterior.\n\n> **Sua missão:** Retorne `mes_pedido`, `receita_mensal`, `receita_mes_anterior` e `variacao_percentual`. Use `NULLIF` para evitar divisão por zero. Arredonde com `ROUND(..., 1)`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — LEAD: receita do próximo mês",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A equipe de planejamento quer ver a receita do **próximo** mês em cada linha.\n\n> **Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `receita_proximo_mes`. Use `LEAD(receita_mensal) OVER (ORDER BY mes_pedido)`. A última linha terá NULL em receita_proximo_mes."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **LAG(coluna, N)** — retorna o valor da linha N posições acima na ordenação.\n- **LEAD(coluna, N)** — retorna o valor da linha N posições abaixo.\n- **ORDER BY** dentro de `OVER` define a ordem temporal (crucial para LAG/LEAD).\n- **NULLIF(denominador, 0)** evita divisão por zero ao calcular variação percentual.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|-------|-------------|\n| **LAG** | Window function que retorna valor da linha anterior |\n| **LEAD** | Window function que retorna valor da linha seguinte |\n| **MoM** | Month-over-Month; comparação mês a mês |\n| **Variação percentual** | (atual - anterior) / anterior * 100 |\n| **NULLIF** | Retorna NULL se os argumentos forem iguais; evita divisão por zero |\n\n---\n\n> **Próxima aula:** Totais móveis (Running Totals) e médias móveis."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_receita_lag",
+      "title": "Desafio 1 — Receita mensal com LAG",
+      "prompt_markdown": "Retorne a receita mensal (apenas pedidos com `status_code = 'entregue'`) com a receita do mês anterior.\n\n**Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `receita_mes_anterior`. Agrupe por `DATE_TRUNC('month', created_at)::DATE`. Use `LAG(receita_mensal) OVER (ORDER BY mes_pedido)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, LAG(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_mes_anterior FROM receita_mensal ORDER BY mes_pedido;",
+      "hint_level_1": "CTE que agrupa pedidos por mês (DATE_TRUNC) e soma order_total. Depois use LAG(receita_mensal) OVER (ORDER BY mes_pedido).",
+      "hint_level_2": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, LAG(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_mes_anterior FROM receita_mensal ORDER BY mes_pedido;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Receita mensal com receita do mês anterior",
+        "expected_columns": [
+          "mes_pedido",
+          "receita_mensal",
+          "receita_mes_anterior"
+        ],
+        "notes": [
+          "Apenas pedidos entregues",
+          "Usar LAG"
+        ]
+      }
+    },
+    {
+      "id": "ex2_variacao_mom",
+      "title": "Desafio 2 — Variação percentual MoM",
+      "prompt_markdown": "Adicione a variação percentual da receita em relação ao mês anterior.\n\n**Sua missão:** Retorne `mes_pedido`, `receita_mensal`, `receita_mes_anterior` e `variacao_percentual`. Fórmula: `(receita_mensal - receita_mes_anterior) / NULLIF(receita_mes_anterior, 0) * 100`. Use `ROUND(..., 1)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1), com_lag AS (SELECT mes_pedido, receita_mensal, LAG(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_mes_anterior FROM receita_mensal) SELECT mes_pedido, receita_mensal, receita_mes_anterior, ROUND((receita_mensal - receita_mes_anterior)::numeric / NULLIF(receita_mes_anterior, 0) * 100, 1) AS variacao_percentual FROM com_lag ORDER BY mes_pedido;",
+      "hint_level_1": "Base na CTE do desafio 1. Segunda CTE com LAG. No SELECT final calcule (receita_mensal - receita_mes_anterior) / NULLIF(receita_mes_anterior, 0) * 100 com ROUND.",
+      "hint_level_2": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1), com_lag AS (SELECT mes_pedido, receita_mensal, LAG(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_mes_anterior FROM receita_mensal) SELECT mes_pedido, receita_mensal, receita_mes_anterior, ROUND((receita_mensal - receita_mes_anterior)::numeric / NULLIF(receita_mes_anterior, 0) * 100, 1) AS variacao_percentual FROM com_lag ORDER BY mes_pedido;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Receita mensal com variação percentual MoM",
+        "expected_columns": [
+          "mes_pedido",
+          "receita_mensal",
+          "receita_mes_anterior",
+          "variacao_percentual"
+        ],
+        "notes": [
+          "Usar NULLIF para evitar divisão por zero"
+        ]
+      }
+    },
+    {
+      "id": "ex3_lead_proximo_mes",
+      "title": "Desafio 3 — LEAD: receita do próximo mês",
+      "prompt_markdown": "Retorne a receita mensal com a receita do **próximo** mês em cada linha.\n\n**Sua missão:** Retorne `mes_pedido`, `receita_mensal` e `receita_proximo_mes`. Use `LEAD(receita_mensal) OVER (ORDER BY mes_pedido)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, LEAD(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_proximo_mes FROM receita_mensal ORDER BY mes_pedido;",
+      "hint_level_1": "CTE de receita mensal. Use LEAD(receita_mensal) OVER (ORDER BY mes_pedido) para pegar o valor da próxima linha.",
+      "hint_level_2": "WITH receita_mensal AS (SELECT DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code='entregue' GROUP BY 1) SELECT mes_pedido, receita_mensal, LEAD(receita_mensal) OVER (ORDER BY mes_pedido) AS receita_proximo_mes FROM receita_mensal ORDER BY mes_pedido;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Receita mensal com receita do próximo mes",
+        "expected_columns": [
+          "mes_pedido",
+          "receita_mensal",
+          "receita_proximo_mes"
+        ],
+        "notes": [
+          "Usar LEAD"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,142 @@
+{
+  "id": "lesson_m2_6",
+  "title": "ORDER BY, LIMIT e OFFSET",
+  "lesson_type": "interactive_sql",
+  "objective": "Ordenar resultados, priorizar os registros mais relevantes e aplicar paginação básica com LIMIT e OFFSET.",
+  "prerequisites": [
+    "lesson_m2_5"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders"
+    ],
+    "scenario": "Você precisa montar visoes executivas com os pedidos mais importantes sem sobrecarregar o dashboard com todas as linhas."
+  },
+  "tabs": [
+    {
+      "id": "tab_order_by",
+      "title": "ORDER BY na prática",
+      "type": "content",
+      "content_markdown": "#### ORDER BY prioriza o que importa\n\nDepois de filtrar dados, o próximo passo e definir **ordem de leitura**.\nCom `ORDER BY`, você escolhe se quer ver primeiro os maiores, os menores, os mais recentes ou os mais antigos.\n\n| Comando | Uso |\n|---|---|\n| `ORDER BY coluna ASC` | crescente (padrão) |\n| `ORDER BY coluna DESC` | decrescente |\n| `ORDER BY col1 DESC, col2 ASC` | desempate por segunda coluna |\n\n```sql\nSELECT id, amount, order_date\nFROM filtering.orders\nORDER BY amount DESC, id ASC;\n```\n\nEssa query mostra pedidos de maior valor primeiro e usa `id` como desempate.\n\n[PLACEHOLDER_IMAGEM: Painel mostrando mesma tabela em três ordenacoes diferentes: por valor desc, por data desc e por id asc, destacando priorizacao de leitura.]"
+    },
+    {
+      "id": "tab_limit_offset",
+      "title": "LIMIT e OFFSET",
+      "type": "content",
+      "content_markdown": "#### LIMIT reduz volume; OFFSET página\n\nEm análise diaria, quase nunca você precisa de todas as linhas.\n`LIMIT` corta o resultado para as primeiras N linhas, e `OFFSET` pula as primeiras linhas para simular página.\n\n| Recurso | Função | Exemplo |\n|---|---|---|\n| `LIMIT` | limita quantidade retornada | `LIMIT 10` |\n| `OFFSET` | pula linhas iniciais | `OFFSET 20` |\n| juntos | página de resultados | `LIMIT 10 OFFSET 20` |\n\n```sql\nSELECT id, country, order_date, amount\nFROM filtering.orders\nWHERE country = 'USA'\nORDER BY order_date DESC, id ASC\nLIMIT 3 OFFSET 3;\n```\n\nA query acima retorna a \"página 2\" de pedidos dos EUA (3 linhas por página).\n\n> Sempre use `ORDER BY` antes de `LIMIT/OFFSET`; sem ordenação, a página pode ficar instavel.\n\n[PLACEHOLDER_IMAGEM: Fluxo visual de paginação SQL com ORDER BY + LIMIT + OFFSET, exibindo página 1 e página 2 de um mesmo ranking.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Top pedidos por valor",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O financeiro quer ver rapidamente os pedidos de maior impacto em receita.\n\n> **Sua missão:** Retorne os 5 pedidos de maior valor usando ordenação e limite."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Paginação de pedidos dos EUA",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O time comercial quer revisar pedidos dos EUA em lotes pequenos para follow-up.\n\n> **Sua missão:** Monte a segunda página (3 linhas) com `LIMIT` e `OFFSET`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Pedidos aprovados mais antigos",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "A operação quer priorizar backlog histórico de pedidos aprovados.\n\n> **Sua missão:** Traga os 4 pedidos aprovados mais antigos, com ordenação crescente por data."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `ORDER BY` define prioridade de leitura do resultado.\n- `ASC` ordena crescente e `DESC` ordena decrescente.\n- Ordenar por duas colunas evita empate ambíguo.\n- `LIMIT` reduz o volume retornado.\n- `OFFSET` permite paginação quando combinado com `ORDER BY`.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `ORDER BY` | Cláusula para ordenar linhas do resultado |\n| `ASC` | Ordem crescente |\n| `DESC` | Ordem decrescente |\n| `LIMIT` | Restringe quantidade de linhas retornadas |\n| `OFFSET` | Pula linhas iniciais antes de retornar resultado |\n\n> **Próxima etapa:** avançar para agregações e leitura executiva de KPIs com SQL."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m2_6_top5_amount",
+      "title": "Desafio 1 - Top 5 pedidos por valor",
+      "prompt_markdown": "Retorne os 5 pedidos de maior valor da tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `id`, `customer_id`, `amount`, `country`\n- Ordenar por `amount DESC`, depois `id ASC`\n- Limitar em 5 linhas",
+      "starter_query": "",
+      "solution_query": "SELECT id, customer_id, amount, country FROM filtering.orders ORDER BY amount DESC, id ASC LIMIT 5;",
+      "hint_level_1": "Use ORDER BY amount DESC para priorizar maiores valores e LIMIT 5 para reduzir o resultado.",
+      "hint_level_2": "SELECT id, customer_id, amount, country FROM filtering.orders ORDER BY amount DESC, id ASC LIMIT 5;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar os 5 pedidos de maior valor com desempate por id",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "country"
+        ],
+        "notes": [
+          "A query deve usar ORDER BY amount DESC e id ASC",
+          "A query deve retornar 5 linhas (ids 1, 5, 20, 16, 9)",
+          "Deve aplicar LIMIT 5"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_6_usa_page2",
+      "title": "Desafio 2 - Página 2 de pedidos dos EUA",
+      "prompt_markdown": "Monte a segunda página de pedidos dos EUA, com 3 linhas por página.\n\n**Requisitos:**\n- Colunas: `id`, `country`, `order_date`, `amount`\n- Filtro: `country = 'USA'`\n- Ordenar por `order_date DESC`, depois `id ASC`\n- Usar `LIMIT 3 OFFSET 3`",
+      "starter_query": "",
+      "solution_query": "SELECT id, country, order_date, amount FROM filtering.orders WHERE country = 'USA' ORDER BY order_date DESC, id ASC LIMIT 3 OFFSET 3;",
+      "hint_level_1": "Filtre USA, ordene por data decrescente e aplique LIMIT/OFFSET para pegar a página 2.",
+      "hint_level_2": "SELECT id, country, order_date, amount FROM filtering.orders WHERE country = 'USA' ORDER BY order_date DESC, id ASC LIMIT 3 OFFSET 3;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar a segunda página de pedidos dos EUA com 3 linhas",
+        "expected_columns": [
+          "id",
+          "country",
+          "order_date",
+          "amount"
+        ],
+        "notes": [
+          "A query deve usar LIMIT 3 OFFSET 3",
+          "A query deve retornar 3 linhas (ids 20, 10 e 7)",
+          "A ordenação deve ser order_date DESC e id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_6_oldest_approved",
+      "title": "Desafio 3 - Aprovados mais antigos",
+      "prompt_markdown": "Retorne os 4 pedidos aprovados mais antigos para acompanhamento operacional.\n\n**Requisitos:**\n- Colunas: `id`, `status`, `order_date`, `amount`\n- Filtro: `status = 'approved'`\n- Ordenar por `order_date ASC`, depois `id ASC`\n- Limitar em 4 linhas",
+      "starter_query": "",
+      "solution_query": "SELECT id, status, order_date, amount FROM filtering.orders WHERE status = 'approved' ORDER BY order_date ASC, id ASC LIMIT 4;",
+      "hint_level_1": "Use filtro de status aprovado, ordene do mais antigo para o mais novo e limite em 4 linhas.",
+      "hint_level_2": "SELECT id, status, order_date, amount FROM filtering.orders WHERE status = 'approved' ORDER BY order_date ASC, id ASC LIMIT 4;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar os 4 pedidos aprovados mais antigos",
+        "expected_columns": [
+          "id",
+          "status",
+          "order_date",
+          "amount"
+        ],
+        "notes": [
+          "A query deve usar status = approved",
+          "A query deve retornar 4 linhas (ids 22, 13, 9 e 16)",
+          "Deve aplicar LIMIT 4"
+        ]
+      }
+    }
+  ]
+}

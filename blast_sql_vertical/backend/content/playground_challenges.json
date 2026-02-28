@@ -1,0 +1,97 @@
+{
+    "datasets": [
+        {
+            "id": "ecommerce",
+            "name": "E-Commerce Interno",
+            "description": "Dados de varejo com clientes, produtos, pedidos e pagamentos. Ótimo para treinar JOINs e agrupar vendas.",
+            "schema_prefix": "ecommerce",
+            "color": "blue"
+        },
+        {
+            "id": "saas_subscription",
+            "name": "SaaS B2B",
+            "description": "Sistema de assinaturas de software com planos, contas, faturas e eventos de funil.",
+            "schema_prefix": "saas_subscription",
+            "color": "indigo"
+        },
+        {
+            "id": "mobility",
+            "name": "Mobilidade Urbana",
+            "description": "Aplicativo de transporte com cidades, motoristas, corridas e pagamentos. Treine agregações e filtros de data.",
+            "schema_prefix": "mobility",
+            "color": "emerald"
+        }
+    ],
+    "challenges": {
+        "ecommerce": [
+            {
+                "id": "eco_1",
+                "difficulty": "Fácil",
+                "title": "Apenas Pedidos Entregues",
+                "description": "Liste todos os pedidos que têm o status 'delivered'. Retorne todas as colunas.",
+                "starter_query": "SELECT * \nFROM ecommerce.orders\nLIMIT 10;",
+                "solution_query": "SELECT * FROM ecommerce.orders WHERE status = 'delivered';"
+            },
+            {
+                "id": "eco_2",
+                "difficulty": "Médio",
+                "title": "Receita Total por Produto",
+                "description": "Calcule a receita total gerada por cada produto vendido. Considere `quantity * unit_price` da tabela `order_items`. Retorne o nome do produto (`name`) e a receita (`receita_total`), ordenando da maior para a menor receita.",
+                "starter_query": "SELECT \n  p.name,\n  \nFROM ecommerce.products p\nJOIN ecommerce.order_items i ON p.id = i.product_id\nGROUP BY 1;",
+                "solution_query": "SELECT p.name, SUM(i.quantity * i.unit_price) AS receita_total FROM ecommerce.products p JOIN ecommerce.order_items i ON p.id = i.product_id GROUP BY p.name ORDER BY receita_total DESC;"
+            },
+            {
+                "id": "eco_3",
+                "difficulty": "Difícil",
+                "title": "Ticket Médio por País",
+                "description": "Calcule o ticket médio pago (da tabela `payments`) por país do usuário. Lembre-se que um usuário faz pedidos, e pedidos têm pagamentos. Retorne o `country` e o `ticket_medio` em ordem descrescente.",
+                "starter_query": "SELECT \n  u.country,\n  \nFROM ecommerce.users u\n\nGROUP BY 1;",
+                "solution_query": "SELECT u.country, AVG(p.amount) AS ticket_medio FROM ecommerce.users u JOIN ecommerce.orders o ON u.id = o.user_id JOIN ecommerce.payments p ON o.id = p.order_id GROUP BY u.country ORDER BY ticket_medio DESC;"
+            }
+        ],
+        "saas_subscription": [
+            {
+                "id": "saas_1",
+                "difficulty": "Fácil",
+                "title": "Assinaturas Ativas",
+                "description": "Encontre todas as assinaturas com status 'active'. Retorne o `id` da assinatura e a data de início (`started_at`).",
+                "starter_query": "SELECT * \nFROM saas_subscription.subscriptions\nLIMIT 10;",
+                "solution_query": "SELECT id, started_at FROM saas_subscription.subscriptions WHERE status = 'active';"
+            },
+            {
+                "id": "saas_2",
+                "difficulty": "Médio",
+                "title": "Plano mais Popular",
+                "description": "Descubra qual plano tem mais assinaturas (independentemente do status). Retorne o nome do plano e a `quantidade` de assinaturas, do maior para o menor.",
+                "starter_query": "SELECT \n  p.name,\n  COUNT(*) as quantidade\nFROM saas_subscription.plans p\n\nGROUP BY 1;",
+                "solution_query": "SELECT p.name, COUNT(*) as quantidade FROM saas_subscription.plans p JOIN saas_subscription.subscriptions s ON p.id = s.plan_id GROUP BY p.name ORDER BY quantidade DESC;"
+            },
+            {
+                "id": "saas_3",
+                "difficulty": "Difícil",
+                "title": "Taxa de Churn por Empresa",
+                "description": "Identifique contas (empresas) que tiveram evento de 'churn'. Retorne o nome da conta e a data em que ocorreu o churn (`occurred_at`). Ordene pela data mais recente.",
+                "starter_query": "SELECT \n  a.name,\n  e.occurred_at\nFROM saas_subscription.accounts a\nJOIN saas_subscription.events e ON a.id = e.account_id\n\n;",
+                "solution_query": "SELECT a.name, e.occurred_at FROM saas_subscription.accounts a JOIN saas_subscription.events e ON a.id = e.account_id WHERE e.event_type = 'churn' ORDER BY e.occurred_at DESC;"
+            }
+        ],
+        "mobility": [
+            {
+                "id": "mob_1",
+                "difficulty": "Fácil",
+                "title": "Verificando as Corridas",
+                "description": "Recupere todas as corridas que custaram mais de 25 reais (`fare > 25`). Retorne todas as colunas.",
+                "starter_query": "SELECT * \nFROM mobility.rides\n",
+                "solution_query": "SELECT * FROM mobility.rides WHERE fare > 25;"
+            },
+            {
+                "id": "mob_2",
+                "difficulty": "Médio",
+                "title": "Faturamento por Motorista",
+                "description": "Some o valor total do faturamento (`fare`) por motorista. Retorne o nome do motorista e o `faturamento_total`, em ordem decrescente.",
+                "starter_query": "SELECT d.name, SUM(r.fare) as faturamento_total\nFROM mobility.drivers d\nJOIN mobility.rides r ON d.id = r.driver_id\nGROUP BY 1;",
+                "solution_query": "SELECT d.name, SUM(r.fare) as faturamento_total FROM mobility.drivers d JOIN mobility.rides r ON d.id = r.driver_id GROUP BY d.name ORDER BY faturamento_total DESC;"
+            }
+        ]
+    }
+}

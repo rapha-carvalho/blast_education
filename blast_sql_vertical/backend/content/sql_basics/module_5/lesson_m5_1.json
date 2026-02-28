@@ -1,0 +1,126 @@
+{
+  "id": "lesson_m5_1",
+  "title": "Extraindo e Truncando Datas",
+  "lesson_type": "interactive_sql",
+  "objective": "Aprender a usar EXTRACT e DATE_TRUNC para manipular, extrair e agrupar registros baseados em data e hora.",
+  "prerequisites": [
+    "lesson_m4_3"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders"
+    ],
+    "scenario": "A equipe diretiva precisa avaliar sazonalidade das vendas e volume de pedidos agrupados por mês e ano."
+  },
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "tabs": [
+    {
+      "id": "tab_intro",
+      "title": "Extraindo com EXTRACT",
+      "type": "content",
+      "content_markdown": "#### Desmembrando uma Data\n\nDatas e carimbos de tempo (timestamps) inteiros, como `2024-03-15 14:30:00`, contem varias informações unidas. Ocasionalmente, você quer descobrir *apenas o ano* ou *apenas o mes*.\n\nPara isso, utilizamos a função **`EXTRACT()`**.\n\n```sql\n-- Descobrindo o ano do pedido\nSELECT \n  order_date,\n  EXTRACT(year FROM order_date) AS ano_venda\nFROM filtering.orders;\n```\n\nPode-se extrair as seguintes partes comuns:\n- `year` (Ano)\n- `month` (Mes, 1-12)\n- `day` (Dia, 1-31)\n- `hour`, `minute`, `second` (Horas, minutos, segundos — se for um timestamp complexo)\n- `dow` (Day of Week - Dia da semana, de 0 a 6)\n\n---\n\n#### Cuidados ao usar EXTRACT no agrupamento\n\nAgrupar por `EXTRACT(month FROM data)` as vezes traz perigos inesperados. Se a sua tabela tem vendas de *2023* e *2024*, ao agrupar usando apenas `EXTRACT(month ...)`, as vendas de *Janeiro de 2023* e *Janeiro de 2024* vao se misturar no mesmo balde \"Mes 1\".\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando uma data de 2024 ? o EXTRACT dividindo ela com setas apontando para baldes separados com o ano, o mes ? o dia.]"
+    },
+    {
+      "id": "tab_trunc",
+      "title": "Arredondando com DATE_TRUNC",
+      "type": "content",
+      "content_markdown": "#### Criando baldes cronológicos\n\nPara resolver o problema do `EXTRACT` nos relatórios (onde o calendário se repete e perde-se o ano), os analistas de dados tem uma arma mais poderosa: o **`DATE_TRUNC()`**. \n\nO `DATE_TRUNC` não separa apenas um número, ele \"arredonda\" a data inteira para o início do período solicitado, transformando tudo em uma data uniforme e confiável.\n\n```sql\n-- DATE_TRUNC arredonda a data mantendo o contexto do ano\nSELECT \n  order_date, \n  DATE_TRUNC('month', order_date) AS mes_agrupado\nFROM filtering.orders;\n```\n\nPor exemplo, tanto as datas `2024-03-15` quanto `2024-03-22` ao serem convertidas por `DATE_TRUNC('month', ...)` retornarão **`2024-03-01`**. \nElas agora caem num \"balde\"único do Início do Mes.\n\n---\n\n#### Praticidade com GROUP BY\n\não criarmos gráficos de Receita Mensal Recorrente (MRR), inevitavelmente usaremos o `DATE_TRUNC`.\n\n```sql\n-- Gráfico das vendas do e-commerce por mês agrupado\nSELECT \n  DATE_TRUNC('month', order_date) AS safra,\n  COUNT(*) AS qtd_pedidos,\n  SUM(amount) AS faturamento\nFROM filtering.orders\nGROUP BY safra\nORDER BY safra;\n```\n\n[PLACEHOLDER_IMAGEM: Infográfico mostrando o DATE_TRUNC atuando como um funil ou balde que arredonda duas datas separadas do meio do mês diretamente para o dia primeiro do mesmo mes, prontas para serem agrupadas.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Usando EXTRACT",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Comecemos com os conceitos basicos do `EXTRACT`.\n\n> **Sua missão:** Mostre o `id` do pedido, e use o comando `EXTRACT(year ...)` na coluna `order_date` nomeando o resultado como `ano_venda`. Considere todos os registros na tabela `filtering.orders`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Testando o TRUNC",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora, vamos usar o poder do truncamento.\n\n> **Sua missão:** Faca um relatório mostrando todos os valores da coluna de `order_date`, e usando `DATE_TRUNC` no parametro `'month'` para essa mesma data nomeando de `mes_inicial`.\n> Puxe isso da nossa sempre util `filtering.orders`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Agrupamento Temporal",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "Uma das maiores forças do analista e montar Séries Temporais.\n\n> **Sua missão:** Usando `filtering.orders`, monte um relatório com duas colunas. A primeira eh o truncamento em nível de mes (`'month'`) da coluna `order_date`, chame de `safra`. A segunda ? a soma de lucro com `SUM(amount)` para representar o `faturamento`. Não se esqueça de realizar o `GROUP BY` e de organizar (`ORDER BY`) da `safra` mais antiga para a mais nova."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### Você aprendeu novos padrões\n\n- O **`EXTRACT(campo FROM data)`** isola partes únicas e matemáticas (como só o número do mês ou da hora).\n- Cuidado ao usar `EXTRACT` em relatórios longos, pois misturar Janeiro/2023 com Janeiro/2024 pode distorcer métricas se você se esquecer de agrupar pelo Ano também.\n- O **`DATE_TRUNC('período', data)`** arredonda a data preservando toda a sua temporalidade. Se quisermos que `2024-03-22 17:00` vire `2024-03-01 00:00`, esse ? o caminho.\n- Analistas experientes quase sempre confiam em `DATE_TRUNC` ao alimentar gráficos de séries temporais (linha do tempo).\n\n---\n\n#### Sinta a Força do SQL!\n\nAqui listamos as strings e períodos que PostgreSQL e outros aceitam sem problema tanto no `EXTRACT` quando no `DATE_TRUNC`:\n- `year`, `month`, `day`\n- `hour`, `minute`, `second`\n- `week`\n- `quarter`\n\nDessa forma, quando a diretoria perguntar quais dias da semana performam melhor (`dow`), ou a receita agregada por trimestres ao longo de uma decada inteira (`'quarter'`), um verdadeiro Mestre não ira suar a camisa."
+    }
+  ],
+  "exercises": [
+    {
+      "id": "ex_m5_1_extract",
+      "title": "Desafio 1 - Identificar ano",
+      "prompt_markdown": "**Quando a loja vendeu isso?**\n\nNossa auditoria requer a listagem dos pedidos e dos anos em que ocorreram.\n\n**Requisitos:**\n- `id`\n- Uso do `EXTRACT(year FROM ...)` gerando a coluna `ano_venda`.\n- Fonte `filtering.orders`",
+      "starter_query": "",
+      "solution_query": "SELECT id, EXTRACT(year FROM order_date) AS ano_venda FROM filtering.orders;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Extrair o ano com sucesso da data de venda (order_date)",
+        "expected_columns": [
+          "id",
+          "ano_venda"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Sua declaração de seleção devera conter as colunas `id` seguido do resultado retornado atraves de uma operação de EXTRACT de `year` desde o campo `order_date`.",
+      "hint_level_2": "SELECT id, EXTRACT(year FROM order_date) AS ano_venda FROM filtering.orders;"
+    },
+    {
+      "id": "ex_m5_1_trunc",
+      "title": "Desafio 2 - Normalizacao mensal",
+      "prompt_markdown": "**Transformando dias no início do ciclo.**\n\nO lider do financeiro precisa equalizar todas as transações efetuadas para cair no primeiro dia de seu mes respectivo e gerar uma nota analítica comparativa entre transação específica e balizamento da base.\n\n**Requisitos:**\n- Coluna original `order_date`\n- Uso de `DATE_TRUNC` para a unidade `'month'` gerando a coluna `mes_inicial`.\n- Da nossa tabela `filtering.orders`.",
+      "starter_query": "",
+      "solution_query": "SELECT order_date, DATE_TRUNC('month', order_date) AS mes_inicial FROM filtering.orders;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Realizar truncamentos em base de mes",
+        "expected_columns": [
+          "order_date",
+          "mes_inicial"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Não confunda a sintaxe do DATE_TRUNC. Ela sempre começa recebendo qual ? a precisao cronologica entre aspas e logo na primeira virgula já específica a coluna do banco de dados.",
+      "hint_level_2": "SELECT order_date, DATE_TRUNC('month', order_date) AS mes_inicial FROM filtering.orders;"
+    },
+    {
+      "id": "ex_m5_1_serie_temporal",
+      "title": "Desafio 3 - Serie temporal",
+      "prompt_markdown": "**Produzindo gráficos analiticos de forma elegante.**\n\nTodos esses relatórios e insights tem como destino comum os potentes gráficos de apresentacao da companhia.\n\nPrepare essa serie para importacao e agregação pelo sistema gráfico.\n\n**Requisitos:**\n- `safra` como produto de um date_trunc de `'month'` no order_date\n- `faturamento` totalizacao generosa (`SUM`) da coluna `amount`.\n- Extraido da base de  `filtering.orders`\n- Agrupado na sua devida `safra` e em ordem ASC (padrão).",
+      "starter_query": "",
+      "solution_query": "SELECT DATE_TRUNC('month', order_date) AS safra, SUM(amount) AS faturamento FROM filtering.orders GROUP BY safra ORDER BY safra;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "A sintaxe GROUP BY opera suavemente combinando os agregadores aos truncamentos e garantindo cronologia asc",
+        "expected_columns": [
+          "safra",
+          "faturamento"
+        ],
+        "notes": [
+          "GROUP BY do termo gerado como alias safra e recomendado já em banco moderno."
+        ]
+      },
+      "hint_level_1": "Ative o seu SELECT. Aplique o truncation de data mes para a variável pedida que deve ser tratada como AS safra. Faca a soma simples AS faturamento, venha de onde já conhecemos. E por fim rode os dois comandos de GROUP e ORDER utilizando esse novissimo index chamado safra.",
+      "hint_level_2": "SELECT DATE_TRUNC('month', order_date) AS safra, SUM(amount) AS faturamento FROM filtering.orders GROUP BY safra ORDER BY safra;"
+    }
+  ]
+}

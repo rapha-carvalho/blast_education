@@ -1,0 +1,1298 @@
+{
+  "id": "lesson_master_challenge_1",
+  "title": "Desafio Mestre - Blast Commerce: Três Teorias, Uma Resposta",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar SQL para investigar o desaceleramento de crescimento da Blast Commerce, reunir evidências para três hipóteses de negócio e transformar os resultados em recomendações executivas.",
+  "prerequisites": [
+    "lesson_m10_2"
+  ],
+  "estimated_minutes": 210,
+  "requires_full_course_completion": true,
+  "final_pdf_button_label": "Baixar estudo de caso em PDF",
+  "final_pdf_requires_completion": false,
+  "portfolio_pdf_mode": "master_challenge",
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "capstone.clientes",
+      "capstone.pedidos",
+      "capstone.itens_pedido",
+      "capstone.produtos",
+      "capstone.pagamentos",
+      "capstone.eventos_funil",
+      "capstone.reembolsos"
+    ],
+    "scenario": "Investigação do desaceleramento de crescimento no H2/2024 da Blast Commerce: três executivos, três hipóteses conflitantes. Seu trabalho e reunir evidências via SQL e recomendar ao CEO qual caminho seguir."
+  },
+  "schema_reference": [
+    {
+      "table": "capstone.clientes",
+      "description": "800 clientes — canal de aquisição, estado, segmento de renda",
+      "columns": [
+        {
+          "name": "cliente_id",
+          "type": "INTEGER",
+          "desc": "Chave primária"
+        },
+        {
+          "name": "data_cadastro",
+          "type": "DATE",
+          "desc": "Data de registro na plataforma"
+        },
+        {
+          "name": "canal_aquisicao",
+          "type": "VARCHAR",
+          "desc": "organic, paid_search, paid_social, referral, email"
+        },
+        {
+          "name": "cidade",
+          "type": "VARCHAR",
+          "desc": "Cidade do cliente"
+        },
+        {
+          "name": "estado",
+          "type": "VARCHAR",
+          "desc": "UF: SP, RJ, MG, PR, RS, BA"
+        },
+        {
+          "name": "segmento_renda",
+          "type": "VARCHAR",
+          "desc": "alta, media_alta, média, entrada"
+        }
+      ]
+    },
+    {
+      "table": "capstone.pedidos",
+      "description": "8.000 pedidos — canal de venda, status, valor e datas",
+      "columns": [
+        {
+          "name": "pedido_id",
+          "type": "INTEGER",
+          "desc": "Chave primária"
+        },
+        {
+          "name": "cliente_id",
+          "type": "INTEGER",
+          "desc": "FK clientes (pode ser NULL — pedidos anônimos)"
+        },
+        {
+          "name": "data_pedido",
+          "type": "DATE",
+          "desc": "Data em que o pedido foi realizado"
+        },
+        {
+          "name": "status_pedido",
+          "type": "VARCHAR",
+          "desc": "entregue, cancelado, pendente"
+        },
+        {
+          "name": "valor_bruto",
+          "type": "DECIMAL",
+          "desc": "Valor total antes do desconto"
+        },
+        {
+          "name": "desconto_aplicado",
+          "type": "DECIMAL",
+          "desc": "Desconto em reais"
+        },
+        {
+          "name": "valor_frete",
+          "type": "DECIMAL",
+          "desc": "Frete cobrado (pode ser NULL)"
+        },
+        {
+          "name": "canal_pedido",
+          "type": "VARCHAR",
+          "desc": "web, app, inside_sales"
+        },
+        {
+          "name": "data_entrega",
+          "type": "DATE",
+          "desc": "Data de entrega (NULL se não entregue)"
+        }
+      ]
+    },
+    {
+      "table": "capstone.itens_pedido",
+      "description": "24.000 itens — preço e custo unitário por SKU",
+      "columns": [
+        {
+          "name": "pedido_id",
+          "type": "INTEGER",
+          "desc": "FK pedidos"
+        },
+        {
+          "name": "produto_id",
+          "type": "INTEGER",
+          "desc": "FK produtos"
+        },
+        {
+          "name": "quantidade",
+          "type": "INTEGER",
+          "desc": "Quantidade vendida"
+        },
+        {
+          "name": "preco_unitario",
+          "type": "DECIMAL",
+          "desc": "Preço de venda no momento da compra"
+        },
+        {
+          "name": "custo_unitario",
+          "type": "DECIMAL",
+          "desc": "Custo de aquisição/produção do item"
+        }
+      ]
+    },
+    {
+      "table": "capstone.produtos",
+      "description": "240 produtos — categoria, subcategoria e custo de produção",
+      "columns": [
+        {
+          "name": "produto_id",
+          "type": "INTEGER",
+          "desc": "Chave primária"
+        },
+        {
+          "name": "categoria",
+          "type": "VARCHAR",
+          "desc": "eletrônicos, casa, moda, esporte, beleza, acessórios"
+        },
+        {
+          "name": "subcategoria",
+          "type": "VARCHAR",
+          "desc": "Subcategoria do produto"
+        },
+        {
+          "name": "preco_lista",
+          "type": "DECIMAL",
+          "desc": "Preço de venda sugerido"
+        },
+        {
+          "name": "custo_unitario",
+          "type": "DECIMAL",
+          "desc": "Custo de produção/aquisição"
+        }
+      ]
+    },
+    {
+      "table": "capstone.pagamentos",
+      "description": "Pagamentos por pedido — método, status e parcelas",
+      "columns": [
+        {
+          "name": "pagamento_id",
+          "type": "INTEGER",
+          "desc": "Chave primária"
+        },
+        {
+          "name": "pedido_id",
+          "type": "INTEGER",
+          "desc": "FK pedidos"
+        },
+        {
+          "name": "metodo_pagamento",
+          "type": "VARCHAR",
+          "desc": "cartao_credito, pix, boleto, cartao_debito"
+        },
+        {
+          "name": "status_pagamento",
+          "type": "VARCHAR",
+          "desc": "aprovado, pendente, recusado"
+        },
+        {
+          "name": "parcelas",
+          "type": "INTEGER",
+          "desc": "Número de parcelas (1 = à vista)"
+        },
+        {
+          "name": "valor_pago",
+          "type": "DECIMAL",
+          "desc": "Valor efetivamente pago"
+        }
+      ]
+    },
+    {
+      "table": "capstone.eventos_funil",
+      "description": "Sessões digitais por etapa do funil de conversão",
+      "columns": [
+        {
+          "name": "sessao_id",
+          "type": "VARCHAR",
+          "desc": "Identificador único de sessão"
+        },
+        {
+          "name": "etapa_funil",
+          "type": "VARCHAR",
+          "desc": "visita, add_carrinho, checkout, compra"
+        },
+        {
+          "name": "canal_midia",
+          "type": "VARCHAR",
+          "desc": "Canal de mídia da sessão"
+        },
+        {
+          "name": "data_evento",
+          "type": "DATE",
+          "desc": "Data do evento"
+        }
+      ]
+    },
+    {
+      "table": "capstone.reembolsos",
+      "description": "1.200 reembolsos com motivo e valor",
+      "columns": [
+        {
+          "name": "reembolso_id",
+          "type": "INTEGER",
+          "desc": "Chave primária"
+        },
+        {
+          "name": "pedido_id",
+          "type": "INTEGER",
+          "desc": "FK pedidos"
+        },
+        {
+          "name": "motivo_reembolso",
+          "type": "VARCHAR",
+          "desc": "defeito, atraso_entrega, pedido_errado, arrependimento"
+        },
+        {
+          "name": "valor_reembolso",
+          "type": "DECIMAL",
+          "desc": "Valor reembolsado ao cliente"
+        },
+        {
+          "name": "data_reembolso",
+          "type": "DATE",
+          "desc": "Data em que o reembolso foi processado"
+        }
+      ]
+    }
+  ],
+  "tabs": [
+    {
+      "id": "tab_onboarding",
+      "title": "Contexto Inicial",
+      "type": "content",
+      "content_markdown": "## Blast Commerce — Crescimento desacelerou: três teorias, uma resposta\n\nVocê foi contratado como Analista SQL Jr pela **Blast Commerce**, um e-commerce omnichannel com forte presença no Brasil. A empresa vende via web, app e equipe de vendas internas em todo o país.\n\n---\n\n### O Problema\n\nO H1/2024 foi de crescimento acelerado. No H2, o crescimento desacelerou bruscamente. O CEO convocou uma reunião de emergência e três executivos chegaram com diagnósticos opostos:\n\n**CMO Mariana:** *\"O problema e de canal de aquisição. Paid search e paid social estão trazendo clientes de baixo valor que não ficam. Precisamos dobrar em organic e referral. Mais investimento em branding, menos em performance.\"*\n\n**CFO Roberto:** *\"Discordo. O problema e de margem. Eletrônicos tem receita enorme mas margem terrivel. O volume de defeitos e reembolsos está comendo nosso lucro operacional. Temos que auditar o portfólio de produtos.\"*\n\n**COO Felipe:** *\"Vocês dois estão errados. O gargalo e operacional. O canal app tem taxa de cancelamento absurda e prazo de entrega inconsistente. Estamos gerando evasão silencioso antes de qualquer problema de margem ou aquisição.\"*\n\n---\n\n### Sua Missão\n\n**Use SQL para reunir evidências e ao final recomendar ao CEO qual (ou quais) teoria(s) são sustentadas pelos dados.**\n\n- Os 20 desafios SQL constroem o dossiê de evidências.\n- As 5 tarefas de interpretação pedem que você análise os dados e tome posição.\n- O resumo executivo final ? o entregável para o CEO.\n\n### Regras do desafio\n- Editor abre vazio: você escreve tudo do zero.\n- Apenas SELECT (o ambiente bloqueia comandos destrutivos).\n- Valide cada desafio antes de avançar."
+    },
+    {
+      "id": "tab_dataset_context",
+      "title": "Base de Dados e Esquema",
+      "type": "content",
+      "content_markdown": "## Esquema capstone — Blast Commerce\n\nTodos os dados estão no esquema `capstone`. Use sempre `capstone.nome_tabela` nas suas consultas.\n\n### Tabelas disponíveis\n\n| Tabela | Descrição |\n|---|---|\n| `capstone.clientes` | 800 clientes com canal de aquisição, estado, segmento de renda |\n| `capstone.pedidos` | 8.000 pedidos com canal de venda, status, valor e datas |\n| `capstone.itens_pedido` | 24.000 itens com preço e custo unitário por SKU |\n| `capstone.produtos` | 240 produtos com categoria, subcategoria e custo de produção |\n| `capstone.pagamentos` | Pagamentos por pedido com método, status e parcelas |\n| `capstone.eventos_funil` | Sessões digitais por etapa (visita, carrinho, checkout, compra) |\n| `capstone.reembolsos` | 1.200 reembolsos com motivo e valor |\n\n### Dados com ruído realista\n- Alguns pedidos sem `cliente_id` (clientes anônimos)\n- Pedidos com divergência entre `valor_bruto` e soma dos itens\n- Pagamentos duplicados em parte dos pedidos\n- `valor_frete` nulo em alguns registros\n\n### Dicas de performance\n- Filtre por `status_pedido` cedo: a maioria dos análises usa apenas `entregue`.\n- Use CTEs para organizar lógica complexa.\n- Sempre confirme a ordenação em funções de janela (`ORDER BY` explícito)."
+    },
+    {
+      "id": "tab_data_dict",
+      "title": "Dicionário de Dados",
+      "type": "content",
+      "content_markdown": "## Dicionário rápido de colunas-chave\n\n### capstone.clientes\n| Coluna | Tipo | Descrição |\n|---|---|---|\n| cliente_id | INTEGER | Chave primária |\n| data_cadastro | DATE | Data de registro na plataforma |\n| canal_aquisicao | VARCHAR | organic, paid_search, paid_social, referral, email |\n| cidade | VARCHAR | Cidade do cliente |\n| estado | VARCHAR | UF: SP, RJ, MG, PR, RS, BA |\n| segmento_renda | VARCHAR | alta, media_alta, média, entrada |\n\n### capstone.pedidos\n| Coluna | Tipo | Descrição |\n|---|---|---|\n| pedido_id | INTEGER | Chave primária |\n| cliente_id | INTEGER | FK para clientes (pode ser NULL) |\n| data_pedido | DATE | Data em que o pedido foi feito |\n| status_pedido | VARCHAR | entregue, cancelado, pendente |\n| valor_bruto | DECIMAL | Valor total antes do desconto |\n| desconto_aplicado | DECIMAL | Desconto em reais |\n| valor_frete | DECIMAL | Frete cobrado (pode ser NULL) |\n| canal_pedido | VARCHAR | web, app, inside_sales |\n| data_entrega | DATE | Data de entrega (NULL se não entregue) |\n\n### capstone.produtos\n| Coluna | Tipo | Descrição |\n|---|---|---|\n| produto_id | INTEGER | Chave primária |\n| categoria | VARCHAR | eletrônicos, casa, moda, esporte, beleza, acessórios |\n| preco_lista | DECIMAL | Preço de venda sugerido |\n| custo_unitario | DECIMAL | Custo de produção/aquisição |\n\n### capstone.eventos_funil\n| Coluna | Tipo | Descrição |\n|---|---|---|\n| sessao_id | VARCHAR | Identificador único de sessão |\n| etapa_funil | VARCHAR | visita, add_carrinho, checkout, compra |\n| canal_midia | VARCHAR | Canal de média da sessão |\n\n### capstone.reembolsos\n| Coluna | Tipo | Descrição |\n|---|---|---|\n| motivo_reembolso | VARCHAR | defeito, atraso_entrega, pedido_errado, arrependimento |\n| valor_reembolso | DECIMAL | Valor reembolsado |"
+    },
+    {
+      "id": "tab_sql_01",
+      "title": "1. Aquecimento — Volume de clientes",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "**Contexto de investigação:** Antes de testar qualquer hipótese, entenda a escala do negócio. Quantos clientes a Blast Commerce tem cadastrados?"
+    },
+    {
+      "id": "tab_sql_02",
+      "title": "2. Aquecimento — Pedidos sem cliente",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "**Contexto de investigação:** O COO Felipe suspeita de problemas de qualidade de dados que afetam métricas operacionais. Quantos pedidos estão sem cliente_id vinculado?"
+    },
+    {
+      "id": "tab_sql_03",
+      "title": "3. Aquecimento — Receita bruta 2024",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "**Contexto de investigação:** Qual ? a receita bruta total de pedidos entregues em 2024? Este número ser? a linha de base para as análises de crescimento."
+    },
+    {
+      "id": "tab_sql_04",
+      "title": "4. Aquecimento — Pedidos por canal",
+      "type": "challenge",
+      "exercise_index": 3,
+      "intro_markdown": "**Hipótese COO:** Felipe acredita que o app ? o problema. Antes de avaliar cancelamentos, veja a distribuição de volume entre os canais de venda."
+    },
+    {
+      "id": "tab_sql_05",
+      "title": "5. Núcleo — Ticket médio mensal",
+      "type": "challenge",
+      "exercise_index": 4,
+      "intro_markdown": "**Hipótese CMO:** Mariana afirma que canais pagos trazem clientes de menor valor. Análise o ticket médio mês a mês — há um padrão sazonal? Algum período de queda?"
+    },
+    {
+      "id": "tab_sql_06",
+      "title": "6. Núcleo — Cancelamento mensal",
+      "type": "challenge",
+      "exercise_index": 5,
+      "intro_markdown": "**Hipótese COO:** Felipe diz que o app tem cancelamentos absurdos. Comece com a taxa mensal geral — há picos? Quando o cancelamento acelerou?"
+    },
+    {
+      "id": "tab_sql_07",
+      "title": "7. Núcleo — Receita líquida por estado",
+      "type": "challenge",
+      "exercise_index": 6,
+      "intro_markdown": "**Contexto de negócio:** Quais estados geram mais receita líquida (após descontos e reembolsos)? SP e RJ dominam — em que proporção?"
+    },
+    {
+      "id": "tab_sql_08",
+      "title": "8. Núcleo — 10 principais clientes",
+      "type": "challenge",
+      "exercise_index": 7,
+      "intro_markdown": "**Hipótese CMO:** Mariana quer proteger os clientes de alto valor. Identifique os 10 principais por receita acumulada — eles são concentrados ou distribuídos?"
+    },
+    {
+      "id": "tab_sql_09",
+      "title": "9. Núcleo — Clientes acima da média",
+      "type": "challenge",
+      "exercise_index": 8,
+      "intro_markdown": "**Hipótese CMO:** Que proporção da base gera receita acima da média? Use subquery para encontrar os 20 clientes mais valiosos acima desse limite."
+    },
+    {
+      "id": "tab_sql_10",
+      "title": "10. Núcleo — Reconciliação pedido x itens",
+      "type": "challenge",
+      "exercise_index": 9,
+      "intro_markdown": "**Hipótese COO:** Felipe aponta problemas de qualidade de dados. Encontre pedidos onde o valor_bruto diverge significativamente da soma dos itens — possível fraude ou bug de sistema."
+    },
+    {
+      "id": "tab_sql_11",
+      "title": "11. Núcleo — Pagamentos duplicados",
+      "type": "challenge",
+      "exercise_index": 10,
+      "intro_markdown": "**Hipótese COO / CFO:** Pagamentos duplicados indicam falha operacional e risco financeiro. Quantos pedidos tem mais de um registro de pagamento?"
+    },
+    {
+      "id": "tab_sql_12",
+      "title": "12. Núcleo — Prazo de entrega por estado",
+      "type": "challenge",
+      "exercise_index": 11,
+      "intro_markdown": "**Hipótese COO:** Felipe acredita que atrasos de entrega causam cancelamentos e evasão. Qual o prazo médio por estado? Ha variações significativas?"
+    },
+    {
+      "id": "tab_sql_13",
+      "title": "13. Núcleo — Margem por categoria",
+      "type": "challenge",
+      "exercise_index": 12,
+      "intro_markdown": "**Hipótese CFO:** Roberto afirma que eletrônicos destroi margem. Calcule receita, custo e margem % por categoria — a hipótese do CFO tem sustentação numérica?"
+    },
+    {
+      "id": "tab_sql_14",
+      "title": "14. Núcleo — Reembolso por motivo",
+      "type": "challenge",
+      "exercise_index": 13,
+      "intro_markdown": "**Hipótese CFO:** Se defeitos dominam os reembolsos, isso sustenta a hipótese de problema de qualidade de produto. Qual motivo concentra mais reembolsos?"
+    },
+    {
+      "id": "tab_sql_15",
+      "title": "15. Avançado — Ranking de produtos",
+      "type": "challenge",
+      "exercise_index": 14,
+      "intro_markdown": "**Hipótese CFO:** Dentro de cada categoria, quais produtos geram mais receita? Use função de janela para rankear e identificar os 3 principais — há concentração em eletrônicos?"
+    },
+    {
+      "id": "tab_sql_16",
+      "title": "16. Avançado — Receita acumulada",
+      "type": "challenge",
+      "exercise_index": 15,
+      "intro_markdown": "**Contexto de crescimento:** Visualize a curva de receita acumulada mês a mês. O crescimento e linear? Ha uma inflexao visível no H2?"
+    },
+    {
+      "id": "tab_sql_17",
+      "title": "17. Avançado — Crescimento MoM",
+      "type": "challenge",
+      "exercise_index": 16,
+      "intro_markdown": "**Diagnóstico de crescimento:** Calcule o crescimento mês contra mês (MoM). Quando exatamente o crescimento desacelerou? Quais meses foram negativos?"
+    },
+    {
+      "id": "tab_sql_18",
+      "title": "18. Avançado — Coorte de retenção",
+      "type": "challenge",
+      "exercise_index": 17,
+      "intro_markdown": "**Hipótese CMO / COO:** Se canais pagos trazem clientes ruins (CMO) ? o app gera evasão (COO), isso deve aparecer na retenção de coorte. Quão bem os clientes retém em M1, M2, M3?"
+    },
+    {
+      "id": "tab_sql_19",
+      "title": "19. Avançado — Funil de conversão",
+      "type": "challenge",
+      "exercise_index": 18,
+      "intro_markdown": "**Hipótese COO:** Felipe suspeita de gargalo no funil digital. Em qual etapa a maior parte das sessões e perdida? O abandono e no carrinho, checkout ou na compra final?"
+    },
+    {
+      "id": "tab_sql_20",
+      "title": "20. Avançado — Clientes em risco de evasão",
+      "type": "challenge",
+      "exercise_index": 19,
+      "intro_markdown": "**Hipótese COO / CMO:** Quem está em risco de evasão? Liste os 50 clientes com mais de 90 dias sem compra entregue — eles representam uma ameaça real de receita?"
+    },
+    {
+      "id": "tab_interp_1",
+      "title": "Interpretação 1 — Canal e cancelamento",
+      "type": "interpretation",
+      "question_id": "interp_1",
+      "prompt_markdown": "Com base nos desafios 4, 5 e 6, avalie a hipótese do **COO Felipe** sobre o canal app.\n\nA taxa de cancelamento por canal ? o volume de pedidos sustentam ou refutam o diagnóstico de Felipe?\n\nInclua:\n- 2 evidências numéricas dos desafios,\n- 1 risco de negócio se o problema não for corrigido,\n- 1 ação recomendada com responsável e prazo.",
+      "min_chars": 280,
+      "keyword_groups": [
+        [
+          "canal",
+          "app",
+          "web"
+        ],
+        [
+          "cancelamento",
+          "cancelado"
+        ],
+        [
+          "acao",
+          "recomendacao",
+          "correção"
+        ]
+      ],
+      "rubric": [
+        "Cite pelo menos 2 numeros observados nas consultas.",
+        "Conecte o número a risco ou impacto de negócio.",
+        "Finalize com ação objetiva com responsável claro."
+      ],
+      "reference_challenges": [
+        3,
+        4,
+        5
+      ],
+      "validation_mode": "min_chars_only",
+      "answer_template": "### Avaliação da hipótese do COO\n- Evidencia 1 (desafio 4): [distribuição de pedidos por canal]\n- Evidencia 2 (desafio 6): [taxa de cancelamento — qual canal tem mais?]\n\n### Posição sobre a hipótese\n- [A hipótese do COO e sustentada/refutada porque...]\n\n### Risco de negócio\n- [O que acontece se nada mudar nos próximos 90 dias?]\n\n### Ação recomendada\n- Ação: \n- Responsável:\n- Prazo:\n- KPI de sucesso:"
+    },
+    {
+      "id": "tab_interp_2",
+      "title": "Interpretação 2 — Margem e reembolso",
+      "type": "interpretation",
+      "question_id": "interp_2",
+      "prompt_markdown": "Com base nos desafios 13 e 14, avalie a hipótese do **CFO Roberto** sobre eletrônicos e margem.\n\nOs numeros de margem e de reembolso sustentam ou refutam o diagnóstico do Roberto?\n\nInclua:\n- 2 evidências numéricas,\n- O impacto financeiro estimado,\n- Uma ação de portfólio ou produto para o próximo trimestre.",
+      "min_chars": 260,
+      "keyword_groups": [
+        [
+          "margem",
+          "custo",
+          "receita"
+        ],
+        [
+          "reembolso",
+          "defeito",
+          "eletronicos"
+        ],
+        [
+          "portfolio",
+          "produto",
+          "acao"
+        ]
+      ],
+      "rubric": [
+        "Compare margem de eletrônicos com pelo menos outra categoria.",
+        "Conecte motivo de reembolso a problema de qualidade de produto.",
+        "Ação deve ser específica ao portfólio (não genérica)."
+      ],
+      "reference_challenges": [
+        12,
+        13
+      ],
+      "validation_mode": "min_chars_only",
+      "answer_template": "### Avaliação da hipótese do CFO\n- Evidencia 1 (desafio 13): [margem % de eletrônicos vs categoria com melhor margem]\n- Evidencia 2 (desafio 14): [principal motivo de reembolso e sua concentração]\n\n### Impacto financeiro\n- [Quanto o problema custa em receita líquida por ano?]\n\n### Posição sobre a hipótese\n- [A hipótese do CFO e sustentada/refutada porque...]\n\n### Ação recomendada para o portfólio\n- Ação:\n- Responsável:\n- Prazo:\n- KPI:"
+    },
+    {
+      "id": "tab_interp_3",
+      "title": "Interpretação 3 — Qualidade operacional",
+      "type": "interpretation",
+      "question_id": "interp_3",
+      "prompt_markdown": "Com base nos desafios 10, 11 e 12, escreva um parecer sobre qualidade operacional e controles de dados da Blast Commerce.",
+      "min_chars": 280,
+      "keyword_groups": [
+        [
+          "qualidade",
+          "controle",
+          "dados"
+        ],
+        [
+          "pagamento",
+          "duplicado",
+          "reconciliacao"
+        ],
+        [
+          "entrega",
+          "prazo",
+          "estado"
+        ]
+      ],
+      "rubric": [
+        "Diferencie problema de dados vs problema de operação.",
+        "Priorize correções por impacto financeiro.",
+        "Inclua responsável sugerido para cada correção."
+      ],
+      "reference_challenges": [
+        9,
+        10,
+        11
+      ],
+      "validation_mode": "min_chars_only",
+      "answer_template": "### Diagnóstico operacional e de qualidade\n- Evidencia 1 (desafio 10): [delta pedido x itens — magnitude do problema]\n- Evidencia 2 (desafio 11): [incidência de pagamento duplicado]\n- Evidencia 3 (desafio 12): [prazo médio por estado e variações]\n\n### Priorização de correções\n- Prioridade 1 (maior impacto):\n- Prioridade 2:\n- Prioridade 3:\n\n### Responsáveis sugeridos\n- Financeiro:\n- Operações:\n- Produto/Dados:"
+    },
+    {
+      "id": "tab_interp_4",
+      "title": "Interpretação 4 — Crescimento e funil",
+      "type": "interpretation",
+      "question_id": "interp_4",
+      "prompt_markdown": "Com base nos desafios 16, 17, 18 e 19, explique o principal gargalo de crescimento da Blast Commerce.\n\nQuando o crescimento desacelerou? Qual etapa do funil ? o maior ponto de perda? A retenção de coorte sustenta a hipótese do COO ou da CMO?",
+      "min_chars": 300,
+      "keyword_groups": [
+        [
+          "funil",
+          "conversao",
+          "gargalo"
+        ],
+        [
+          "crescimento",
+          "mom",
+          "aceleracao"
+        ],
+        [
+          "coorte",
+          "retencao",
+          "churn"
+        ]
+      ],
+      "rubric": [
+        "Identifique o mes específico em que o crescimento desacelerou.",
+        "Mostre onde ocorre a maior perda no funil com número.",
+        "Conecte retenção de coorte a uma das três hipóteses."
+      ],
+      "reference_challenges": [
+        15,
+        16,
+        17,
+        18
+      ],
+      "validation_mode": "min_chars_only",
+      "answer_template": "### Análise de crescimento\n- Evidencia 1 (desafio 16): [comportamento da curva acumulada]\n- Evidencia 2 (desafio 17): [meses com queda ou desaceleracao MoM]\n- Evidencia 3 (desafio 18): [retenção M0-M3 — onde há maior queda?]\n- Evidencia 4 (desafio 19): [etapa de maior perda no funil]\n\n### Principal gargalo identificado\n- [Descrição do gargalo com evidência numérica]\n\n### A retenção sustenta qual hipótese?\n- [CMO (canal de aquisição), COO (operação), ou ambas?]\n\n### Mini-plano de ação\n- Experimento:\n- Público:\n- Janela de medição:\n- Métrica de sucesso:"
+    },
+    {
+      "id": "tab_interp_5",
+      "title": "Resumo Executivo Final",
+      "type": "interpretation",
+      "question_id": "interp_5",
+      "prompt_markdown": "Escreva um **memorando executivo** para o CEO da Blast Commerce.\n\nEle precisa de uma resposta clara: qual(is) das três teorias — CMO Mariana, CFO Roberto, COO Felipe — tem suporte nos dados, e qual ? a estratégia recomendada?\n\nEstruture em 4 blocos:\n1) Diagnóstico geral (o que os dados mostram?)\n2) 3 principais achados com evidências numéricas\n3) Recomendação principal (quem estava certo?)\n4) Riscos e limites da análise",
+      "min_chars": 420,
+      "keyword_groups": [
+        [
+          "cmo",
+          "cfo",
+          "coo",
+          "mariana",
+          "roberto",
+          "felipe"
+        ],
+        [
+          "insight",
+          "evidência",
+          "diagnóstico"
+        ],
+        [
+          "recomendacao",
+          "acao",
+          "estratégia"
+        ],
+        [
+          "risco",
+          "limitacao",
+          "dados"
+        ]
+      ],
+      "rubric": [
+        "Deve citar pelo menos dois dos três executivos com evidência numérica.",
+        "Recomendação deve ser clara sobre qual hipótese e mais forte.",
+        "Mencione pelo menos um limite da análise para evitar overclaim."
+      ],
+      "reference_challenges": [
+        3,
+        4,
+        5,
+        6,
+        7,
+        12,
+        13,
+        15,
+        16,
+        17,
+        18,
+        19
+      ],
+      "validation_mode": "min_chars_only",
+      "answer_template": "### memorando executivo — Blast Commerce\n**Para:** CEO\n**De:** Analista SQL Jr\n**Assunto:** Investigação do desaceleramento de crescimento H2/2024\n\n---\n\n### 1) Diagnóstico geral\n- [Resumo em 2-3 frases do que os dados revelam sobre o desaceleramento]\n\n### 2) 3 principais achados\n- Achado 1: [evidência numérica + impacto de negócio]\n- Achado 2: [evidência numérica + impacto de negócio]\n- Achado 3: [evidência numérica + impacto de negócio]\n\n### 3) Recomendação principal\n- [Qual hipótese tem mais suporte? CMO, CFO, COO ou combinação?]\n- Ação prioritária (90 dias):\n- Dono:\n- KPI de sucesso:\n\n### 4) Riscos e limites da análise\n- Risco 1:\n- Risco 2:\n- Limitação dos dados:"
+    },
+    {
+      "id": "tab_final_review",
+      "title": "Lista de Verificação e Entrega",
+      "type": "content",
+      "content_markdown": "## Lista de verificação de entrega\n\n- [ ] 20 desafios SQL validados\n- [ ] 5 respostas de interpretação aprovadas\n- [ ] Resumo executivo revisado\n\n---\n\nQuando tudo estiver concluído, baixe o **PDF de Estudo de Caso** para usar no seu portfólio e LinkedIn.\n\nO documento inclui:\n- Seus KPIs calculados com SQL\n- Graficos dos resultados principais\n- Sua recomendação executiva"
+    }
+  ],
+  "content_markdown": "Use as abas para navegar pelo Desafio Mestre.",
+  "exercises": [
+    {
+      "id": "mc_ex_01",
+      "title": "Aquecimento 1 — Volume de clientes",
+      "prompt_markdown": "Retorne o total de clientes cadastrados na base capstone.\n\nSaída esperada: 1 linha com a coluna `total_clientes`.",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(*) AS total_clientes\nFROM capstone.clientes",
+      "hint_level_1": "Use COUNT(*) na tabela de clientes.",
+      "hint_level_2": "SELECT COUNT(*) AS total_clientes FROM capstone.clientes",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Retorne o total de clientes cadastrados na base capstone.",
+        "expected_columns": [
+          "total_clientes"
+        ],
+        "notes": [
+          "Use o esquema capstone.",
+          "Mantenha o nome da coluna de saída conforme solicitado."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_02",
+      "title": "Aquecimento 2 — Pedidos sem cliente",
+      "prompt_markdown": "Conte quantos pedidos estão sem `cliente_id` preenchido.\n\nSaída esperada: 1 linha com `pedidos_sem_cliente`.",
+      "starter_query": "",
+      "solution_query": "SELECT COUNT(*) AS pedidos_sem_cliente\nFROM capstone.pedidos\nWHERE cliente_id IS NULL",
+      "hint_level_1": "Filtre os pedidos com cliente_id nulo.",
+      "hint_level_2": "WHERE cliente_id IS NULL antes do COUNT.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Conte quantos pedidos estão sem cliente_id preenchido.",
+        "expected_columns": [
+          "pedidos_sem_cliente"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_03",
+      "title": "Aquecimento 3 — Receita bruta entregue em 2024",
+      "prompt_markdown": "Some o `valor_bruto` apenas de pedidos entregues no ano de 2024.\n\nSaída esperada: 1 linha com `receita_bruta_2024`.",
+      "starter_query": "",
+      "solution_query": "SELECT ROUND(SUM(valor_bruto), 2) AS receita_bruta_2024\nFROM capstone.pedidos\nWHERE status_pedido = 'entregue'\n  AND data_pedido >= DATE '2024-01-01'\n  AND data_pedido < DATE '2025-01-01'",
+      "hint_level_1": "Use SUM com filtro por status e intervalo de datas.",
+      "hint_level_2": "Filtre por entregues em 2024 e agregue com SUM.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Some o valor_bruto apenas de pedidos entregues no ano de 2024.",
+        "expected_columns": [
+          "receita_bruta_2024"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_04",
+      "title": "Aquecimento 4 — Pedidos por canal de venda",
+      "prompt_markdown": "Liste o total de pedidos por `canal_pedido`. Ordene do maior para o menor total e, em empate, por `canal_pedido` ASC.\n\nSaída: `canal_pedido`, `total_pedidos`.\n\n> **Observe:** Os três canais tem volumes diferentes — o app domina ou o web?",
+      "starter_query": "",
+      "solution_query": "SELECT canal_pedido, COUNT(*) AS total_pedidos\nFROM capstone.pedidos\nGROUP BY canal_pedido\nORDER BY total_pedidos DESC, canal_pedido ASC",
+      "hint_level_1": "Agrupe por canal_pedido e conte linhas.",
+      "hint_level_2": "GROUP BY canal_pedido ORDER BY total_pedidos DESC.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar",
+        "title": "Pedidos por Canal de Venda",
+        "x": "canal_pedido",
+        "y": [
+          "total_pedidos"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Liste o total de pedidos por canal_pedido, ordenado do maior para o menor.",
+        "expected_columns": [
+          "canal_pedido",
+          "total_pedidos"
+        ],
+        "notes": [
+          "Use o esquema capstone.",
+          "Mantenha nomes de colunas de saída conforme solicitado."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_05",
+      "title": "Núcleo 1 — Ticket médio mensal",
+      "prompt_markdown": "Calcule o ticket médio mensal considerando apenas pedidos entregues e usando `(valor_bruto - desconto_aplicado)`.\n\nSaída: `mes_ref`, `ticket_medio`.\n\n> **Observe:** Ha uma queda visível no meio do ano ? uma recuperação no Q4?",
+      "starter_query": "",
+      "solution_query": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n       ROUND(AVG(valor_bruto - desconto_aplicado), 2) AS ticket_medio\nFROM capstone.pedidos\nWHERE status_pedido = 'entregue'\nGROUP BY 1\nORDER BY 1",
+      "hint_level_1": "DATE_TRUNC para mes, AVG para ticket.",
+      "hint_level_2": "Agrupe por mês e calcule média de valor_bruto - desconto_aplicado.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "line",
+        "title": "Ticket Médio Mensal (R$)",
+        "x": "mes_ref",
+        "y": [
+          "ticket_medio"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Calcule o ticket médio mensal de pedidos entregues.",
+        "expected_columns": [
+          "mes_ref",
+          "ticket_medio"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_06",
+      "title": "Núcleo 2 — Taxa de cancelamento mensal",
+      "prompt_markdown": "Calcule a taxa de cancelamento mensal em percentual: `pedidos cancelados / pedidos totais * 100`.\n\nSaída: `mes_ref`, `taxa_cancelamento_pct`.\n\n> **Hipótese COO:** Se Felipe estiver certo, a taxa deve ser consistentemente alta — não um pico isolado.",
+      "starter_query": "",
+      "solution_query": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n       ROUND(100.0 * SUM(CASE WHEN status_pedido = 'cancelado' THEN 1 ELSE 0 END) / COUNT(*), 2) AS taxa_cancelamento_pct\nFROM capstone.pedidos\nGROUP BY 1\nORDER BY 1",
+      "hint_level_1": "Use CASE WHEN dentro de SUM para contar cancelados.",
+      "hint_level_2": "Divida total de cancelados pelo total de pedidos no mês.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "line",
+        "title": "Taxa de Cancelamento Mensal (%)",
+        "x": "mes_ref",
+        "y": [
+          "taxa_cancelamento_pct"
+        ],
+        "color_scheme": "red"
+      },
+      "success_criteria": {
+        "objective": "Calcule a taxa de cancelamento mensal em percentual.",
+        "expected_columns": [
+          "mes_ref",
+          "taxa_cancelamento_pct"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_07",
+      "title": "Núcleo 3 — Receita líquida por estado",
+      "prompt_markdown": "Retorne a receita líquida por estado: `valor_bruto - desconto_aplicado - reembolsos`.\nConsidere apenas pedidos entregues.\n\nSaída: `estado`, `receita_liquida`.\n\n> **Observe:** Quão concentrada ? a receita geograficamente?",
+      "starter_query": "",
+      "solution_query": "WITH reembolso_por_pedido AS (\n  SELECT pedido_id, SUM(valor_reembolso) AS total_reembolso\n  FROM capstone.reembolsos\n  GROUP BY pedido_id\n)\nSELECT c.estado,\n       ROUND(SUM(p.valor_bruto - p.desconto_aplicado - COALESCE(r.total_reembolso, 0)), 2) AS receita_liquida\nFROM capstone.pedidos p\nJOIN capstone.clientes c\n  ON p.cliente_id = c.cliente_id\nLEFT JOIN reembolso_por_pedido r\n  ON p.pedido_id = r.pedido_id\nWHERE p.status_pedido = 'entregue'\nGROUP BY c.estado\nORDER BY receita_liquida DESC, c.estado",
+      "hint_level_1": "Monte um total de reembolso por pedido e depois faça join.",
+      "hint_level_2": "CTE + LEFT JOIN para descontar reembolso por pedido.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar_horizontal",
+        "title": "Receita Líquida por Estado (R$)",
+        "x": "estado",
+        "y": [
+          "receita_liquida"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Retorne a receita líquida por estado considerando descontos e reembolsos.",
+        "expected_columns": [
+          "estado",
+          "receita_liquida"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_08",
+      "title": "Núcleo 4 — 10 principais clientes por receita",
+      "prompt_markdown": "Liste os 10 clientes com maior receita acumulada de pedidos entregues, usando `valor_bruto - desconto_aplicado`.\n\nSaída: `cliente_id`, `receita_cliente`, `pedidos_cliente`.",
+      "starter_query": "",
+      "solution_query": "SELECT cliente_id,\n       ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita_cliente,\n       COUNT(*) AS pedidos_cliente\nFROM capstone.pedidos\nWHERE status_pedido = 'entregue'\n  AND cliente_id IS NOT NULL\nGROUP BY cliente_id\nORDER BY receita_cliente DESC, cliente_id\nLIMIT 10",
+      "hint_level_1": "Agrupe por cliente_id, some receita e conte pedidos.",
+      "hint_level_2": "ORDER BY receita_cliente DESC com LIMIT 10.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": [
+        {
+          "type": "bar_horizontal",
+          "title": "Receita por Cliente (10 principais)",
+          "x": "cliente_id",
+          "y": [
+            "receita_cliente"
+          ],
+          "color_scheme": "blue"
+        },
+        {
+          "type": "bar_horizontal",
+          "title": "Pedidos por Cliente (10 principais)",
+          "x": "cliente_id",
+          "y": [
+            "pedidos_cliente"
+          ],
+          "color_scheme": "green"
+        }
+      ],
+      "success_criteria": {
+        "objective": "Liste os 10 clientes com maior receita acumulada.",
+        "expected_columns": [
+          "cliente_id",
+          "receita_cliente",
+          "pedidos_cliente"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_09",
+      "title": "Núcleo 5 — Clientes acima da média",
+      "prompt_markdown": "Use subquery para retornar os 20 clientes com maior receita total entre os que estão acima da média de receita por cliente.\n\nSaída: `cliente_id`, `receita_cliente`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_cliente AS (\n  SELECT cliente_id,\n         SUM(valor_bruto - desconto_aplicado) AS receita_cliente\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n    AND cliente_id IS NOT NULL\n  GROUP BY cliente_id\n)\nSELECT cliente_id, ROUND(receita_cliente, 2) AS receita_cliente\nFROM receita_cliente\nWHERE receita_cliente > (SELECT AVG(receita_cliente) FROM receita_cliente)\nORDER BY receita_cliente DESC, cliente_id\nLIMIT 20",
+      "hint_level_1": "Crie uma CTE com receita por cliente e compare com AVG dessa CTE.",
+      "hint_level_2": "WHERE receita_cliente > (SELECT AVG(receita_cliente) FROM receita_cliente).",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar_horizontal",
+        "title": "Receita dos Clientes Acima da Média",
+        "x": "cliente_id",
+        "y": [
+          "receita_cliente"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Retornar os 20 clientes com maior receita entre os acima da média.",
+        "expected_columns": [
+          "cliente_id",
+          "receita_cliente"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_10",
+      "title": "Núcleo 6 — Reconciliação pedido x itens",
+      "prompt_markdown": "Encontre pedidos com diferença absoluta acima de 60 entre `valor_bruto` do pedido e soma dos itens `(quantidade * preco_unitario)`.\nRetorne os 15 maiores deltas.\n\nSaída: `pedido_id`, `valor_bruto`, `total_itens`, `delta_abs`.",
+      "starter_query": "",
+      "solution_query": "WITH valor_itens AS (\n  SELECT pedido_id,\n         ROUND(SUM(quantidade * preco_unitario), 2) AS total_itens\n  FROM capstone.itens_pedido\n  GROUP BY pedido_id\n)\nSELECT p.pedido_id,\n       p.valor_bruto,\n       v.total_itens,\n       ROUND(ABS(p.valor_bruto - v.total_itens), 2) AS delta_abs\nFROM capstone.pedidos p\nJOIN valor_itens v\n  ON p.pedido_id = v.pedido_id\nWHERE ABS(p.valor_bruto - v.total_itens) > 60\nORDER BY delta_abs DESC, p.pedido_id\nLIMIT 15",
+      "hint_level_1": "Primeiro agregue itens por pedido, depois compare com pedidos.",
+      "hint_level_2": "Use ABS e ordene pelo maior delta.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar",
+        "title": "Discrepância Pedido vs Itens (15 principais)",
+        "x": "pedido_id",
+        "y": [
+          "delta_abs"
+        ],
+        "color_scheme": "red"
+      },
+      "success_criteria": {
+        "objective": "Encontre pedidos com diferença absoluta acima de 60 entre valor_bruto e soma dos itens.",
+        "expected_columns": [
+          "pedido_id",
+          "valor_bruto",
+          "total_itens",
+          "delta_abs"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_11",
+      "title": "Núcleo 7 — Pagamentos duplicados",
+      "prompt_markdown": "Liste pedidos que possuem mais de um registro em pagamentos.\n\nSaída: `pedido_id`, `qtd_pagamentos`.",
+      "starter_query": "",
+      "solution_query": "SELECT pedido_id, COUNT(*) AS qtd_pagamentos\nFROM capstone.pagamentos\nGROUP BY pedido_id\nHAVING COUNT(*) > 1\nORDER BY qtd_pagamentos DESC, pedido_id\nLIMIT 20",
+      "hint_level_1": "Agrupe pagamentos por pedido_id e use HAVING COUNT(*) > 1.",
+      "hint_level_2": "Conte pagamentos por pedido e filtre somente duplicados.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar",
+        "title": "Quantidade de Pagamentos por Pedido",
+        "x": "pedido_id",
+        "y": [
+          "qtd_pagamentos"
+        ],
+        "color_scheme": "red"
+      },
+      "success_criteria": {
+        "objective": "Liste pedidos que possuem mais de um registro de pagamento.",
+        "expected_columns": [
+          "pedido_id",
+          "qtd_pagamentos"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_12",
+      "title": "Núcleo 8 — Prazo médio de entrega por estado",
+      "prompt_markdown": "Calcule o prazo médio de entrega em dias por estado, considerando apenas pedidos entregues com `data_entrega` preenchida.\n\nSaída: `estado`, `prazo_medio_dias`.",
+      "starter_query": "",
+      "solution_query": "SELECT c.estado,\n       ROUND(AVG(DATEDIFF('day', p.data_pedido, p.data_entrega)), 2) AS prazo_medio_dias\nFROM capstone.pedidos p\nJOIN capstone.clientes c\n  ON p.cliente_id = c.cliente_id\nWHERE p.status_pedido = 'entregue'\n  AND p.data_entrega IS NOT NULL\nGROUP BY c.estado\nORDER BY prazo_medio_dias DESC, c.estado",
+      "hint_level_1": "Use DATEDIFF em dias entre data_pedido e data_entrega.",
+      "hint_level_2": "AVG por estado após filtrar pedidos entregues.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar_horizontal",
+        "title": "Prazo Médio de Entrega por Estado (dias)",
+        "x": "estado",
+        "y": [
+          "prazo_medio_dias"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Calcule o prazo médio de entrega em dias por estado.",
+        "expected_columns": [
+          "estado",
+          "prazo_medio_dias"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_13",
+      "title": "Núcleo 9 — Margem por categoria",
+      "prompt_markdown": "Calcule receita, custo e margem percentual por categoria de produto.\n\nSaída: `categoria`, `receita_categoria`, `custo_categoria`, `margem_pct`.\n\n> **Hipótese CFO:** Eletrônicos tem a pior margem? Beleza tem a melhor?",
+      "starter_query": "",
+      "solution_query": "SELECT pr.categoria,\n       ROUND(SUM(ip.quantidade * ip.preco_unitario), 2) AS receita_categoria,\n       ROUND(SUM(ip.quantidade * ip.custo_unitario), 2) AS custo_categoria,\n       ROUND(100.0 * (SUM(ip.quantidade * ip.preco_unitario) - SUM(ip.quantidade * ip.custo_unitario)) / NULLIF(SUM(ip.quantidade * ip.preco_unitario), 0), 2) AS margem_pct\nFROM capstone.itens_pedido ip\nJOIN capstone.produtos pr\n  ON ip.produto_id = pr.produto_id\nGROUP BY pr.categoria\nORDER BY margem_pct DESC, pr.categoria",
+      "hint_level_1": "Receita e custo são soma de quantidade * preço/custo unitário.",
+      "hint_level_2": "Use NULLIF no denominador para evitar divisão por zero.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": [
+        {
+          "type": "bar_horizontal",
+          "title": "Margem por Categoria (%)",
+          "x": "categoria",
+          "y": [
+            "margem_pct"
+          ],
+          "color_scheme": "green"
+        },
+        {
+          "type": "bar_horizontal",
+          "title": "Receita vs Custo por Categoria (R$)",
+          "x": "categoria",
+          "y": [
+            "receita_categoria",
+            "custo_categoria"
+          ],
+          "color_scheme": "multi"
+        }
+      ],
+      "success_criteria": {
+        "objective": "Calcule receita, custo e margem percentual por categoria.",
+        "expected_columns": [
+          "categoria",
+          "receita_categoria",
+          "custo_categoria",
+          "margem_pct"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_14",
+      "title": "Núcleo 10 — Reembolso por motivo",
+      "prompt_markdown": "Resuma quantidade e valor total de reembolsos por motivo.\n\nSaída: `motivo_reembolso`, `qtd_reembolsos`, `valor_total_reembolsado`.\n\n> **Hipótese CFO:** Se defeito domina, isso aponta para problema de qualidade de produto.",
+      "starter_query": "",
+      "solution_query": "SELECT motivo_reembolso,\n       COUNT(*) AS qtd_reembolsos,\n       ROUND(SUM(valor_reembolso), 2) AS valor_total_reembolsado\nFROM capstone.reembolsos\nGROUP BY motivo_reembolso\nORDER BY valor_total_reembolsado DESC, motivo_reembolso",
+      "hint_level_1": "Agrupe pela coluna motivo_reembolso.",
+      "hint_level_2": "COUNT e SUM por motivo.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": [
+        {
+          "type": "donut",
+          "title": "Distribuição de Reembolsos por Motivo",
+          "x": "motivo_reembolso",
+          "y": [
+            "qtd_reembolsos"
+          ],
+          "color_scheme": "multi"
+        },
+        {
+          "type": "bar_horizontal",
+          "title": "Valor Total Reembolsado por Motivo (R$)",
+          "x": "motivo_reembolso",
+          "y": [
+            "valor_total_reembolsado"
+          ],
+          "color_scheme": "red"
+        }
+      ],
+      "success_criteria": {
+        "objective": "Resuma quantidade e valor total de reembolsos por motivo.",
+        "expected_columns": [
+          "motivo_reembolso",
+          "qtd_reembolsos",
+          "valor_total_reembolsado"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_15",
+      "title": "Avançado 1 — Ranking de produtos por categoria",
+      "prompt_markdown": "Use função de janela para ranquear produtos por receita dentro de cada categoria e retorne apenas 3 principais de cada categoria.\n\nSaída: `categoria`, `produto_id`, `receita_produto`, `rank_receita`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_produto AS (\n  SELECT pr.categoria,\n         ip.produto_id,\n         ROUND(SUM(ip.quantidade * ip.preco_unitario), 2) AS receita_produto\n  FROM capstone.itens_pedido ip\n  JOIN capstone.produtos pr\n    ON ip.produto_id = pr.produto_id\n  GROUP BY pr.categoria, ip.produto_id\n), ranking AS (\n  SELECT categoria,\n         produto_id,\n         receita_produto,\n         ROW_NUMBER() OVER (PARTITION BY categoria ORDER BY receita_produto DESC, produto_id) AS rank_receita\n  FROM receita_produto\n)\nSELECT categoria, produto_id, receita_produto, rank_receita\nFROM ranking\nWHERE rank_receita <= 3\nORDER BY categoria, rank_receita, produto_id",
+      "hint_level_1": "Crie receita por produto e aplique ROW_NUMBER por categoria.",
+      "hint_level_2": "Filtre rank_receita <= 3 após calcular a janela.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar_horizontal",
+        "title": "3 principais Produtos por Categoria (Receita)",
+        "x": "produto_id",
+        "y": [
+          "receita_produto"
+        ],
+        "color_scheme": "multi"
+      },
+      "success_criteria": {
+        "objective": "Ranquear produtos por receita dentro de cada categoria e retornar 3 principais.",
+        "expected_columns": [
+          "categoria",
+          "produto_id",
+          "receita_produto",
+          "rank_receita"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_16",
+      "title": "Avançado 2 — Receita acumulada mensal",
+      "prompt_markdown": "Calcule receita mensal e receita acumulada ao longo do tempo usando função de janela.\n\nSaída: `mes_ref`, `receita_mes`, `receita_acumulada`.\n\n> **Observe:** Onde a curva acumulada perde inclinação? Isso marca o início do problema.",
+      "starter_query": "",
+      "solution_query": "WITH receita_mes AS (\n  SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n         ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita_mes\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n  GROUP BY 1\n)\nSELECT mes_ref,\n       receita_mes,\n       ROUND(SUM(receita_mes) OVER (ORDER BY mes_ref ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW), 2) AS receita_acumulada\nFROM receita_mes\nORDER BY mes_ref",
+      "hint_level_1": "Primeiro agregue por mês, depois use SUM() OVER (ORDER BY).",
+      "hint_level_2": "A janela acumulada precisa de ORDER BY mes_ref.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "área",
+        "title": "Receita Mensal e Acumulada (R$)",
+        "x": "mes_ref",
+        "y": [
+          "receita_mes",
+          "receita_acumulada"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Calcule receita mensal e receita acumulada usando função de janela.",
+        "expected_columns": [
+          "mes_ref",
+          "receita_mes",
+          "receita_acumulada"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_17",
+      "title": "Avançado 3 — Crescimento MoM com LAG",
+      "prompt_markdown": "Calcule crescimento percentual mês contra mês (MoM) da receita de pedidos entregues.\n\nSaída: `mes_ref`, `receita_mes`, `receita_mes_anterior`, `crescimento_pct`.\n\n> **Observe:** Meses negativos (vermelho) indicam regressão. Onde estão concentrados?",
+      "starter_query": "",
+      "solution_query": "WITH receita_mes AS (\n  SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n         ROUND(SUM(valor_bruto - desconto_aplicado), 2) AS receita_mes\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n  GROUP BY 1\n), base AS (\n  SELECT mes_ref,\n         receita_mes,\n         LAG(receita_mes) OVER (ORDER BY mes_ref) AS receita_mes_anterior\n  FROM receita_mes\n)\nSELECT mes_ref,\n       receita_mes,\n       receita_mes_anterior,\n       ROUND(100.0 * (receita_mes - receita_mes_anterior) / NULLIF(receita_mes_anterior, 0), 2) AS crescimento_pct\nFROM base\nORDER BY mes_ref",
+      "hint_level_1": "Use LAG para trazer o mês anterior antes de calcular o percentual.",
+      "hint_level_2": "Calcule receita_mes_anterior em uma CTE intermediaria.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar_signed",
+        "title": "Crescimento MoM da Receita (%)",
+        "x": "mes_ref",
+        "y": [
+          "crescimento_pct"
+        ],
+        "color_scheme": "signed"
+      },
+      "success_criteria": {
+        "objective": "Calcule crescimento percentual mês contra mês da receita.",
+        "expected_columns": [
+          "mes_ref",
+          "receita_mes",
+          "receita_mes_anterior",
+          "crescimento_pct"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_18",
+      "title": "Avançado 4 — Coorte de primeira compra (M0 a M3)",
+      "prompt_markdown": "Monte tabela de coorte por mês da primeira compra e mostre retenção nos offsets M0 a M3.\n\nSaída: `mes_coorte`, `mes_offset`, `clientes_ativos`.",
+      "starter_query": "",
+      "solution_query": "WITH primeira_compra AS (\n  SELECT cliente_id,\n         CAST(DATE_TRUNC('month', MIN(data_pedido)) AS DATE) AS mes_coorte\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n    AND cliente_id IS NOT NULL\n  GROUP BY cliente_id\n), atividade AS (\n  SELECT cliente_id,\n         CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_atividade\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n    AND cliente_id IS NOT NULL\n  GROUP BY cliente_id, 2\n), coorte AS (\n  SELECT f.mes_coorte,\n         DATEDIFF('month', f.mes_coorte, a.mes_atividade) AS mes_offset,\n         COUNT(DISTINCT a.cliente_id) AS clientes_ativos\n  FROM primeira_compra f\n  JOIN atividade a\n    ON f.cliente_id = a.cliente_id\n  GROUP BY f.mes_coorte, mes_offset\n)\nSELECT mes_coorte, mes_offset, clientes_ativos\nFROM coorte\nWHERE mes_offset BETWEEN 0 AND 3\nORDER BY mes_coorte, mes_offset",
+      "hint_level_1": "Defina mes da primeira compra por cliente e compare com meses de atividade.",
+      "hint_level_2": "Use DATEDIFF month para criar o offset da coorte.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Monte tabela de coorte com retenção M0 a M3.",
+        "expected_columns": [
+          "mes_coorte",
+          "mes_offset",
+          "clientes_ativos"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_19",
+      "title": "Avançado 5 — Conversão do funil",
+      "prompt_markdown": "Calcule sessões por etapa do funil e taxa de conversão visita -> compra.\n\nSaída: `sessoes_visita`, `sessoes_cart`, `sessoes_checkout`, `sessoes_compra`, `conversao_visita_compra_pct`.\n\n> **Hipótese COO:** Se o gargalo e no checkout -> compra, há um problema de experiência de pagamento.",
+      "starter_query": "",
+      "solution_query": "WITH funil AS (\n  SELECT etapa_funil, COUNT(DISTINCT sessao_id) AS sessoes\n  FROM capstone.eventos_funil\n  GROUP BY etapa_funil\n), base AS (\n  SELECT MAX(CASE WHEN etapa_funil = 'visita' THEN sessoes END) AS sessoes_visita,\n         MAX(CASE WHEN etapa_funil = 'add_carrinho' THEN sessoes END) AS sessoes_cart,\n         MAX(CASE WHEN etapa_funil = 'checkout' THEN sessoes END) AS sessoes_checkout,\n         MAX(CASE WHEN etapa_funil = 'compra' THEN sessoes END) AS sessoes_compra\n  FROM funil\n)\nSELECT sessoes_visita,\n       sessoes_cart,\n       sessoes_checkout,\n       sessoes_compra,\n       ROUND(100.0 * sessoes_compra / NULLIF(sessoes_visita, 0), 2) AS conversao_visita_compra_pct\nFROM base",
+      "hint_level_1": "Conte sessões distintas por etapa e faça pivot com CASE.",
+      "hint_level_2": "A conversão final e compra / visita * 100.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": false
+      },
+      "chart_config": {
+        "type": "funnel",
+        "title": "Funil de Conversão de Vendas",
+        "x": null,
+        "y": [
+          "sessoes_visita",
+          "sessoes_cart",
+          "sessoes_checkout",
+          "sessoes_compra"
+        ],
+        "color_scheme": "blue"
+      },
+      "success_criteria": {
+        "objective": "Calcule sessões por etapa do funil e taxa de conversão.",
+        "expected_columns": [
+          "sessoes_visita",
+          "sessoes_cart",
+          "sessoes_checkout",
+          "sessoes_compra",
+          "conversao_visita_compra_pct"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    },
+    {
+      "id": "mc_ex_20",
+      "title": "Avançado 6 — Clientes em risco de evasão",
+      "prompt_markdown": "Considere data de referência como a maior `data_pedido` da base.\nListe os 50 clientes com mais de 90 dias sem compra entregue.\n\nSaída: `cliente_id`, `data_ultima_compra`, `dias_sem_compra`.",
+      "starter_query": "",
+      "solution_query": "WITH ultima_compra AS (\n  SELECT cliente_id,\n         MAX(data_pedido) AS data_ultima_compra\n  FROM capstone.pedidos\n  WHERE status_pedido = 'entregue'\n    AND cliente_id IS NOT NULL\n  GROUP BY cliente_id\n), referência AS (\n  SELECT MAX(data_pedido) AS data_ref\n  FROM capstone.pedidos\n)\nSELECT u.cliente_id,\n       u.data_ultima_compra,\n       DATEDIFF('day', u.data_ultima_compra, r.data_ref) AS dias_sem_compra\nFROM ultima_compra u\nCROSS JOIN referência r\nWHERE DATEDIFF('day', u.data_ultima_compra, r.data_ref) > 90\nORDER BY dias_sem_compra DESC, u.cliente_id\nLIMIT 50",
+      "hint_level_1": "Obtenha última compra por cliente e compare com a data maxima da base.",
+      "hint_level_2": "Filtre diferença maior que 90 dias e ordene desc.",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "chart_config": {
+        "type": "bar",
+        "title": "Dias sem Compra — Clientes em Risco (50 principais)",
+        "x": "cliente_id",
+        "y": [
+          "dias_sem_compra"
+        ],
+        "color_scheme": "red"
+      },
+      "success_criteria": {
+        "objective": "Liste os 50 clientes com mais de 90 dias sem compra entregue.",
+        "expected_columns": [
+          "cliente_id",
+          "data_ultima_compra",
+          "dias_sem_compra"
+        ],
+        "notes": [
+          "Use o esquema capstone."
+        ]
+      }
+    }
+  ]
+}

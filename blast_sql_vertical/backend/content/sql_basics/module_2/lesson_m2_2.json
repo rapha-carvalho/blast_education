@@ -1,0 +1,143 @@
+{
+  "id": "lesson_m2_2",
+  "title": "AND, OR e Parênteses",
+  "lesson_type": "interactive_sql",
+  "objective": "Combinar condições com AND, OR e parênteses para construir filtros precisos sem bugs logicos.",
+  "prerequisites": [
+    "lesson_m2_1"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.customers"
+    ],
+    "scenario": "Você trabalha no time de analytics da GrooveCommerce e precisa construir filtros compostos para o time de marketing e financeiro."
+  },
+  "tabs": [
+    {
+      "id": "tab_and_or",
+      "title": "AND e OR",
+      "type": "content",
+      "content_markdown": "#### Combinar condições: AND e OR\n\nQuase toda pergunta de negócio real exige mais de um filtro. O SQL oferece dois operadores logicos para isso:\n\n| Operador | Regra | Analogia |\n|---|---|---|\n| `AND` | **Todas** as condições devem ser verdadeiras | Interseção — ambos os filtros valem |\n| `OR` | **Pelo menos uma** condição deve ser verdadeira | União — qualquer um dos filtros vale |\n\n---\n\n#### AND — interseção de filtros\n\nUse AND quando a linha precisa satisfazer **todas** as regras ao mesmo tempo.\n\n```sql\nSELECT id, name, email, country\nFROM filtering.customers\nWHERE country = 'USA'\n  AND email IS NOT NULL\nORDER BY id ASC;\n```\n\nEssa query retorna apenas clientes que são dos EUA **e** possuem email cadastrado.\n\n---\n\n#### OR — união de filtros\n\nUse OR quando a linha pode satisfazer **qualquer uma** das regras.\n\n```sql\nSELECT id, customer_id, amount, status\nFROM filtering.orders\nWHERE status = 'rejected'\n   OR status = 'pending'\nORDER BY id ASC;\n```\n\nEssa query retorna pedidos que foram rejeitados **ou** que ainda estão pendentes.\n\n---\n\n#### Casos de uso no dia a dia\n\n| Cenário | Operador |\n|---|---|\n| Clientes de SP com compra acima de 500 | AND |\n| Pedidos cancelados ou estornados | OR |\n| Produtos ativos e com estoque positivo | AND |\n| Clientes sem email ou sem telefone | OR |\n\n[PLACEHOLDER_IMAGEM: Diagrama de Venn mostrando AND como interseção (área comum entre dois circulos) e OR como união (ambos os circulos completos), com exemplos de filtros SQL para cada caso.]"
+    },
+    {
+      "id": "tab_parenteses",
+      "title": "Parênteses e Precedência",
+      "type": "content",
+      "content_markdown": "#### O bug silencioso do AND e OR\n\nQuando você mistura AND e OR sem parênteses, o SQL segue uma **ordem de precedência**: AND e avaliado **antes** do OR, assim como multiplicacao e avaliada antes de adicao na matematica.\n\nIsso cria um bug silencioso muito comum:\n\n```sql\n-- ERRADO: parece filtrar (rejeitados ou pendentes) com amount > 200\n-- Mas SQL le como: rejeitados OU (pendentes com amount > 200)\nSELECT id, country, amount, status\nFROM filtering.orders\nWHERE status = 'rejected'\n   OR status = 'pending'\n  AND amount > 200;\n```\n\nO resultado contem **todos** os rejeitados (independente do valor), pois o AND liga apenas `pending` e `amount > 200`.\n\n---\n\n#### A correção: use parênteses\n\nParenteses forcam a avaliacao na ordem que você deseja:\n\n```sql\n-- CORRETO: (rejeitados ou pendentes) E com amount > 200\nSELECT id, country, amount, status\nFROM filtering.orders\nWHERE (status = 'rejected' OR status = 'pending')\n  AND amount > 200;\n```\n\nAgora o OR e resolvido primeiro (dentro dos parênteses), depois o AND aplica o corte de valor.\n\n---\n\n#### Regra de ouro\n\n> Sempre use parênteses quando misturar AND e OR na mesma cláusula WHERE. Nunca confie na precedência implícita.\n\n| Situacao | Ação recomendada |\n|---|---|\n| Apenas AND | Não precisa de parênteses |\n| Apenas OR | Não precisa de parênteses |\n| AND e OR misturados | **Sempre use parênteses** |\n\n[PLACEHOLDER_IMAGEM: Diagrama de comparação lado a lado: query sem parênteses (resultado incorreto com bug silencioso) versus query com parênteses (resultado correto), destacando a diferença no conjunto de linhas retornadas.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - AND com clientes",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "O time de marketing precisa de uma lista de clientes dos EUA que possuem email cadastrado para uma campanha.\n\n> **Sua missão:** Retorne `id`, `name`, `email` e `country` de clientes dos EUA com email não nulo, ordenados por `id` crescente."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - OR com pedidos",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "O financeiro precisa auditar todos os pedidos que não foram concluídos com sucesso.\n\n> **Sua missão:** Retorne `id`, `customer_id`, `amount` e `status` dos pedidos com status `rejected` ou `pending`, ordenados por `id` crescente."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - AND e OR com parênteses",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "O time de expansão quer analisar pedidos de alto valor na América Latina. Cuidado com a precedência — use parênteses!\n\n> **Sua missão:** Retorne `id`, `country`, `amount` e `status` de pedidos do Brasil ou Argentina com `amount > 200`, usando parênteses corretamente, ordenados por `id` crescente."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `AND` exige que **todas** as condições sejam verdadeiras — interseção de filtros.\n- `OR` exige que **pelo menos uma** condição seja verdadeira — união de filtros.\n- SQL avalia `AND` antes de `OR` por padrão (precedência implícita).\n- Misturar AND e OR sem parênteses cria **bugs silenciosos** difíceis de detectar.\n- **Regra de ouro:** sempre use parênteses ao combinar AND e OR na mesma cláusula WHERE.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Definição |\n|---|---|\n| `AND` | Operador lógico que exige todas as condições verdadeiras |\n| `OR` | Operador lógico que exige pelo menos uma condição verdadeira |\n| `Parênteses` | Forcam a ordem de avaliacao das condições lógicas |\n| `Precedência` | Ordem em que o SQL avalia operadores (AND antes de OR) |\n| `Bug silencioso` | Erro lógico sem mensagem de erro — resultado incorreto |\n\n> **Próxima aula:** BETWEEN e IN — formas mais compactas de expressar intervalos e listas de valores."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m2_2_and_clientes_usa",
+      "title": "Desafio 1 - AND: Clientes dos EUA com email",
+      "prompt_markdown": "O time de marketing precisa de clientes dos EUA com email cadastrado.\n\n**Requisitos:**\n- Colunas: `id`, `name`, `email`, `country`\n- Tabela: `filtering.customers`\n- Filtros: `country = 'USA'` AND `email IS NOT NULL`\n- Ordenar por `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, name, email, country FROM filtering.customers WHERE country = 'USA' AND email IS NOT NULL ORDER BY id ASC;",
+      "hint_level_1": "Use AND para combinar o filtro de país com a verificação de email não nulo. Para verificar que email existe, use IS NOT NULL.",
+      "hint_level_2": "SELECT id, name, email, country FROM filtering.customers WHERE country = 'USA' AND email IS NOT NULL ORDER BY id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar clientes dos EUA com email cadastrado, ordenados por id",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "country"
+        ],
+        "notes": [
+          "Deve usar AND para combinar os dois filtros",
+          "Deve usar IS NOT NULL para verificar email",
+          "A ordenação deve ser por id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_2_or_pedidos_nao_aprovados",
+      "title": "Desafio 2 - OR: Pedidos rejeitados ou pendentes",
+      "prompt_markdown": "O financeiro precisa auditar pedidos que não foram concluídos.\n\n**Requisitos:**\n- Colunas: `id`, `customer_id`, `amount`, `status`\n- Tabela: `filtering.orders`\n- Filtro: `status = 'rejected'` OR `status = 'pending'`\n- Ordenar por `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, customer_id, amount, status FROM filtering.orders WHERE status = 'rejected' OR status = 'pending' ORDER BY id ASC;",
+      "hint_level_1": "Use OR para retornar linhas que atendam qualquer um dos dois valores de status. Não e necessário parênteses quando h? apenas OR.",
+      "hint_level_2": "SELECT id, customer_id, amount, status FROM filtering.orders WHERE status = 'rejected' OR status = 'pending' ORDER BY id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos com status rejected ou pending, ordenados por id",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "status"
+        ],
+        "notes": [
+          "Deve usar OR para combinar os dois status",
+          "A query deve retornar 5 linhas (ids 2, 6, 8, 14, 21)",
+          "A ordenação deve ser por id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_2_and_or_parenteses",
+      "title": "Desafio 3 - AND e OR com parênteses: América Latina com alto valor",
+      "prompt_markdown": "O time de expansão quer analisar pedidos de alto valor na América Latina.\n\n**Requisitos:**\n- Colunas: `id`, `country`, `amount`, `status`\n- Tabela: `filtering.orders`\n- Filtros: (`country = 'Brazil'` OR `country = 'Argentina'`) AND `amount > 200`\n- Use parênteses para garantir a precedência correta\n- Ordenar por `id` ASC",
+      "starter_query": "",
+      "solution_query": "SELECT id, country, amount, status FROM filtering.orders WHERE (country = 'Brazil' OR country = 'Argentina') AND amount > 200 ORDER BY id ASC;",
+      "hint_level_1": "Envolva as condições de país em parênteses antes de aplicar o AND com amount. Sem parênteses, o AND seria avaliado primeiro ? o resultado seria incorreto.",
+      "hint_level_2": "SELECT id, country, amount, status FROM filtering.orders WHERE (country = 'Brazil' OR country = 'Argentina') AND amount > 200 ORDER BY id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos do Brasil ou Argentina com valor acima de 200, usando parênteses",
+        "expected_columns": [
+          "id",
+          "country",
+          "amount",
+          "status"
+        ],
+        "notes": [
+          "Deve usar parênteses para agrupar o OR antes do AND",
+          "A query deve retornar 3 linhas (ids 5, 12, 19)",
+          "A ordenação deve ser por id ASC"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,349 @@
+{
+  "id": "lesson_02_combining_conditions",
+  "title": "AND, OR e Parênteses",
+  "lesson_type": "interactive_sql",
+  "objective": "Combine filters using AND and OR.",
+  "prerequisites": [
+    "lesson_01_filtering_where"
+  ],
+  "estimated_minutes": 18,
+  "content_markdown": "**Contexto de negócio**: O marketing precisa de clientes que estejam nos EUA E tenham um endereço de e-mail. O financeiro precisa de pedidos que foram cancelados OU reembolsados. Combinar condições com precisão é essencial.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Combinar dois filtros usando `AND`.\r\n- Combinar dois filtros usando `OR`.\r\n- Usar parênteses para controlar a ordem lógica (`AND` antes de `OR` sem parênteses pode causar bugs).\r\n- Descrever o que acontece quando `AND` e `OR` são misturados sem parênteses.\r\n\r\n> ⚠️ **Aviso de Erro Comum**: `WHERE status = 'cancelado' OR status = 'reembolsado' AND valor_total > 100` NÃO funciona como a maioria das pessoas espera. O SQL avalia o `AND` antes do `OR` (como a multiplicação antes da adição). Use parênteses: `WHERE (status = 'cancelado' OR status = 'reembolsado') AND valor_total > 100`.",
+  "dataset_context": {
+    "business_model": "core_sql",
+    "tables_used": [
+      "filtering.orders",
+      "filtering.customers"
+    ],
+    "scenario": "Combine conditions with AND and OR."
+  },
+  "exercises": [
+    {
+      "id": "ch1_and",
+      "title": "Challenge 1: AND",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.orders` where `amount > 200` AND `status = 'approved'`.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.orders\nWHERE amount > 200 AND status = 'approved';",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "customer_id": 1,
+          "amount": 650,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2024-03-15",
+          "delivery_date": "2024-03-18"
+        },
+        {
+          "id": 3,
+          "customer_id": 3,
+          "amount": 350,
+          "city": "Toronto",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-06-20",
+          "delivery_date": "2023-06-25"
+        },
+        {
+          "id": 5,
+          "customer_id": 5,
+          "amount": 550,
+          "city": "São Paulo",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2024-02-01",
+          "delivery_date": "2024-02-05"
+        },
+        {
+          "id": 7,
+          "customer_id": 7,
+          "amount": 320,
+          "city": "Chicago",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-08-22",
+          "delivery_date": "2023-08-25"
+        },
+        {
+          "id": 9,
+          "customer_id": 9,
+          "amount": 410,
+          "city": "Guadalajara",
+          "country": "Mexico",
+          "status": "approved",
+          "order_date": "2023-04-15",
+          "delivery_date": "2023-04-20"
+        },
+        {
+          "id": 10,
+          "customer_id": 1,
+          "amount": 280,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-09-01",
+          "delivery_date": "2023-09-04"
+        },
+        {
+          "id": 12,
+          "customer_id": 6,
+          "amount": 380,
+          "city": "Cordoba",
+          "country": "Argentina",
+          "status": "approved",
+          "order_date": "2024-01-20",
+          "delivery_date": "2024-01-24"
+        },
+        {
+          "id": 15,
+          "customer_id": 3,
+          "amount": 250,
+          "city": "Montreal",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-10-12",
+          "delivery_date": "2023-10-15"
+        },
+        {
+          "id": 16,
+          "customer_id": 7,
+          "amount": 420,
+          "city": "Boston",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-05-18",
+          "delivery_date": "2023-05-22"
+        },
+        {
+          "id": 19,
+          "customer_id": 6,
+          "amount": 310,
+          "city": "Mendoza",
+          "country": "Argentina",
+          "status": "approved",
+          "order_date": "2023-08-10",
+          "delivery_date": "2023-08-14"
+        },
+        {
+          "id": 20,
+          "customer_id": 1,
+          "amount": 480,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-12-25",
+          "delivery_date": "2023-12-28"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return approved orders with amount > 200",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "city",
+          "country",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use AND to require both conditions.",
+      "hint_level_2": "WHERE amount > 200 AND status = 'approved'"
+    },
+    {
+      "id": "ch2_or",
+      "title": "Challenge 2: OR",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.customers` where `country = 'USA'` OR `country = 'Canada'`.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.customers\nWHERE country = 'USA' OR country = 'Canada';",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "name": "John Smith",
+          "email": "john@gmail.com",
+          "country": "USA",
+          "phone": "555-0101"
+        },
+        {
+          "id": 2,
+          "name": "Jane Doe",
+          "email": "jane@yahoo.com",
+          "country": "USA",
+          "phone": null
+        },
+        {
+          "id": 3,
+          "name": "Bob Wilson",
+          "email": null,
+          "country": "Canada",
+          "phone": "555-0102"
+        },
+        {
+          "id": 7,
+          "name": "James Lee",
+          "email": "james@gmail.com",
+          "country": "USA",
+          "phone": "555-0105"
+        },
+        {
+          "id": 8,
+          "name": "Mary Johnson",
+          "email": "mary@company.com",
+          "country": "Canada",
+          "phone": null
+        },
+        {
+          "id": 10,
+          "name": "Professional Tools Co",
+          "email": "info@protools.com",
+          "country": "USA",
+          "phone": "555-0107"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return USA or Canada customers",
+        "expected_columns": [
+          "id",
+          "name",
+          "email",
+          "country",
+          "phone"
+        ],
+        "notes": []
+      },
+      "hint_level_1": "Use OR to match either condition.",
+      "hint_level_2": "WHERE country = 'USA' OR country = 'Canada'"
+    },
+    {
+      "id": "ch3_and_or",
+      "title": "Challenge 3: AND with OR",
+      "prompt_markdown": "### Objective\nReturn rows from `filtering.orders` where (`status = 'approved'` OR `status = 'pending'`) AND `amount > 300`.\n\nUse parentheses to group the OR condition.",
+      "starter_query": "-- (editor vazio)",
+      "solution_query": "SELECT *\nFROM filtering.orders\nWHERE (status = 'approved' OR status = 'pending') AND amount > 300;",
+      "validation_type": "result_match",
+      "expected_result": [
+        {
+          "id": 1,
+          "customer_id": 1,
+          "amount": 650,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2024-03-15",
+          "delivery_date": "2024-03-18"
+        },
+        {
+          "id": 3,
+          "customer_id": 3,
+          "amount": 350,
+          "city": "Toronto",
+          "country": "Canada",
+          "status": "approved",
+          "order_date": "2023-06-20",
+          "delivery_date": "2023-06-25"
+        },
+        {
+          "id": 5,
+          "customer_id": 5,
+          "amount": 550,
+          "city": "São Paulo",
+          "country": "Brazil",
+          "status": "approved",
+          "order_date": "2024-02-01",
+          "delivery_date": "2024-02-05"
+        },
+        {
+          "id": 7,
+          "customer_id": 7,
+          "amount": 320,
+          "city": "Chicago",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-08-22",
+          "delivery_date": "2023-08-25"
+        },
+        {
+          "id": 9,
+          "customer_id": 9,
+          "amount": 410,
+          "city": "Guadalajara",
+          "country": "Mexico",
+          "status": "approved",
+          "order_date": "2023-04-15",
+          "delivery_date": "2023-04-20"
+        },
+        {
+          "id": 12,
+          "customer_id": 6,
+          "amount": 380,
+          "city": "Cordoba",
+          "country": "Argentina",
+          "status": "approved",
+          "order_date": "2024-01-20",
+          "delivery_date": "2024-01-24"
+        },
+        {
+          "id": 16,
+          "customer_id": 7,
+          "amount": 420,
+          "city": "Boston",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-05-18",
+          "delivery_date": "2023-05-22"
+        },
+        {
+          "id": 19,
+          "customer_id": 6,
+          "amount": 310,
+          "city": "Mendoza",
+          "country": "Argentina",
+          "status": "approved",
+          "order_date": "2023-08-10",
+          "delivery_date": "2023-08-14"
+        },
+        {
+          "id": 20,
+          "customer_id": 1,
+          "amount": 480,
+          "city": "NYC",
+          "country": "USA",
+          "status": "approved",
+          "order_date": "2023-12-25",
+          "delivery_date": "2023-12-28"
+        }
+      ],
+      "validation": {
+        "order_matters": false
+      },
+      "success_criteria": {
+        "objective": "Return approved or pending orders with amount > 300",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "city",
+          "country",
+          "status",
+          "order_date",
+          "delivery_date"
+        ],
+        "notes": [
+          "Use parentheses around the OR clause."
+        ]
+      },
+      "hint_level_1": "Group the OR with parentheses: (status='approved' OR status='pending').",
+      "hint_level_2": "WHERE (status = 'approved' OR status = 'pending') AND amount > 300"
+    }
+  ]
+}

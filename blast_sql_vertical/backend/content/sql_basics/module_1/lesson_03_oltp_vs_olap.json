@@ -1,0 +1,13 @@
+{
+  "id": "lesson_03_oltp_vs_olap",
+  "title": "OLTP vs OLAP: Dois Trabalhos, Dois Tipos de Banco de Dados",
+  "lesson_type": "concept_only",
+  "objective": "Differentiate OLTP and OLAP and when each is used in business contexts.",
+  "prerequisites": [
+    "lesson_02_what_is_database"
+  ],
+  "estimated_minutes": 12,
+  "content_markdown": "**Contexto de negócio**: A GrooveCommerce usa dois sistemas diferentes: um processa pedidos de clientes ao vivo em tempo real (OLTP) e outro é usado pela equipe de análise para executar relatórios e dashboards (OLAP). Saber qual sistema você está consultando muda a forma como você escreve queries.\r\n\r\n**Após esta aula, o aluno será capaz de**:\r\n- Explicar o que o OLTP faz e dar três exemplos do mundo real.\r\n- Explicar o que o OLAP faz e dar três exemplos do mundo real.\r\n- Descrever por que você não executa queries analíticas pesadas no banco de dados OLTP de produção.\r\n- Identificar em qual sistema um analista geralmente trabalha.",
+  "exercises": [],
+  "infographics": []
+}

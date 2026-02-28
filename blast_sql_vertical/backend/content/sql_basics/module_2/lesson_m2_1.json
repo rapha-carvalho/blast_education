@@ -1,0 +1,139 @@
+{
+  "id": "lesson_m2_1",
+  "title": "WHERE e Operadores de Comparação",
+  "lesson_type": "interactive_sql",
+  "objective": "Filtrar dados com WHERE usando comparações numericas, texto e data para responder perguntas de negócio.",
+  "prerequisites": [
+    "lesson_m1_5"
+  ],
+  "estimated_minutes": 15,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "filtering.orders"
+    ],
+    "scenario": "Você faz parte do time de analytics da GrooveCommerce e precisa encontrar pedidos especificos para auditoria financeira."
+  },
+  "tabs": [
+    {
+      "id": "tab_contexto",
+      "title": "Por que WHERE importa?",
+      "type": "content",
+      "content_markdown": "#### Sem filtro, não existe análise de negócio\n\nNo trabalho real, quase nunca você quer a tabela inteira. A pergunta sempre vem com contexto:\n\n- Quais pedidos estão **aprovados**?\n- Quais pedidos são **acima de 300**?\n- Quais registros são de **2024**?\n\nA cláusula `WHERE` faz exatamente isso: **filtra linhas** antes de mostrar o resultado.\n\n```sql\nSELECT id, amount, status\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\n[PLACEHOLDER_IMAGEM: Painel comparando tabela sem filtro vs tabela com filtro WHERE, destacando reducao de linhas e foco na decisão.]"
+    },
+    {
+      "id": "tab_operadores",
+      "title": "Operadores na prática",
+      "type": "content",
+      "content_markdown": "#### Operadores de comparação que você vai usar hoje\n\n| Operador | Significado | Exemplo |\n|---|---|---|\n| `=` | igual | `status = 'approved'` |\n| `!=` | diferente | `status != 'rejected'` |\n| `>` | maior que | `amount > 300` |\n| `>=` | maior ou igual | `amount >= 300` |\n| `<` | menor que | `amount < 100` |\n| `<=` | menor ou igual | `amount <= 100` |\n\n#### Dica de analista\n\nSempre pense no filtro como uma regra de negócio explícita. Se a regra mudar, sua query deve refletir essa mudança com clareza.\n\n[PLACEHOLDER_IMAGEM: Quadro visual com os operadores SQL e exemplos de uso em pedidos de ecommerce.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 - Filtro por status",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "Comece com o caso mais comum: filtrar por status textual.\n\n> **Sua missão:** traga apenas pedidos com status aprovado."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 - Pedidos grandes",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "Agora você vai aplicar comparação numerica para encontrar pedidos de alto valor.\n\n> **Sua missão:** traga pedidos com valor acima de 300, ordenados do maior para o menor."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 - Janela de tempo ativa",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "No dia a dia, filtros combinados são comuns: período + qualidade de status.\n\n> **Sua missão:** traga pedidos de 2024 que não estão rejeitados."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `WHERE` filtra linhas para responder perguntas especificas.\n- `=` e `!=` funcionam bem para regras de status e categorias.\n- `>`, `>=`, `<`, `<=` permitem cortes por valor.\n- Filtro de data exige comparação explícita no intervalo correto.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `WHERE` | Cláusula que aplica condições de filtro |\n| Comparação | Regra lógica entre dois valores |\n| Registro elegível | Linha que satisfaz o filtro |\n| Ordenação | Forma de priorizar leitura do resultado |\n\n> **Próxima aula:** AND, OR e parênteses para combinar múltiplas regras sem ambiguidade."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex_m2_1_status_aprovado",
+      "title": "Desafio 1 - Pedidos aprovados",
+      "prompt_markdown": "Retorne os pedidos aprovados da tabela `filtering.orders`.\n\n**Requisitos:**\n- Colunas: `id`, `customer_id`, `amount`, `status`\n- Filtrar somente `status = 'approved'`\n- Ordenar por `id` crescente",
+      "starter_query": "",
+      "solution_query": "SELECT id, customer_id, amount, status FROM filtering.orders WHERE status = 'approved' ORDER BY id ASC;",
+      "hint_level_1": "Use WHERE com comparação de texto para manter somente status aprovado.",
+      "hint_level_2": "SELECT id, customer_id, amount, status FROM filtering.orders WHERE status = 'approved' ORDER BY id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar somente pedidos aprovados com colunas e ordem solicitadas",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "status"
+        ],
+        "notes": [
+          "O filtro deve usar status aprovado",
+          "A ordenação final deve ser por id ASC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_1_amount_maior_300",
+      "title": "Desafio 2 - Pedidos acima de 300",
+      "prompt_markdown": "Retorne pedidos com valor acima de 300 para análise financeira.\n\n**Requisitos:**\n- Colunas: `id`, `customer_id`, `amount`, `country`\n- Filtro: `amount > 300`\n- Ordenar por `amount DESC`, depois `id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT id, customer_id, amount, country FROM filtering.orders WHERE amount > 300 ORDER BY amount DESC, id ASC;",
+      "hint_level_1": "Use o operador > para manter apenas valores maiores que 300.",
+      "hint_level_2": "SELECT id, customer_id, amount, country FROM filtering.orders WHERE amount > 300 ORDER BY amount DESC, id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos de alto valor para auditoria",
+        "expected_columns": [
+          "id",
+          "customer_id",
+          "amount",
+          "country"
+        ],
+        "notes": [
+          "A query deve filtrar valores estritamente maiores que 300",
+          "A ordenação deve priorizar amount DESC"
+        ]
+      }
+    },
+    {
+      "id": "ex_m2_1_periodo_2024_nao_rejected",
+      "title": "Desafio 3 - Pedidos de 2024 ativos",
+      "prompt_markdown": "Liste pedidos de 2024 que não foram rejeitados.\n\n**Requisitos:**\n- Colunas: `id`, `order_date`, `status`, `amount`\n- Filtros:\n  - `order_date >= '2024-01-01'`\n  - `order_date < '2025-01-01'`\n  - `status != 'rejected'`\n- Ordenar por `order_date ASC`, depois `id ASC`",
+      "starter_query": "",
+      "solution_query": "SELECT id, order_date, status, amount FROM filtering.orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-01' AND status != 'rejected' ORDER BY order_date ASC, id ASC;",
+      "hint_level_1": "Use comparações de data para fechar o intervalo de 2024 e exclua rejected com!=",
+      "hint_level_2": "SELECT id, order_date, status, amount FROM filtering.orders WHERE order_date >= '2024-01-01' AND order_date < '2025-01-01' AND status != 'rejected' ORDER BY order_date ASC, id ASC;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar pedidos de 2024 que permanecem ativos para acompanhamento",
+        "expected_columns": [
+          "id",
+          "order_date",
+          "status",
+          "amount"
+        ],
+        "notes": [
+          "Use recorte de data completo de 2024",
+          "Remova pedidos com status rejected"
+        ]
+      }
+    }
+  ]
+}

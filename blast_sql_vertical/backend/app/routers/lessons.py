@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 
-from app.services.content_loader import get_exercise_id, load_lesson
+from app.services.content_loader import load_lesson
 
 router = APIRouter()
 

@@ -1,0 +1,142 @@
+{
+  "id": "lesson_m8_1",
+  "title": "Ranqueando com ROW_NUMBER, RANK, DENSE_RANK",
+  "lesson_type": "interactive_sql",
+  "objective": "Usar ROW_NUMBER, RANK e DENSE_RANK para ranquear linhas; usar PARTITION BY para ranquear dentro de grupos.",
+  "prerequisites": [
+    "lesson_m7_2"
+  ],
+  "estimated_minutes": 25,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": [
+      "clientes",
+      "pedidos",
+      "produtos",
+      "itens_pedido"
+    ],
+    "scenario": "A equipe de vendas quer ranquear clientes por gastos totais; a equipe de produtos quer ranquear produtos por receita dentro de cada categoria."
+  },
+  "tabs": [
+    {
+      "id": "tab_conceito",
+      "title": "ROW_NUMBER, RANK e DENSE_RANK",
+      "type": "content",
+      "content_markdown": "#### O que são window functions de ranking?\n\nWindow functions permitem **ranquear** linhas sem colapsá-las em um único resumo (como o GROUP BY faria). Você mantém cada linha visível e adiciona uma coluna com a posição.\n\nA sintaxe básica é:\n\n```sql\nRANK() OVER (ORDER BY coluna DESC)\n```\n\nAs três funções mais usadas são:\n\n| Função | Comportamento em empates | Exemplo |\n|--------|-------------------------|--------|\n| **ROW_NUMBER()** | Cada linha recebe um número único; empates quebram arbitrariamente | 1, 2, 3, 4 |\n| **RANK()** | Empates recebem o mesmo número; o próximo pula | 1, 1, 3, 4 |\n| **DENSE_RANK()** | Empates recebem o mesmo número; não pula | 1, 1, 2, 3 |\n\n> **Aviso de erro comum:** `ROW_NUMBER` sempre atribui números únicos, mesmo em empates. `RANK` dá o mesmo número aos empates mas pula o próximo. `DENSE_RANK` dá o mesmo número aos empates e não pula. Escolha com base no que a pergunta de negócio exige.\n\n[PLACEHOLDER_IMAGEM: Diagrama comparativo mostrando ROW_NUMBER vs RANK vs DENSE_RANK em colunas lado a lado, com exemplo de dados com empates.]\n\n---\n\n#### Exemplo prático\n\nPara ranquear clientes por gasto total:\n\n```sql\nSELECT\n  customer_id,\n  total_gasto,\n  ROW_NUMBER() OVER (ORDER BY total_gasto DESC) AS posicao\nFROM (\n  SELECT customer_id, SUM(order_total) AS total_gasto\n  FROM pedidos\n  WHERE status_code = 'entregue'\n  GROUP BY customer_id\n) g;\n```"
+    },
+    {
+      "id": "tab_conceito2",
+      "title": "PARTITION BY — Ranking dentro de grupos",
+      "type": "content",
+      "content_markdown": "#### Ranquear dentro de cada categoria\n\nÀs vezes você precisa ranquear **dentro de um grupo**, não em toda a tabela. Por exemplo: os 3 produtos mais vendidos **em cada categoria**.\n\nPara isso use `PARTITION BY`:\n\n```sql\nRANK() OVER (\n  PARTITION BY categoria\n  ORDER BY receita DESC\n)\n```\n\nO ranking é reiniciado em cada partição (cada valor distinto de `categoria`).\n\n---\n\n#### Quando usar RANK vs ROW_NUMBER\n\n- **RANK** ou **DENSE_RANK**: quando empates devem receber a mesma posição (ex: dois produtos empatados em 1º na categoria).\n- **ROW_NUMBER**: quando você precisa de posições únicas (ex: pódio estrito 1º, 2º, 3º).\n\n[PLACEHOLDER_IMAGEM: Fluxo mostrando PARTITION BY categoria reiniciando o ranking em cada grupo.]"
+    },
+    {
+      "id": "tab_practice_1",
+      "title": "Desafio 1 — Top 5 clientes por gasto",
+      "type": "challenge",
+      "exercise_index": 0,
+      "intro_markdown": "A equipe de vendas quer ver os 5 clientes que mais gastaram (apenas pedidos entregues).\n\n> **Sua missão:** Retorne `customer_id`, `first_name`, `last_name`, `total_gasto` e `posicao`, ordenados por posição. Use `ROW_NUMBER()` para atribuir a posição. Considere apenas pedidos com `status_code = 'entregue'`."
+    },
+    {
+      "id": "tab_practice_2",
+      "title": "Desafio 2 — Produtos ranqueados por categoria",
+      "type": "challenge",
+      "exercise_index": 1,
+      "intro_markdown": "A equipe de produtos quer ranquear os produtos por receita **dentro de cada categoria**.\n\n> **Sua missão:** Retorne `product_id`, `name`, `category`, `receita` e `rank_categoria`. Calcule a receita com base em `itens_pedido` (quantity * unit_price). Use `RANK() OVER (PARTITION BY category ORDER BY receita DESC)`."
+    },
+    {
+      "id": "tab_practice_3",
+      "title": "Desafio 3 — Top 3 níveis de gasto com DENSE_RANK",
+      "type": "challenge",
+      "exercise_index": 2,
+      "intro_markdown": "O CFO quer ver todos os clientes que estão entre os 3 primeiros níveis de gasto. Com `DENSE_RANK`, clientes empatados recebem o mesmo nível e não há \"buraco\" (1, 1, 2, 2, 3, 3...).\n\n> **Sua missão:** Retorne `customer_id`, `total_gasto` e `nível`. Use `DENSE_RANK()` e mostre apenas os níveis 1, 2 e 3. Apenas pedidos entregues."
+    },
+    {
+      "id": "tab_recap",
+      "title": "Recapitulando",
+      "type": "content",
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **ROW_NUMBER()** — atribui número único a cada linha; em empates, a ordem pode variar.\n- **RANK()** — empates recebem o mesmo número; o próximo pula (1, 1, 3).\n- **DENSE_RANK()** — empates recebem o mesmo número; não pula (1, 1, 2).\n- **PARTITION BY** — reinicia o ranking dentro de cada grupo (ex: por categoria).\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|-------|-------------|\n| **ROW_NUMBER** | Função de janela que atribui número sequencial único |\n| **RANK** | Função que ranqueia; empates recebem mesmo valor, próximo pula |\n| **DENSE_RANK** | Função que ranqueia; empates recebem mesmo valor, sem pular |\n| **PARTITION BY** | Cláusula que divide a janela em grupos para o ranking |\n| **OVER (ORDER BY...)** | Define a ordem das linhas para a função de janela |\n\n---\n\n> **Próxima aula:** LAG e LEAD — comparando linhas no tempo."
+    }
+  ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [
+    {
+      "id": "ex1_top5_clientes",
+      "title": "Desafio 1 — Top 5 clientes por gasto",
+      "prompt_markdown": "A equipe de vendas quer os 5 clientes que mais gastaram, considerando apenas pedidos **entregues**.\n\n**Sua missão:** Retorne `customer_id`, `first_name`, `last_name`, `total_gasto` e `posicao`. Use `ROW_NUMBER() OVER (ORDER BY total_gasto DESC, customer_id)` para garantir ordem determinística em empates. Limite a 5 linhas.",
+      "starter_query": "",
+      "solution_query": "WITH gastos AS (SELECT customer_id, SUM(order_total) AS total FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) SELECT c.customer_id, c.first_name, c.last_name, g.total AS total_gasto, ROW_NUMBER() OVER (ORDER BY g.total DESC, c.customer_id) AS posicao FROM clientes c JOIN gastos g ON c.customer_id = g.customer_id ORDER BY posicao LIMIT 5;",
+      "hint_level_1": "Comece com uma CTE que calcula o total gasto por cliente (SUM de order_total em pedidos com status_code='entregue'). Depois faça JOIN com clientes e use ROW_NUMBER() OVER (ORDER BY total DESC).",
+      "hint_level_2": "WITH gastos AS (SELECT customer_id, SUM(order_total) AS total FROM pedidos WHERE status_code='entregue' GROUP BY customer_id) SELECT c.customer_id, c.first_name, c.last_name, g.total AS total_gasto, ROW_NUMBER() OVER (ORDER BY g.total DESC, c.customer_id) AS posicao FROM clientes c JOIN gastos g ON c.customer_id = g.customer_id ORDER BY posicao LIMIT 5;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Retornar top 5 clientes por gasto com posicao",
+        "expected_columns": [
+          "customer_id",
+          "first_name",
+          "last_name",
+          "total_gasto",
+          "posicao"
+        ],
+        "notes": [
+          "Deve retornar 5 linhas",
+          "Apenas pedidos entregues"
+        ]
+      }
+    },
+    {
+      "id": "ex2_produtos_por_categoria",
+      "title": "Desafio 2 — Produtos ranqueados por categoria",
+      "prompt_markdown": "Ranqueie os produtos por receita **dentro de cada categoria**.\n\n**Sua missão:** Retorne `product_id`, `name`, `category`, `receita` e `rank_categoria`. A receita vem de `itens_pedido` (quantity * unit_price). Use `RANK() OVER (PARTITION BY category ORDER BY receita DESC, product_id)`.",
+      "starter_query": "",
+      "solution_query": "WITH receita_produto AS (SELECT p.product_id, p.name, p.category, SUM(i.quantity * i.unit_price) AS receita FROM produtos p JOIN itens_pedido i ON p.product_id = i.product_id GROUP BY p.product_id, p.name, p.category) SELECT product_id, name, category, receita, RANK() OVER (PARTITION BY category ORDER BY receita DESC, product_id) AS rank_categoria FROM receita_produto ORDER BY category, rank_categoria;",
+      "hint_level_1": "CTE para calcular receita por produto (JOIN produtos com itens_pedido, SUM(quantity * unit_price)). Depois use RANK() OVER (PARTITION BY category ORDER BY receita DESC).",
+      "hint_level_2": "WITH receita_produto AS (SELECT p.product_id, p.name, p.category, SUM(i.quantity * i.unit_price) AS receita FROM produtos p JOIN itens_pedido i ON p.product_id = i.product_id GROUP BY p.product_id, p.name, p.category) SELECT product_id, name, category, receita, RANK() OVER (PARTITION BY category ORDER BY receita DESC, product_id) AS rank_categoria FROM receita_produto ORDER BY category, rank_categoria;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Produtos ranqueados por receita dentro de cada categoria",
+        "expected_columns": [
+          "product_id",
+          "name",
+          "category",
+          "receita",
+          "rank_categoria"
+        ],
+        "notes": [
+          "Usar PARTITION BY category"
+        ]
+      }
+    },
+    {
+      "id": "ex3_dense_rank_top3",
+      "title": "Desafio 3 — Top 3 níveis com DENSE_RANK",
+      "prompt_markdown": "Retorne todos os clientes que estão entre os 3 primeiros níveis de gasto (considerando pedidos entregues). Com `DENSE_RANK`, clientes empatados têm o mesmo nível.\n\n**Sua missão:** Retorne `customer_id`, `total_gasto` e `nível`. Use `DENSE_RANK() OVER (ORDER BY total DESC)`. Filtre para `nível <= 3` e ordene por nível, customer_id.",
+      "starter_query": "",
+      "solution_query": "WITH gastos AS (SELECT customer_id, SUM(order_total) AS total FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id), com_rank AS (SELECT customer_id, total AS total_gasto, DENSE_RANK() OVER (ORDER BY total DESC) AS nível FROM gastos) SELECT customer_id, total_gasto, nível FROM com_rank WHERE nível <= 3 ORDER BY nível, customer_id;",
+      "hint_level_1": "CTE de gastos por cliente. Segunda CTE com DENSE_RANK() OVER (ORDER BY total DESC) AS nível. SELECT final com WHERE nível <= 3.",
+      "hint_level_2": "WITH gastos AS (SELECT customer_id, SUM(order_total) AS total FROM pedidos WHERE status_code='entregue' GROUP BY customer_id), com_rank AS (SELECT customer_id, total AS total_gasto, DENSE_RANK() OVER (ORDER BY total DESC) AS nível FROM gastos) SELECT customer_id, total_gasto, nível FROM com_rank WHERE nível <= 3 ORDER BY nível, customer_id;",
+      "validation_type": "result_match",
+      "validation": {
+        "order_matters": true
+      },
+      "success_criteria": {
+        "objective": "Clientes nos 3 primeiros níveis de gasto com DENSE_RANK",
+        "expected_columns": [
+          "customer_id",
+          "total_gasto",
+          "nível"
+        ],
+        "notes": [
+          "Usar DENSE_RANK",
+          "Apenas pedidos entregues"
+        ]
+      }
+    }
+  ]
+}
