@@ -21,6 +21,7 @@ import {
   FileText,
   Check,
   Lock,
+  LockOpen,
   Database,
 } from "lucide-react";
 import LessonContent from "../components/LessonContent";
@@ -42,6 +43,7 @@ import {
   writeLessonProgressLocal,
 } from "../utils/progressStore";
 import { resolveLessonSlugToKey, getPrevNextSlugs } from "../utils/lessonResolver";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 const MASTER_CHALLENGE_ID = "lesson_master_challenge_1";
 const CAPSTONE_FORCE_UNLOCK = true;
@@ -187,6 +189,11 @@ export default function ClassPage() {
   const [feedback, setFeedback] = useState(null);
   const [activeTabId, setActiveTabId] = useState(null);
   const [masterLock, setMasterLock] = useState({ locked: false, missing: 0 });
+
+  // ── Mobile layout state ──────────────────────────────────────────────────
+  const isMobile = useIsMobile();
+  const [mobilePanelTab, setMobilePanelTab] = useState("desafio");
+  const [challengePreviewExpanded, setChallengePreviewExpanded] = useState(false);
 
   const challenges = Array.isArray(lesson?.exercises) ? lesson.exercises : [];
   const hasTabs = Array.isArray(lesson?.tabs) && lesson.tabs.length > 0;
@@ -401,6 +408,19 @@ export default function ClassPage() {
     activeInterpretationAnswer,
     activeInterpretationTemplateSeeded,
   ]);
+
+  // On mobile: auto-navigate to the resultado panel whenever SQL results arrive
+  useEffect(() => {
+    if (!isMobile) return;
+    if (result?.columns || result?.error) {
+      setMobilePanelTab("resultado");
+    }
+  }, [result, isMobile]);
+
+  // Reset mobile panel to "desafio" when lesson/challenge changes
+  useEffect(() => {
+    if (isMobile) setMobilePanelTab("desafio");
+  }, [lessonId, currentChallenge, isMobile]);
 
   const captureChallengeSnapshot = async (challengeIndex, sqlText) => {
     const sql = (sqlText ?? "").trim();
@@ -652,7 +672,443 @@ export default function ClassPage() {
         </div>
       )}
 
-      <div style={{ display: "grid", gap: 18, gridTemplateColumns: showSql ? "1.5fr 1fr" : "1fr" }}>
+      {/* SchemaPanel is a portal modal — sits outside grid so it works in both layouts */}
+      {schemaOpen && lesson?.schema_reference && (
+        <SchemaPanel
+          schemaReference={lesson.schema_reference}
+          onClose={() => setSchemaOpen(false)}
+        />
+      )}
+
+      {isMobile && showSql ? (
+        /* ═══════════════════════════════════════════════════════════════════
+           MOBILE LAYOUT  ·  segmented panel: Desafio / Editor / Resultado
+           Desktop layout is in the else branch below — completely unchanged.
+           ═══════════════════════════════════════════════════════════════════ */
+        <div style={{ margin: "0 -2rem" }}>
+
+          {/* ── Sticky segmented control (below the 96 px app header) ── */}
+          <div style={{
+            position: "sticky",
+            top: 96,
+            zIndex: 40,
+            background: "#fff",
+            borderBottom: "1px solid rgba(0,0,0,0.1)",
+            display: "flex",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+          }}>
+            {[
+              { id: "desafio",   label: "Desafio",   icon: <BookOpen size={15} /> },
+              { id: "editor",    label: "Editor",    icon: <Pencil size={15} /> },
+              { id: "resultado", label: "Resultado", icon: <FileText size={15} /> },
+            ].map(({ id, label, icon }) => (
+              <button
+                key={id}
+                onClick={() => setMobilePanelTab(id)}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 3,
+                  padding: "0.55rem 0.25rem",
+                  border: "none",
+                  borderBottom: mobilePanelTab === id
+                    ? "2px solid #1a73e8"
+                    : "2px solid transparent",
+                  background: "transparent",
+                  color: mobilePanelTab === id ? "#1a73e8" : "#5f6368",
+                  fontWeight: mobilePanelTab === id ? 700 : 500,
+                  fontSize: "0.75rem",
+                  cursor: "pointer",
+                  minHeight: 52,
+                }}
+              >
+                {icon}
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* ════════ Desafio panel ════════ */}
+          {mobilePanelTab === "desafio" && (
+            <div style={{ padding: "1.25rem 1.25rem 5.5rem" }}>
+
+              {/* No-tabs lesson: full lesson content markdown */}
+              {!hasTabs && (
+                <LessonContent
+                  markdown={fixPtBrText(lesson.content_markdown)}
+                  lessonId={lessonId}
+                  tabId={tabFolder}
+                />
+              )}
+
+              {/* Tabbed — content tab */}
+              {hasTabs && activeTab?.type === "content" && (
+                <LessonContent
+                  markdown={fixPtBrText(activeTab.content_markdown)}
+                  lessonId={lessonId}
+                  tabId={tabFolder}
+                />
+              )}
+
+              {/* Tabbed — challenge tab: show challenge title + prompt */}
+              {hasTabs && activeTab?.type === "challenge" && currentExercise && (
+                <>
+                  {activeTab.intro_markdown && (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {fixPtBrText(activeTab.intro_markdown)}
+                    </ReactMarkdown>
+                  )}
+                  <h3 style={{ marginTop: "1rem" }}>{fixPtBrText(currentExercise.title)}</h3>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {fixPtBrText(currentExercise.prompt_markdown ?? "")}
+                  </ReactMarkdown>
+                </>
+              )}
+
+              {/* Tab prev / next navigation */}
+              {hasTabs && (
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginTop: "1.5rem",
+                  paddingTop: "1rem",
+                  borderTop: "1px solid rgba(0,0,0,0.08)",
+                }}>
+                  <button
+                    disabled={lesson.tabs.findIndex((t) => t.id === activeTabId) <= 0}
+                    onClick={() => {
+                      const idx = lesson.tabs.findIndex((t) => t.id === activeTabId);
+                      if (idx > 0) handleTabSelect(lesson.tabs[idx - 1].id);
+                    }}
+                    style={{
+                      padding: "0.6rem 1.1rem", borderRadius: "999px",
+                      border: "1px solid rgba(0,0,0,0.15)", background: "#fff",
+                      fontWeight: 600, color: "#1a1a1a",
+                      cursor: lesson.tabs.findIndex((t) => t.id === activeTabId) <= 0 ? "not-allowed" : "pointer",
+                      opacity: lesson.tabs.findIndex((t) => t.id === activeTabId) <= 0 ? 0.4 : 1,
+                      display: "flex", alignItems: "center", gap: "0.4rem",
+                    }}
+                  >
+                    <ArrowLeft size={16} /> Anterior
+                  </button>
+                  <button
+                    disabled={lesson.tabs.findIndex((t) => t.id === activeTabId) >= lesson.tabs.length - 1}
+                    onClick={() => {
+                      const idx = lesson.tabs.findIndex((t) => t.id === activeTabId);
+                      if (idx < lesson.tabs.length - 1) handleTabSelect(lesson.tabs[idx + 1].id);
+                    }}
+                    style={{
+                      padding: "0.6rem 1.1rem", borderRadius: "999px",
+                      border: "1px solid rgba(0,0,0,0.15)", background: "#1a73e8",
+                      fontWeight: 600, color: "#fff",
+                      cursor: lesson.tabs.findIndex((t) => t.id === activeTabId) >= lesson.tabs.length - 1 ? "not-allowed" : "pointer",
+                      opacity: lesson.tabs.findIndex((t) => t.id === activeTabId) >= lesson.tabs.length - 1 ? 0.4 : 1,
+                      display: "flex", alignItems: "center", gap: "0.4rem",
+                    }}
+                  >
+                    Próximo <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
+
+              {/* CTA to jump straight to editor */}
+              <button
+                onClick={() => setMobilePanelTab("editor")}
+                style={{
+                  marginTop: "1.25rem",
+                  width: "100%",
+                  padding: "0.75rem",
+                  borderRadius: 12,
+                  border: "none",
+                  background: "#1a1a1a",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  minHeight: 48,
+                }}
+              >
+                <Pencil size={15} /> Ir para o Editor
+              </button>
+            </div>
+          )}
+
+          {/* ════════ Editor panel ════════ */}
+          {mobilePanelTab === "editor" && (
+            <div style={{ paddingBottom: 80 }}>
+
+              {/* Compact challenge preview (2-line collapse/expand) */}
+              {currentExercise && (
+                <div style={{
+                  padding: "0.75rem 1.25rem",
+                  background: "#f0f6ff",
+                  borderBottom: "1px solid #c7d9f5",
+                }}>
+                  <div style={{
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    color: "#1a73e8",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    marginBottom: 3,
+                  }}>
+                    {fixPtBrText(currentExercise.title)}
+                  </div>
+                  <div style={{
+                    fontSize: "0.84rem",
+                    color: "#374151",
+                    lineHeight: 1.5,
+                    overflow: "hidden",
+                    display: "-webkit-box",
+                    WebkitLineClamp: challengePreviewExpanded ? 100 : 2,
+                    WebkitBoxOrient: "vertical",
+                  }}>
+                    {(currentExercise.prompt_markdown ?? "").replace(/[#*`_>]/g, "").trim()}
+                  </div>
+                  <button
+                    onClick={() => setChallengePreviewExpanded((p) => !p)}
+                    style={{
+                      marginTop: 4,
+                      fontSize: "0.75rem",
+                      color: "#1a73e8",
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {challengePreviewExpanded ? "▲ Menos" : "▼ Ver desafio completo"}
+                  </button>
+                </div>
+              )}
+
+              {/* SQL Editor */}
+              <div style={{ background: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                <div style={{
+                  padding: "0.65rem 1rem",
+                  borderBottom: "1px solid rgba(0,0,0,0.08)",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}>
+                  <span>Editor SQL</span>
+                  {lesson?.schema_reference && (
+                    <button
+                      onClick={() => setSchemaOpen(true)}
+                      title="Referência de schema"
+                      style={{
+                        display: "flex", alignItems: "center", gap: 5,
+                        fontSize: 12, fontWeight: 500, color: "#4b5563",
+                        background: "#f3f4f6", border: "1px solid #e5e7eb",
+                        borderRadius: 6, padding: "4px 10px", cursor: "pointer",
+                        minHeight: 36,
+                      }}
+                    >
+                      <Database size={13} /> Schema
+                    </button>
+                  )}
+                </div>
+                <div style={{ height: 280 }}>
+                  <SqlEditor
+                    value={query}
+                    onChange={(val) => {
+                      const next = val ?? "";
+                      setQuery(next);
+                      setLastQueryByChallenge((prev) => ({ ...prev, [currentChallenge]: next }));
+                    }}
+                    height="100%"
+                  />
+                </div>
+              </div>
+
+              {/* Secondary actions: Dica + Ver Solução */}
+              <div style={{
+                padding: "0.75rem 1rem",
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+              }}>
+                <button
+                  onClick={hintUnlockedByChallenge[currentChallenge] ? handleHint : undefined}
+                  disabled={!hintUnlockedByChallenge[currentChallenge]}
+                  title={!hintUnlockedByChallenge[currentChallenge] ? "Desbloqueie após a primeira execução com erro." : undefined}
+                  style={{
+                    padding: "0.5rem 0.9rem",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "#f1f3f4",
+                    color: !hintUnlockedByChallenge[currentChallenge] ? "#9aa0a6" : "#5f6368",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    cursor: !hintUnlockedByChallenge[currentChallenge] ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    minHeight: 44,
+                  }}
+                >
+                  {!hintUnlockedByChallenge[currentChallenge] ? <Lock size={13} /> : <LockOpen size={13} />} Dica
+                </button>
+                <button
+                  onClick={(failuresByChallenge[currentChallenge] ?? 0) >= 2 ? handleSolution : undefined}
+                  disabled={(failuresByChallenge[currentChallenge] ?? 0) < 2}
+                  title={(failuresByChallenge[currentChallenge] ?? 0) < 2 ? "Desbloqueie após 2 tentativas incorretas." : undefined}
+                  style={{
+                    padding: "0.5rem 0.9rem",
+                    borderRadius: 8,
+                    border: "none",
+                    background: "#f1f3f4",
+                    color: (failuresByChallenge[currentChallenge] ?? 0) < 2 ? "#9aa0a6" : "#5f6368",
+                    fontWeight: 600,
+                    fontSize: "0.85rem",
+                    cursor: (failuresByChallenge[currentChallenge] ?? 0) < 2 ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 5,
+                    minHeight: 44,
+                  }}
+                >
+                  {(failuresByChallenge[currentChallenge] ?? 0) < 2 ? <Lock size={13} /> : <LockOpen size={13} />} Ver Solução
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ════════ Resultado panel ════════ */}
+          {mobilePanelTab === "resultado" && (
+            <div style={{ padding: "1rem 1.25rem", paddingBottom: 80 }}>
+              {(() => {
+                const errorToShow = result?.error ?? (feedback?.correct === false ? feedback.message : null);
+                return (
+                  <>
+                    {errorToShow && <SqlErrorCard rawError={errorToShow} />}
+                    {feedback && !errorToShow && (
+                      <div style={{
+                        marginBottom: 10,
+                        padding: "0.7rem 0.9rem",
+                        borderRadius: 10,
+                        background: feedback.correct === true ? "#e6f4ea" : feedback.correct === false ? "#fce8e6" : "#f1f3f4",
+                      }}>
+                        {fixPtBrText(feedback.message)}
+                        {feedback.correct === true && feedback.nextTabId && (
+                          <button
+                            onClick={() => handleTabSelect(feedback.nextTabId)}
+                            style={{ marginLeft: 8, border: "none", background: "#137333", color: "#fff", borderRadius: 999, padding: "0.3rem 0.8rem" }}
+                          >
+                            Próximo desafio <ArrowRight size={12} />
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {!errorToShow && !feedback && !result?.columns && (
+                      <div style={{ color: "#9aa0a6", textAlign: "center", padding: "2rem 0", fontSize: "0.9rem" }}>
+                        Execute uma query para ver os resultados aqui.
+                      </div>
+                    )}
+                    {/* Horizontal scroll wrapper for wide tables */}
+                    <div style={{ overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
+                      <ResultTable columns={result.columns} rows={result.rows} error={null} />
+                    </div>
+                    {currentExercise?.chart_config && result.columns && result.rows && (
+                      <ChartResult
+                        chartConfig={currentExercise.chart_config}
+                        columns={result.columns}
+                        rows={result.rows}
+                        chartRef={getChartRef(currentChallenge)}
+                      />
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* ════════ Sticky action footer (always reachable) ════════ */}
+          <div style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 50,
+            background: "#fff",
+            borderTop: "1px solid rgba(0,0,0,0.1)",
+            padding: "0.6rem 1rem",
+            display: "flex",
+            gap: 10,
+            boxShadow: "0 -2px 12px rgba(0,0,0,0.08)",
+          }}>
+            <button
+              onClick={() => { handleRun(); setMobilePanelTab("resultado"); }}
+              style={{
+                flex: 1,
+                padding: "0.75rem",
+                borderRadius: 10,
+                border: "none",
+                background: "#1a1a1a",
+                color: "#fff",
+                fontWeight: 700,
+                fontSize: "0.9rem",
+                cursor: "pointer",
+                minHeight: 48,
+              }}
+            >
+              ▶ Rodar SQL
+            </button>
+            {typeof pendingNextChallenge === "number" ? (
+              <button
+                onClick={handleContinue}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem",
+                  borderRadius: 10,
+                  border: "none",
+                  background: "#1a73e8",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  minHeight: 48,
+                }}
+              >
+                Continuar →
+              </button>
+            ) : (
+              <button
+                onClick={handleValidate}
+                style={{
+                  flex: 1,
+                  padding: "0.75rem",
+                  borderRadius: 10,
+                  border: "none",
+                  background: "#1a73e8",
+                  color: "#fff",
+                  fontWeight: 700,
+                  fontSize: "0.9rem",
+                  cursor: "pointer",
+                  minHeight: 48,
+                }}
+              >
+                Verificar
+              </button>
+            )}
+          </div>
+
+        </div>
+        /* end MOBILE layout */
+      ) : (
+        /* ═══════════════════════════════════════════════════════════════════
+           DESKTOP LAYOUT  ·  two-column grid  (completely unchanged below)
+           ═══════════════════════════════════════════════════════════════════ */
+        <div style={{ display: "grid", gap: 18, gridTemplateColumns: showSql ? "1.5fr 1fr" : "1fr" }}>
         <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 16, padding: "1.4rem" }}>
           {!hasTabs && <LessonContent markdown={fixPtBrText(lesson.content_markdown)} lessonId={lessonId} tabId={tabFolder} />}
 
@@ -1090,13 +1546,8 @@ export default function ClassPage() {
           </div>
         )}
 
-        {schemaOpen && lesson?.schema_reference && (
-          <SchemaPanel
-            schemaReference={lesson.schema_reference}
-            onClose={() => setSchemaOpen(false)}
-          />
-        )}
-      </div>
+        </div>
+      )} {/* end mobile / desktop conditional */}
     </div>
   );
 }
