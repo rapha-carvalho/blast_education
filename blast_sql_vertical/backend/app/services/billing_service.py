@@ -38,6 +38,7 @@ from app.services.access_service import (
     sync_user_effective_status,
 )
 from app.services.crypto_service import encrypt_cpf, normalize_cpf
+from app.services.email_service import build_login_link, send_purchase_confirmation_email
 from app.services.user_db import (
     ACCESS_STATUS_VALUES,
     attach_checkout_session_to_purchase,
@@ -50,15 +51,19 @@ from app.services.user_db import (
     get_checkout_signup_intent_by_id,
     get_latest_purchase_for_user_any_status,
     get_purchase_by_checkout_session_id,
+    get_purchase_email_event_by_stripe_event_id,
     get_purchase_by_id,
     get_purchase_by_payment_intent_id,
     get_user_by_email,
     get_user_by_id,
     get_user_by_stripe_customer_id,
+    has_sent_purchase_confirmation_email,
+    mark_purchase_email_event_processed,
     mark_purchase_paid,
     mark_checkout_signup_intent_completed,
     mark_checkout_signup_intent_session_created,
     mark_purchase_refunded_by_payment_intent,
+    upsert_purchase_email_event,
     update_purchase_status,
     update_user_access_state,
     update_user_cpf_if_empty,
@@ -515,6 +520,7 @@ def start_public_checkout(email: str, password: str, course_id: str | None = Non
     metadata = {
         "checkout_intent_id": checkout_intent_id,
         "course_id": normalized_course_id,
+        "price_id": STRIPE_PRICE_ID,
     }
     params = _build_public_checkout_params(
         email=clean_email,
@@ -578,6 +584,7 @@ def start_public_embedded_checkout(email: str, password: str, course_id: str | N
     metadata = {
         "checkout_intent_id": checkout_intent_id,
         "course_id": normalized_course_id,
+        "price_id": STRIPE_PRICE_ID,
     }
     params = _build_public_embedded_checkout_params(
         email=clean_email,
@@ -630,6 +637,7 @@ def create_checkout_session_for_user(user: dict) -> dict[str, Any]:
         "purchase_id": str(purchase_id),
         "user_id": str(user_id),
         "course_id": course_id,
+        "price_id": STRIPE_PRICE_ID,
     }
     user_row = get_user_by_id(user_id) or {}
     params = _build_checkout_params(
@@ -677,6 +685,7 @@ def create_embedded_checkout_session_for_user(user: dict, course_id: str | None 
         "purchase_id": str(purchase_id),
         "user_id": str(user_id),
         "course_id": normalized_course_id,
+        "price_id": STRIPE_PRICE_ID,
     }
     user_row = get_user_by_id(user_id) or {}
     params = _build_checkout_params(
@@ -869,16 +878,157 @@ def _extract_cpf_from_checkout_session(payload: Any, session_id: str) -> str:
     return _extract_custom_field_text(session, "cpf")
 
 
+def _build_event_audit_context(event_type: str, payload: Any) -> dict[str, Any]:
+    session_id: str | None = None
+    payment_intent_id: str | None = None
+    if event_type == "checkout.session.completed":
+        session_id = str(_obj_get(payload, "id") or "").strip() or None
+        payment_intent_id = str(_obj_get(payload, "payment_intent") or "").strip() or None
+    elif event_type == "payment_intent.succeeded":
+        payment_intent_id = str(_obj_get(payload, "id") or "").strip() or None
+    elif event_type in {"charge.refunded", "charge.dispute.created"}:
+        payment_intent_id = str(_obj_get(payload, "payment_intent") or "").strip() or None
+
+    return {
+        "stripe_session_id": session_id,
+        "stripe_payment_intent_id": payment_intent_id,
+        "purchase_id": None,
+        "user_id": None,
+        "email": None,
+        "email_sent_at": None,
+        "email_provider_message_id": None,
+        "email_error": None,
+    }
+
+
+def _set_event_audit_context(ctx: dict[str, Any], **kwargs: Any) -> dict[str, Any]:
+    for key, value in kwargs.items():
+        if value is None:
+            continue
+        if isinstance(value, str):
+            clean_value = value.strip()
+            if not clean_value:
+                continue
+            ctx[key] = clean_value
+            continue
+        ctx[key] = value
+    return ctx
+
+
+def _metadata_matches_configured_checkout(metadata: dict[str, str], *, event_id: str, event_type: str) -> bool:
+    metadata_course_id = str(metadata.get("course_id") or "").strip()
+    if metadata_course_id and metadata_course_id != BILLING_COURSE_ID:
+        logger.warning(
+            "stripe_event_ignored_unsupported_course event_id=%s event_type=%s course_id=%s",
+            event_id,
+            event_type,
+            metadata_course_id,
+        )
+        return False
+
+    metadata_price_id = str(metadata.get("price_id") or "").strip()
+    if metadata_price_id and STRIPE_PRICE_ID and metadata_price_id != STRIPE_PRICE_ID:
+        logger.warning(
+            "stripe_event_ignored_price_mismatch event_id=%s event_type=%s metadata_price_id=%s expected_price_id=%s",
+            event_id,
+            event_type,
+            metadata_price_id,
+            STRIPE_PRICE_ID,
+        )
+        return False
+    return True
+
+
+def _send_purchase_confirmation_for_purchase(
+    *,
+    event_id: str,
+    event_type: str,
+    purchase: dict[str, Any],
+    event_context: dict[str, Any],
+    password_created_at_checkout: bool,
+) -> dict[str, Any]:
+    purchase_id = int(purchase["id"])
+    user_id = int(purchase["user_id"])
+    course_id = str(purchase.get("course_id") or "")
+
+    _set_event_audit_context(
+        event_context,
+        purchase_id=purchase_id,
+        user_id=user_id,
+        stripe_session_id=str(purchase.get("stripe_checkout_session_id") or "") or event_context.get("stripe_session_id"),
+        stripe_payment_intent_id=str(purchase.get("stripe_payment_intent_id") or "")
+        or event_context.get("stripe_payment_intent_id"),
+    )
+
+    if course_id != BILLING_COURSE_ID:
+        logger.warning(
+            "stripe_purchase_confirmation_email_skipped_unsupported_course event_id=%s event_type=%s purchase_id=%s course_id=%s",
+            event_id,
+            event_type,
+            purchase_id,
+            course_id,
+        )
+        return event_context
+
+    user = get_user_by_id(user_id) or {}
+    user_email = _normalize_email(str(user.get("email") or ""))
+    _set_event_audit_context(event_context, email=user_email)
+    if not user_email:
+        logger.warning(
+            "stripe_purchase_confirmation_email_skipped_missing_email event_id=%s event_type=%s purchase_id=%s user_id=%s",
+            event_id,
+            event_type,
+            purchase_id,
+            user_id,
+        )
+        _set_event_audit_context(event_context, email_error="missing user email")
+        return event_context
+
+    stripe_session_id = str(event_context.get("stripe_session_id") or "").strip() or None
+    if has_sent_purchase_confirmation_email(stripe_session_id=stripe_session_id, purchase_id=purchase_id):
+        logger.info(
+            "stripe_purchase_confirmation_email_skipped_duplicate event_id=%s event_type=%s purchase_id=%s session_id=%s",
+            event_id,
+            event_type,
+            purchase_id,
+            stripe_session_id or "",
+        )
+        return event_context
+
+    send_result = send_purchase_confirmation_email(
+        to_email=user_email,
+        full_name=str(user.get("full_name") or "").strip() or None,
+        login_email=user_email,
+        login_url=build_login_link(),
+        password_created_at_checkout=password_created_at_checkout,
+    )
+    if send_result.get("sent"):
+        _set_event_audit_context(
+            event_context,
+            email_sent_at=int(time.time()),
+            email_provider_message_id=str(send_result.get("provider_message_id") or ""),
+        )
+        return event_context
+
+    _set_event_audit_context(
+        event_context,
+        email_error=str(send_result.get("error") or "purchase confirmation email failed"),
+    )
+    return event_context
+
+
 def _handle_checkout_signup_intent_completion(
     payload: Any,
     event_id: str,
     event_created: int,
     checkout_intent_id: str,
-) -> None:
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
     now_ts = int(time.time())
     expire_old_checkout_signup_intents(now_ts=now_ts)
     intent = get_checkout_signup_intent_by_id(checkout_intent_id)
     session_id = str(_obj_get(payload, "id") or "")
+    _set_event_audit_context(event_context, stripe_session_id=session_id)
     if not intent:
         logger.warning(
             "stripe_checkout_signup_intent_missing event_id=%s checkout_intent_id=%s session_id=%s",
@@ -886,7 +1036,7 @@ def _handle_checkout_signup_intent_completion(
             checkout_intent_id,
             session_id,
         )
-        return
+        return event_context
     if int(intent.get("expires_at") or 0) <= now_ts and str(intent.get("status") or "") != "completed":
         logger.warning(
             "stripe_checkout_signup_intent_expired event_id=%s checkout_intent_id=%s session_id=%s",
@@ -894,14 +1044,14 @@ def _handle_checkout_signup_intent_completion(
             checkout_intent_id,
             session_id,
         )
-        return
+        return event_context
     if str(intent.get("status") or "") == "completed":
         logger.info(
             "stripe_checkout_signup_intent_duplicate event_id=%s checkout_intent_id=%s",
             event_id,
             checkout_intent_id,
         )
-        return
+        return event_context
 
     cpf_raw = _extract_cpf_from_checkout_session(payload, session_id=session_id)
     if not cpf_raw:
@@ -910,7 +1060,7 @@ def _handle_checkout_signup_intent_completion(
             event_id,
             checkout_intent_id,
         )
-        return
+        return event_context
     if not CPF_ENCRYPTION_KEY:
         raise RuntimeError("Missing CPF_ENCRYPTION_KEY")
     try:
@@ -923,7 +1073,7 @@ def _handle_checkout_signup_intent_completion(
             checkout_intent_id,
             str(exc),
         )
-        return
+        return event_context
 
     intent_email = _normalize_email(str(intent.get("email") or ""))
     existing_user = get_user_by_email(intent_email)
@@ -971,7 +1121,15 @@ def _handle_checkout_signup_intent_completion(
             event_id,
             checkout_intent_id,
         )
-        return
+        return event_context
+
+    _set_event_audit_context(
+        event_context,
+        purchase_id=int(updated_purchase["id"]),
+        user_id=int(updated_purchase["user_id"]),
+        stripe_payment_intent_id=str(updated_purchase.get("stripe_payment_intent_id") or ""),
+        email=intent_email,
+    )
 
     customer_id = str(_obj_get(payload, "customer") or "").strip()
     if customer_id:
@@ -985,9 +1143,16 @@ def _handle_checkout_signup_intent_completion(
             checkout_intent_id,
             updated_purchase["id"],
         )
-        return
+        return event_context
 
     _grant_access_for_purchase(updated_purchase, paid_at=paid_at)
+    _send_purchase_confirmation_for_purchase(
+        event_id=event_id,
+        event_type="checkout.session.completed",
+        purchase=updated_purchase,
+        event_context=event_context,
+        password_created_at_checkout=True,
+    )
     logger.info(
         "stripe_checkout_signup_intent_completed event_id=%s checkout_intent_id=%s purchase_id=%s user_id=%s intent_changed=%s",
         event_id,
@@ -996,9 +1161,15 @@ def _handle_checkout_signup_intent_completion(
         updated_purchase["user_id"],
         intent_changed,
     )
+    return event_context
 
 
-def _handle_checkout_session_completed(payload: Any, event_id: str, event_created: int) -> None:
+def _handle_checkout_session_completed(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
     payment_status = str(_obj_get(payload, "payment_status") or "").lower()
     if payment_status != "paid":
         logger.info(
@@ -1007,19 +1178,35 @@ def _handle_checkout_session_completed(payload: Any, event_id: str, event_create
             _obj_get(payload, "id"),
             payment_status or "unknown",
         )
-        return
+        return event_context
 
     session_id = str(_obj_get(payload, "id") or "")
+    _set_event_audit_context(event_context, stripe_session_id=session_id)
     metadata = _metadata_as_dict(_obj_get(payload, "metadata"))
+    if not _metadata_matches_configured_checkout(metadata, event_id=event_id, event_type="checkout.session.completed"):
+        return event_context
     checkout_intent_id = str(metadata.get("checkout_intent_id") or "").strip()
     if checkout_intent_id:
-        _handle_checkout_signup_intent_completion(payload, event_id, event_created, checkout_intent_id)
-        return
+        return _handle_checkout_signup_intent_completion(
+            payload,
+            event_id,
+            event_created,
+            checkout_intent_id,
+            event_context,
+        )
 
     purchase = _resolve_purchase_from_metadata(metadata, session_id=session_id)
     if not purchase:
         logger.warning("stripe_checkout_completed_missing_purchase event_id=%s session_id=%s", event_id, session_id)
-        return
+        return event_context
+    if str(purchase.get("course_id") or "") != BILLING_COURSE_ID:
+        logger.warning(
+            "stripe_checkout_completed_ignored_unsupported_course event_id=%s purchase_id=%s course_id=%s",
+            event_id,
+            purchase.get("id"),
+            purchase.get("course_id"),
+        )
+        return event_context
 
     session_with_discounts = _retrieve_session_with_expanded_discounts(session_id) or payload
     discount_metadata = _extract_discount_metadata(session_with_discounts)
@@ -1039,7 +1226,14 @@ def _handle_checkout_session_completed(payload: Any, event_id: str, event_create
     )
     if not updated_purchase:
         logger.warning("stripe_checkout_completed_purchase_not_found_after_update event_id=%s", event_id)
-        return
+        return event_context
+
+    _set_event_audit_context(
+        event_context,
+        purchase_id=int(updated_purchase["id"]),
+        user_id=int(updated_purchase["user_id"]),
+        stripe_payment_intent_id=str(updated_purchase.get("stripe_payment_intent_id") or ""),
+    )
 
     customer_id = str(_obj_get(payload, "customer") or "").strip()
     if customer_id:
@@ -1051,9 +1245,16 @@ def _handle_checkout_session_completed(payload: Any, event_id: str, event_create
             event_id,
             updated_purchase["id"],
         )
-        return
+        return event_context
 
     _grant_access_for_purchase(updated_purchase, paid_at=paid_at)
+    _send_purchase_confirmation_for_purchase(
+        event_id=event_id,
+        event_type="checkout.session.completed",
+        purchase=updated_purchase,
+        event_context=event_context,
+        password_created_at_checkout=False,
+    )
     logger.info(
         "stripe_checkout_completed_processed event_id=%s purchase_id=%s user_id=%s amount_discount=%s",
         event_id,
@@ -1061,10 +1262,18 @@ def _handle_checkout_session_completed(payload: Any, event_id: str, event_create
         updated_purchase["user_id"],
         discount_metadata.get("amount_discount"),
     )
+    return event_context
 
 
-def _handle_payment_intent_succeeded(payload: Any, event_id: str, event_created: int) -> None:
+def _handle_payment_intent_succeeded(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
     metadata = _metadata_as_dict(_obj_get(payload, "metadata"))
+    if not _metadata_matches_configured_checkout(metadata, event_id=event_id, event_type="payment_intent.succeeded"):
+        return event_context
     checkout_intent_id = str(metadata.get("checkout_intent_id") or "").strip()
     purchase = _resolve_purchase_from_metadata(metadata)
     if not purchase:
@@ -1077,9 +1286,17 @@ def _handle_payment_intent_succeeded(payload: Any, event_id: str, event_created:
                 event_id,
                 checkout_intent_id,
             )
-            return
+            return event_context
         logger.info("stripe_payment_intent_succeeded_ignored event_id=%s reason=no_purchase", event_id)
-        return
+        return event_context
+    if str(purchase.get("course_id") or "") != BILLING_COURSE_ID:
+        logger.warning(
+            "stripe_payment_intent_succeeded_ignored_unsupported_course event_id=%s purchase_id=%s course_id=%s",
+            event_id,
+            purchase.get("id"),
+            purchase.get("course_id"),
+        )
+        return event_context
 
     paid_at = _to_int(_obj_get(payload, "created")) or event_created or int(time.time())
     updated_purchase, changed = mark_purchase_paid(
@@ -1095,7 +1312,15 @@ def _handle_payment_intent_succeeded(payload: Any, event_id: str, event_created:
         },
     )
     if not updated_purchase:
-        return
+        return event_context
+
+    _set_event_audit_context(
+        event_context,
+        purchase_id=int(updated_purchase["id"]),
+        user_id=int(updated_purchase["user_id"]),
+        stripe_payment_intent_id=str(updated_purchase.get("stripe_payment_intent_id") or ""),
+        stripe_session_id=str(updated_purchase.get("stripe_checkout_session_id") or ""),
+    )
 
     customer_id = str(_obj_get(payload, "customer") or "").strip()
     if customer_id:
@@ -1103,15 +1328,23 @@ def _handle_payment_intent_succeeded(payload: Any, event_id: str, event_created:
 
     if not changed:
         logger.info("stripe_payment_intent_succeeded_duplicate event_id=%s purchase_id=%s", event_id, purchase["id"])
-        return
+        return event_context
 
     _grant_access_for_purchase(updated_purchase, paid_at=paid_at)
+    _send_purchase_confirmation_for_purchase(
+        event_id=event_id,
+        event_type="payment_intent.succeeded",
+        purchase=updated_purchase,
+        event_context=event_context,
+        password_created_at_checkout=False,
+    )
     logger.info(
         "stripe_payment_intent_succeeded_processed event_id=%s purchase_id=%s user_id=%s",
         event_id,
         updated_purchase["id"],
         updated_purchase["user_id"],
     )
+    return event_context
 
 
 def _extract_refund_id_from_charge(payload: Any) -> str | None:
@@ -1129,11 +1362,17 @@ def _extract_refund_id_from_charge(payload: Any) -> str | None:
     return None
 
 
-def _handle_charge_refunded(payload: Any, event_id: str, event_created: int) -> None:
+def _handle_charge_refunded(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
     payment_intent_id = str(_obj_get(payload, "payment_intent") or "").strip()
     if not payment_intent_id:
         logger.info("stripe_charge_refunded_ignored event_id=%s reason=no_payment_intent", event_id)
-        return
+        return event_context
+    _set_event_audit_context(event_context, stripe_payment_intent_id=payment_intent_id)
 
     stripe_refund_id = _extract_refund_id_from_charge(payload)
 
@@ -1149,14 +1388,21 @@ def _handle_charge_refunded(payload: Any, event_id: str, event_created: int) -> 
             event_id,
             payment_intent_id,
         )
-        return
+        return event_context
+    _set_event_audit_context(
+        event_context,
+        purchase_id=int(refunded_purchase["id"]),
+        user_id=int(refunded_purchase["user_id"]),
+        stripe_session_id=str(refunded_purchase.get("stripe_checkout_session_id") or ""),
+        email=_normalize_email(str((get_user_by_id(int(refunded_purchase["user_id"])) or {}).get("email") or "")),
+    )
     if not changed:
         logger.info(
             "stripe_charge_refunded_duplicate event_id=%s purchase_id=%s",
             event_id,
             refunded_purchase["id"],
         )
-        return
+        return event_context
     _set_user_access_from_stripe(
         int(refunded_purchase["user_id"]),
         access_status="refunded",
@@ -1169,13 +1415,19 @@ def _handle_charge_refunded(payload: Any, event_id: str, event_created: int) -> 
         refunded_purchase["id"],
         refunded_purchase["user_id"],
     )
+    return event_context
 
 
-def _handle_subscription_deleted(payload: Any, event_id: str, event_created: int) -> None:
+def _handle_subscription_deleted(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
     customer_id = str(_obj_get(payload, "customer") or "").strip()
     if not customer_id:
         logger.info("stripe_subscription_deleted_ignored event_id=%s reason=no_customer", event_id)
-        return
+        return event_context
     user = get_user_by_stripe_customer_id(customer_id)
     if not user:
         logger.info(
@@ -1183,7 +1435,12 @@ def _handle_subscription_deleted(payload: Any, event_id: str, event_created: int
             event_id,
             customer_id,
         )
-        return
+        return event_context
+    _set_event_audit_context(
+        event_context,
+        user_id=int(user["id"]),
+        email=_normalize_email(str(user.get("email") or "")),
+    )
     expires_at = _to_int(user.get("expires_at"))
     _set_user_access_from_stripe(
         int(user["id"]),
@@ -1197,16 +1454,30 @@ def _handle_subscription_deleted(payload: Any, event_id: str, event_created: int
         user["id"],
         customer_id,
     )
+    return event_context
 
 
-def _handle_charge_dispute_created(payload: Any, event_id: str, event_created: int) -> None:
+def _handle_charge_dispute_created(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
     payment_intent_id = str(_obj_get(payload, "payment_intent") or "").strip()
     customer_id = str(_obj_get(payload, "customer") or "").strip()
+    _set_event_audit_context(event_context, stripe_payment_intent_id=payment_intent_id)
     user_id: int | None = None
     if payment_intent_id:
         purchase = get_purchase_by_payment_intent_id(payment_intent_id)
         if purchase:
             user_id = int(purchase["user_id"])
+            _set_event_audit_context(
+                event_context,
+                purchase_id=int(purchase["id"]),
+                user_id=user_id,
+                stripe_session_id=str(purchase.get("stripe_checkout_session_id") or ""),
+                email=_normalize_email(str((get_user_by_id(user_id) or {}).get("email") or "")),
+            )
             update_purchase_status(
                 int(purchase["id"]),
                 status=str(purchase.get("status") or "paid"),
@@ -1227,8 +1498,13 @@ def _handle_charge_dispute_created(payload: Any, event_id: str, event_created: i
             payment_intent_id,
             customer_id,
         )
-        return
+        return event_context
     user_row = get_user_by_id(user_id)
+    _set_event_audit_context(
+        event_context,
+        user_id=user_id,
+        email=_normalize_email(str((user_row or {}).get("email") or "")),
+    )
     expires_at = _to_int(user_row.get("expires_at")) if user_row else None
     _set_user_access_from_stripe(
         user_id,
@@ -1242,6 +1518,7 @@ def _handle_charge_dispute_created(payload: Any, event_id: str, event_created: i
         user_id,
         payment_intent_id,
     )
+    return event_context
 
 
 def refresh_user_from_stripe(user_id: int, requested_by_admin_id: int) -> dict[str, Any]:
@@ -1354,21 +1631,46 @@ def process_stripe_event(event: Any) -> None:
     event_type = str(_obj_get(event, "type") or "")
     event_created = _to_int(_obj_get(event, "created")) or int(time.time())
     payload = _obj_get(_obj_get(event, "data", {}), "object", {})
+    event_context = _build_event_audit_context(event_type, payload)
 
     logger.info("stripe_webhook_received event_id=%s event_type=%s", event_id, event_type)
+    if event_id:
+        existing_event = get_purchase_email_event_by_stripe_event_id(event_id)
+        if existing_event and existing_event.get("processed_at") is not None:
+            logger.info("stripe_webhook_duplicate_processed event_id=%s event_type=%s", event_id, event_type)
+            return
+        upsert_purchase_email_event(
+            stripe_event_id=event_id,
+            event_type=event_type,
+            stripe_session_id=str(event_context.get("stripe_session_id") or "") or None,
+            stripe_payment_intent_id=str(event_context.get("stripe_payment_intent_id") or "") or None,
+        )
+
     if event_type == "checkout.session.completed":
-        _handle_checkout_session_completed(payload, event_id, event_created)
+        event_context = _handle_checkout_session_completed(payload, event_id, event_created, event_context)
+    elif event_type == "payment_intent.succeeded":
+        event_context = _handle_payment_intent_succeeded(payload, event_id, event_created, event_context)
+    elif event_type == "charge.refunded":
+        event_context = _handle_charge_refunded(payload, event_id, event_created, event_context)
+    elif event_type == "customer.subscription.deleted":
+        event_context = _handle_subscription_deleted(payload, event_id, event_created, event_context)
+    elif event_type == "charge.dispute.created":
+        event_context = _handle_charge_dispute_created(payload, event_id, event_created, event_context)
+    else:
+        logger.info("stripe_webhook_ignored event_id=%s event_type=%s", event_id, event_type)
+
+    if not event_id:
         return
-    if event_type == "payment_intent.succeeded":
-        _handle_payment_intent_succeeded(payload, event_id, event_created)
-        return
-    if event_type == "charge.refunded":
-        _handle_charge_refunded(payload, event_id, event_created)
-        return
-    if event_type == "customer.subscription.deleted":
-        _handle_subscription_deleted(payload, event_id, event_created)
-        return
-    if event_type == "charge.dispute.created":
-        _handle_charge_dispute_created(payload, event_id, event_created)
-        return
-    logger.info("stripe_webhook_ignored event_id=%s event_type=%s", event_id, event_type)
+
+    mark_purchase_email_event_processed(
+        stripe_event_id=event_id,
+        processed_at=int(time.time()),
+        stripe_session_id=str(event_context.get("stripe_session_id") or "") or None,
+        stripe_payment_intent_id=str(event_context.get("stripe_payment_intent_id") or "") or None,
+        purchase_id=_to_int(event_context.get("purchase_id")),
+        user_id=_to_int(event_context.get("user_id")),
+        email=str(event_context.get("email") or "") or None,
+        email_sent_at=_to_int(event_context.get("email_sent_at")),
+        email_provider_message_id=str(event_context.get("email_provider_message_id") or "") or None,
+        email_error=str(event_context.get("email_error") or "") or None,
+    )

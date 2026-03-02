@@ -53,6 +53,7 @@ export default function HomePage() {
 
   const card = (
     <div
+      className="home-course-card"
       style={{
         borderRadius: "20px",
         overflow: "hidden",
@@ -101,7 +102,7 @@ export default function HomePage() {
         />
       </div>
 
-      <div style={{ padding: "0.25rem 2.5rem 2rem", background: "#111111" }}>
+      <div className="home-card-content" style={{ padding: "0.25rem 2.5rem 2rem", background: "#111111" }}>
         <div
           style={{
             width: "40px",
@@ -172,6 +173,21 @@ export default function HomePage() {
   );
 
   return (
+    <>
+      <style>{`
+        @media (max-width: 767px) {
+          .home-card-wrapper {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          .home-course-card {
+            border-radius: 0 !important;
+          }
+          .home-card-content {
+            padding: 0.25rem 1.5rem 1.75rem !important;
+          }
+        }
+      `}</style>
     <div style={{ background: "#f8f9fa", minHeight: "100vh" }}>
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "3.5rem 2rem 1rem" }}>
         <motion.h1
@@ -223,6 +239,7 @@ export default function HomePage() {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7, ease: "easeOut", delay: 0.1 }}
+        className="home-card-wrapper"
         style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 2rem 4rem" }}
       >
         {hasAccess ? (
@@ -290,5 +307,6 @@ export default function HomePage() {
         </div>
       </motion.div>
     </div>
+    </>
   );
 }

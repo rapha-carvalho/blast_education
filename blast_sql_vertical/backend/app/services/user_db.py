@@ -225,6 +225,26 @@ def init_user_db() -> None:
             """
         )
         conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS purchase_email_events (
+                stripe_event_id TEXT PRIMARY KEY,
+                stripe_session_id TEXT,
+                stripe_payment_intent_id TEXT,
+                purchase_id INTEGER,
+                user_id INTEGER,
+                email TEXT,
+                event_type TEXT NOT NULL,
+                processed_at INTEGER,
+                email_sent_at INTEGER,
+                email_provider_message_id TEXT,
+                email_error TEXT,
+                created_at INTEGER NOT NULL,
+                FOREIGN KEY (purchase_id) REFERENCES purchases(id) ON DELETE SET NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+            )
+            """
+        )
+        conn.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_purchases_checkout_session_id ON purchases(stripe_checkout_session_id)"
         )
         conn.execute(
@@ -241,6 +261,15 @@ def init_user_db() -> None:
         )
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_access_grants_expires_at ON access_grants(expires_at)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_purchase_email_events_session_id ON purchase_email_events(stripe_session_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_purchase_email_events_purchase_id ON purchase_email_events(purchase_id)"
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_purchase_email_events_processed_at ON purchase_email_events(processed_at)"
         )
         conn.execute(
             """
@@ -1259,6 +1288,191 @@ def _decode_purchase_row(row: sqlite3.Row | None) -> dict | None:
         return None
     data["metadata"] = _decode_json_object(data.get("metadata"))
     return data
+
+
+def _decode_purchase_email_event_row(row: sqlite3.Row | None) -> dict | None:
+    return _row_to_dict(row)
+
+
+def get_purchase_email_event_by_stripe_event_id(stripe_event_id: str) -> dict | None:
+    event_id = (stripe_event_id or "").strip()
+    if not event_id:
+        return None
+    with _connect() as conn:
+        row = conn.execute(
+            """
+            SELECT stripe_event_id, stripe_session_id, stripe_payment_intent_id, purchase_id, user_id, email,
+                   event_type, processed_at, email_sent_at, email_provider_message_id, email_error, created_at
+            FROM purchase_email_events
+            WHERE stripe_event_id = ?
+            LIMIT 1
+            """,
+            (event_id,),
+        ).fetchone()
+        return _decode_purchase_email_event_row(row)
+
+
+def upsert_purchase_email_event(
+    stripe_event_id: str,
+    event_type: str,
+    stripe_session_id: str | None = None,
+    stripe_payment_intent_id: str | None = None,
+    purchase_id: int | None = None,
+    user_id: int | None = None,
+    email: str | None = None,
+) -> dict | None:
+    event_id = (stripe_event_id or "").strip()
+    if not event_id:
+        return None
+    now = int(time.time())
+    clean_event_type = (event_type or "").strip() or "unknown"
+    clean_session_id = (stripe_session_id or "").strip() or None
+    clean_payment_intent_id = (stripe_payment_intent_id or "").strip() or None
+    clean_email = (email or "").strip().lower() or None
+
+    with _connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO purchase_email_events (
+                stripe_event_id,
+                stripe_session_id,
+                stripe_payment_intent_id,
+                purchase_id,
+                user_id,
+                email,
+                event_type,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(stripe_event_id)
+            DO UPDATE SET
+                stripe_session_id = COALESCE(excluded.stripe_session_id, purchase_email_events.stripe_session_id),
+                stripe_payment_intent_id = COALESCE(
+                    excluded.stripe_payment_intent_id,
+                    purchase_email_events.stripe_payment_intent_id
+                ),
+                purchase_id = COALESCE(excluded.purchase_id, purchase_email_events.purchase_id),
+                user_id = COALESCE(excluded.user_id, purchase_email_events.user_id),
+                email = COALESCE(excluded.email, purchase_email_events.email),
+                event_type = COALESCE(excluded.event_type, purchase_email_events.event_type)
+            """,
+            (
+                event_id,
+                clean_session_id,
+                clean_payment_intent_id,
+                purchase_id,
+                user_id,
+                clean_email,
+                clean_event_type,
+                now,
+            ),
+        )
+        row = conn.execute(
+            """
+            SELECT stripe_event_id, stripe_session_id, stripe_payment_intent_id, purchase_id, user_id, email,
+                   event_type, processed_at, email_sent_at, email_provider_message_id, email_error, created_at
+            FROM purchase_email_events
+            WHERE stripe_event_id = ?
+            LIMIT 1
+            """,
+            (event_id,),
+        ).fetchone()
+        conn.commit()
+        return _decode_purchase_email_event_row(row)
+
+
+def mark_purchase_email_event_processed(
+    stripe_event_id: str,
+    *,
+    processed_at: int | None = None,
+    stripe_session_id: str | None = None,
+    stripe_payment_intent_id: str | None = None,
+    purchase_id: int | None = None,
+    user_id: int | None = None,
+    email: str | None = None,
+    email_sent_at: int | None = None,
+    email_provider_message_id: str | None = None,
+    email_error: str | None = None,
+) -> dict | None:
+    event_id = (stripe_event_id or "").strip()
+    if not event_id:
+        return None
+    resolved_processed_at = int(processed_at or time.time())
+    clean_session_id = (stripe_session_id or "").strip() or None
+    clean_payment_intent_id = (stripe_payment_intent_id or "").strip() or None
+    clean_email = (email or "").strip().lower() or None
+    clean_provider_message_id = (email_provider_message_id or "").strip() or None
+    clean_email_error = (email_error or "").strip() or None
+
+    with _connect() as conn:
+        conn.execute(
+            """
+            UPDATE purchase_email_events
+            SET
+                stripe_session_id = COALESCE(?, stripe_session_id),
+                stripe_payment_intent_id = COALESCE(?, stripe_payment_intent_id),
+                purchase_id = COALESCE(?, purchase_id),
+                user_id = COALESCE(?, user_id),
+                email = COALESCE(?, email),
+                processed_at = COALESCE(processed_at, ?),
+                email_sent_at = COALESCE(?, email_sent_at),
+                email_provider_message_id = COALESCE(?, email_provider_message_id),
+                email_error = COALESCE(?, email_error)
+            WHERE stripe_event_id = ?
+            """,
+            (
+                clean_session_id,
+                clean_payment_intent_id,
+                purchase_id,
+                user_id,
+                clean_email,
+                resolved_processed_at,
+                email_sent_at,
+                clean_provider_message_id,
+                clean_email_error,
+                event_id,
+            ),
+        )
+        row = conn.execute(
+            """
+            SELECT stripe_event_id, stripe_session_id, stripe_payment_intent_id, purchase_id, user_id, email,
+                   event_type, processed_at, email_sent_at, email_provider_message_id, email_error, created_at
+            FROM purchase_email_events
+            WHERE stripe_event_id = ?
+            LIMIT 1
+            """,
+            (event_id,),
+        ).fetchone()
+        conn.commit()
+        return _decode_purchase_email_event_row(row)
+
+
+def has_sent_purchase_confirmation_email(
+    stripe_session_id: str | None = None,
+    purchase_id: int | None = None,
+) -> bool:
+    clean_session_id = (stripe_session_id or "").strip()
+    if not clean_session_id and purchase_id is None:
+        return False
+
+    query = """
+        SELECT 1
+        FROM purchase_email_events
+        WHERE email_sent_at IS NOT NULL
+    """
+    params: list[Any] = []
+    clauses: list[str] = []
+    if clean_session_id:
+        clauses.append("stripe_session_id = ?")
+        params.append(clean_session_id)
+    if purchase_id is not None:
+        clauses.append("purchase_id = ?")
+        params.append(int(purchase_id))
+    query += f" AND ({' OR '.join(clauses)}) LIMIT 1"
+
+    with _connect() as conn:
+        row = conn.execute(query, tuple(params)).fetchone()
+        return row is not None
 
 
 def update_user_stripe_customer_id(user_id: int, stripe_customer_id: str) -> None:

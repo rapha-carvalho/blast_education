@@ -119,7 +119,7 @@ PASSWORD_RESET_TOKEN_TTL_MINUTES=60
 
 - `RESEND_API_KEY`: Resend API key (from Resend dashboard).
 - `RESEND_FROM_EMAIL`: Verified sender address in Resend.
-- `APP_BASE_URL`: Base URL of the frontend (used in reset links).
+- `APP_BASE_URL`: Base URL of the frontend (used in reset links and purchase-login links).
 - `PASSWORD_RESET_TOKEN_TTL_MINUTES`: Token expiry (default 60 minutes).
 
 If `RESEND_API_KEY` is not set, the backend still returns success for forgot-password (no account enumeration) but does not send the email.
@@ -149,6 +149,19 @@ Behavior:
 - Entitlement expires exactly `paid_at + 6 months`.
 - Refund event (`charge.refunded`) revokes access by expiring the active grant immediately and stores `stripe_refund_id` in purchases for audit.
 - Handlers are idempotent (duplicate webhook deliveries do not create duplicate grants).
+
+### Purchase confirmation email (Resend)
+
+- Trigger: only after paid confirmation in Stripe webhook flow (`checkout.session.completed` or `payment_intent.succeeded`).
+- Provider: Resend (same provider used by password reset).
+- Subject: `Acesso liberado — Curso SQL (Blast)`.
+- Login link: `${APP_BASE_URL}/login`.
+- Content: PT-BR, transactional only (payment confirmation, next steps, login instruction, support fallback).
+- Idempotency/audit:
+  - webhook events are tracked in `purchase_email_events` (`stripe_event_id` unique),
+  - duplicate Stripe retries (`same event_id`) are ignored after `processed_at`,
+  - cross-event duplicates for same checkout/session are prevented (`email_sent_at` already set),
+  - failures are fail-open: purchase/access are kept and `email_error` is stored for audit.
 
 ### Embedded checkout (Blast-branded) quick setup
 
@@ -284,7 +297,10 @@ stripe listen --forward-to localhost:8000/billing/stripe-webhook
 5. Validate:
    - `purchases.status` transitions from `pending` to `paid`
    - `access_grants.expires_at` is set to `paid_at + 6 months`
+   - `purchase_email_events.processed_at` is populated for the webhook event
+   - `purchase_email_events.email_sent_at` is populated when Resend send succeeds
    - Home/checkout success page reports `has_access=true`
+6. Replay the same event (Stripe Dashboard resend) and confirm no duplicate confirmation email is sent.
 
 ### End-to-end test purchase (test mode)
 
@@ -375,7 +391,7 @@ docker-compose up -d --build
    - confirm intent status can become `expired`.
 3. Webhook retry/idempotency:
    - replay same `checkout.session.completed`
-   - confirm no duplicate user, purchase, or extra grant rows.
+   - confirm no duplicate user, purchase, extra grant rows, or purchase confirmation email.
 4. Existing email scenario:
    - call `POST /api/checkout/start` using an existing account email
    - expect `409` with login guidance.
@@ -397,6 +413,8 @@ SQL migrations/examples are in:
 - `backend/migrations/004_password_reset_tokens_postgres.sql`
 - `backend/migrations/005_admin_impersonation_sqlite.sql`
 - `backend/migrations/005_admin_impersonation_postgres.sql`
+- `backend/migrations/006_purchase_email_events_sqlite.sql`
+- `backend/migrations/006_purchase_email_events_postgres.sql`
 
 Runtime DB bootstrap for SQLite is also handled automatically in `init_user_db()`.
 

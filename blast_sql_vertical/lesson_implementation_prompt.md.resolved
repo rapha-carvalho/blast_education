@@ -1,0 +1,362 @@
+# Prompt para IA: Implementar Nova Aula na Plataforma Blast SQL
+
+## Contexto
+Você vai criar e implementar uma nova aula no curso **"SQL do Básico ao Avançado"** na plataforma Blast SQL Learning. A plataforma renderiza aulas a partir de arquivos JSON no backend e gera PDFs no frontend com jsPDF.
+
+**Repositório:** `c:\Users\Administrador\Documents\blast_education\blast_sql_vertical`
+
+---
+
+## O que você precisa entregar
+
+Para cada nova aula (`lesson_m1_X`), você deve:
+
+1. **Criar o `lesson_m1_X.json`** — conteúdo completo da aula
+2. **Criar as imagens** — 1 por tab de conteúdo, em `frontend/public/lessons/lesson_m1_X/tab_Y/1.png`
+3. **Adicionar `generatePDF_m1_X()`** em `frontend/src/utils/generateLessonPDF.js`
+4. **Registrar o dispatch** na função `generateLessonPDF(lessonId)`
+
+---
+
+## 1. Estrutura do JSON da Aula
+
+**Caminho:** `backend/content/sql_basics/module_1/lesson_m1_X.json`
+
+> [!CAUTION]
+> Salve o arquivo como **UTF-8 sem BOM**. Arquivos com BOM travam o backend com `JSONDecodeError`. Em PowerShell: `[System.IO.File]::WriteAllText($path, $content, (New-Object System.Text.UTF8Encoding $false))`
+
+### Schema completo
+
+```json
+{
+  "id": "lesson_m1_X",
+  "title": "Título da Aula",
+  "lesson_type": "interactive_sql",
+  "objective": "O aluno vai aprender...",
+  "prerequisites": ["lesson_m1_anterior"],
+  "estimated_minutes": 12,
+  "dataset_context": {
+    "business_model": "ecommerce",
+    "tables_used": ["clientes", "pedidos", "produtos", "itens_pedido"],
+    "scenario": "Contexto narrativo da GrooveCommerce para esta aula."
+  },
+  "tabs": [ ... ],
+  "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
+  "exercises": [ ... ]
+}
+```
+
+### Estrutura padrão de tabs (6 abas)
+
+| # | `id` sugerido | `type` | Descrição |
+|---|---|---|---|
+| 1 | `tab_conceito` | `content` | Tab de conteúdo — com imagem |
+| 2 | `tab_conceito2` | `content` | Tab de conteúdo — com imagem |
+| 3 | `tab_practice_1` | `challenge` | Desafio SQL 1 |
+| 4 | `tab_practice_2` | `challenge` | Desafio SQL 2 |
+| 5 | `tab_practice_3` | `challenge` | Desafio SQL 3 |
+| 6 | `tab_recap` | `content` | Recapitulando (sem imagem) |
+
+### Tab de conteúdo (`type: "content"`)
+
+```json
+{
+  "id": "tab_conceito",
+  "title": "Nome da Aba",
+  "type": "content",
+  "content_markdown": "#### Título\\n\\nTexto da aula em markdown.\\n\\n| Coluna A | Coluna B |\\n|---|---|\\n| valor | valor |\\n\\n[PLACEHOLDER_IMAGEM: Descrição da imagem para legenda]\\n\\nMais texto após a imagem."
+}
+```
+
+> [!IMPORTANT]
+> O marcador `[PLACEHOLDER_IMAGEM: descrição]` é o que faz a imagem aparecer na tela. Sem ele, a imagem na pasta não é renderizada. O sistema carrega automaticamente `/lessons/{lessonId}/{tabId}/1.png` para o 1º marcador, `/2.png` para o 2º, etc.
+
+### Tab de desafio (`type: "challenge"`)
+
+```json
+{
+  "id": "tab_practice_1",
+  "title": "Desafio 1 — Nome do Desafio",
+  "type": "challenge",
+  "exercise_index": 0,
+  "intro_markdown": "Contexto do desafio em markdown. Explique o cenário e a missão.\\n\\n> **Sua missão:** descrição clara do que o aluno deve fazer."
+}
+```
+
+> O campo `exercise_index` (0, 1, 2) liga a tab ao array `exercises` abaixo.
+
+### Array `exercises`
+
+```json
+{
+  "id": "ex1_nome",
+  "title": "Desafio 1 — Título",
+  "prompt_markdown": "Descrição completa do exercício com contexto.",
+  "starter_query": "",
+  "solution_query": "SELECT * FROM tabela WHERE condicao;",
+  "hint_level_1": "Dica genérica sobre como abordar o problema.",
+  "hint_level_2": "SELECT * FROM tabela WHERE condicao;",
+  "validation_type": "result_match",
+  "validation": { "order_matters": false },
+  "success_criteria": {
+    "objective": "O que o aluno deve retornar",
+    "expected_columns": ["col1", "col2", "col3"],
+    "notes": [
+      "Deve retornar X linhas",
+      "Deve usar cláusula Y"
+    ]
+  }
+}
+```
+
+### Banco de Dados GrooveCommerce (referência)
+
+| Tabela | PK | Colunas principais |
+|---|---|---|
+| `clientes` | `customer_id` | `first_name`, `last_name`, `email`, `phone`, `created_at`, `acquisition_channel`, `country` |
+| `pedidos` | `order_id` | `customer_id` (FK), `created_at`, `status_code`, `order_total` |
+| `produtos` | `product_id` | `name`, `category`, `price`, `in_stock` |
+| `itens_pedido` | `item_id` | `order_id` (FK), `product_id` (FK), `quantity`, `unit_price` |
+
+**Valores de `status_code`:** `'entregue'`, `'cancelado'`, `'pendente'`  
+**Valores de `acquisition_channel`:** `'instagram'`, `'google'`, `'indicacao'`, `'organico'`
+
+---
+
+## 2. Imagens
+
+### Onde colocar
+
+```
+frontend/public/lessons/lesson_m1_X/
+  tab_conceito/
+    1.png       ← 1ª imagem do tab (1-indexed)
+  tab_conceito2/
+    1.png       ← 1ª imagem do tab
+```
+
+O nome da pasta deve ser **exatamente igual ao `id` da tab** no JSON.
+
+### Como criar as imagens
+
+Use a ferramenta de geração de imagem disponível. Crie imagens educacionais e técnicas:
+- Diagramas comparativos (ex: OLTP vs OLAP)
+- Fluxos de dados (ex: ETL → Transform → Load)
+- Infográficos com ícones e texto in PT-BR
+- Estilo: azul/roxo/verde profissional, fundo branco ou claro
+
+Após gerar, **copie o arquivo PNG** para o caminho correto com o nome `1.png`.
+
+---
+
+## 3. Função PDF em `generateLessonPDF.js`
+
+**Caminho:** `frontend/src/utils/generateLessonPDF.js`
+
+### a) Adicionar a função cover (nova cor de tema)
+
+```javascript
+function drawCover_m1_X(doc, logoB64) {
+    // Escolha uma cor de tema única (ex: laranja, roxo, azul-escuro)
+    doc.setFillColor(R, G, B);   // cor principal
+    doc.rect(0, 0, PAGE_W, 70, "F");
+
+    if (logoB64) doc.addImage(logoB64, "PNG", PAGE_W - 28, 8, 22, 22);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(R2, G2, B2);   // cor clara (subtítulo)
+    doc.text("SQL DO BASICO AO AVANCADO", MARGIN_L, 28);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.setTextColor(...C.white);
+    const titleLines = doc.splitTextToSize("Título da Aula sem acentos especiais", CONTENT_W - 30);
+    titleLines.forEach((line, i) => doc.text(line, MARGIN_L, 39 + i * 10));
+
+    // Tag do módulo
+    doc.setFillColor(R3, G3, B3);  // cor escura
+    doc.roundedRect(MARGIN_L, 58, 54, 7, 2, 2, "F");
+    doc.setFont("helvetica", "normal"); doc.setFontSize(8); doc.setTextColor(...C.white);
+    doc.text("Modulo 1 - Fundamentos · Aula 1.X", MARGIN_L + 2, 63);
+
+    // Área do corpo
+    doc.setFillColor(245, 247, 250);
+    doc.rect(0, 70, PAGE_W, PAGE_H - 70, "F");
+
+    // Descrição
+    doc.setFont("helvetica", "normal"); doc.setFontSize(11.5); doc.setTextColor(...C.grey);
+    const desc = doc.splitTextToSize("Descrição curta da aula sem acentos especiais.", CONTENT_W);
+    desc.forEach((line, i) => doc.text(line, MARGIN_L, 90 + i * 7));
+
+    doc.setDrawColor(...C.divider); doc.setLineWidth(0.4);
+    doc.line(MARGIN_L, 120, PAGE_W - MARGIN_R, 120);
+
+    // Tópicos
+    doc.setFont("helvetica", "bold"); doc.setFontSize(10); doc.setTextColor(...C.black);
+    doc.text("O que voce vai aprender", MARGIN_L, 132);
+    const topics = ["Topico 1", "Topico 2", "Topico 3", "Topico 4", "Topico 5"];
+    topics.forEach((t, i) => {
+        doc.setFillColor(R, G, B);
+        doc.circle(MARGIN_L + 1.5, 141 + i * 9 - 1.5, 1.5, "F");
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9.5); doc.setTextColor(...C.black);
+        doc.text(t, MARGIN_L + 6, 141 + i * 9);
+    });
+
+    doc.setFont("helvetica", "italic"); doc.setFontSize(8); doc.setTextColor(...C.grey);
+    doc.text("Curso disponivel em https://blastgroup.org", PAGE_W / 2, PAGE_H - 18, { align: "center" });
+}
+```
+
+> [!WARNING]
+> **Não use caracteres especiais** (á, ã, ç, etc.) em nenhum texto passado para `doc.text()`. O jsPDF com fonte Helvetica não suporta acentos — use equivalentes sem acento.
+
+### b) Adicionar a função builder
+
+```javascript
+async function generatePDF_m1_X() {
+    const logoB64 = await fetchBase64("/logo/Blast_Icon_Black.png");
+    const [img_t1_1, img_t2_1] = await Promise.all([
+        fetchBase64("/lessons/lesson_m1_X/tab_conceito/1.png"),
+        fetchBase64("/lessons/lesson_m1_X/tab_conceito2/1.png"),
+    ]);
+
+    const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+    drawCover_m1_X(doc, logoB64);
+
+    const state = {
+        page: 1,
+        y: MARGIN_TOP,
+        courseTitle: "SQL do Basico ao Avancado · Modulo 1 · Aula 1.X",
+    };
+
+    // ── Página 2: Conteúdo Tab 1 ──────────────────────────────────────────────
+    newPage(doc, logoB64, state);
+    heading1(doc, state, "Titulo do Conceito Principal");
+    spacer(state, 2);
+    body(doc, logoB64, state, "Texto introdutório sem acentos especiais...");
+    spacer(state, 2);
+    table2col(doc, logoB64, state, [
+        ["Coluna A", "Explicacao"],
+        ["Coluna B", "Explicacao"],
+    ], ["Termo", "Definicao"]);
+    imageBlock(doc, logoB64, state, img_t1_1, "Legenda da imagem 1 sem acentos.");
+    callout(doc, logoB64, state, "Texto de destaque ou dica importante.", "info");
+
+    // ── Página 3: Conteúdo Tab 2 ──────────────────────────────────────────────
+    newPage(doc, logoB64, state);
+    heading1(doc, state, "Titulo do Segundo Conceito");
+    // ... (seguir o mesmo padrão)
+
+    // ── Desafios ──────────────────────────────────────────────────────────────
+    newPage(doc, logoB64, state);
+    heading1(doc, state, "Desafios Praticos");
+    spacer(state, 4);
+
+    heading2(doc, logoB64, state, "Desafio 1 — Nome");
+    callout(doc, logoB64, state, "Missao: Descricao do desafio.", "tip");
+    body(doc, logoB64, state, "Solucao:");
+    codeBlock(doc, logoB64, state, "SELECT * FROM tabela;");
+
+    // ── Recap ─────────────────────────────────────────────────────────────────
+    newPage(doc, logoB64, state);
+    heading1(doc, state, "Recapitulando");
+    spacer(state, 2);
+    heading2(doc, logoB64, state, "O que voce aprendeu nesta aula");
+    bullet(doc, logoB64, state, "Conceito 1 — explicacao sem acentos.");
+    bullet(doc, logoB64, state, "Conceito 2 — explicacao sem acentos.");
+    spacer(state, 4);
+    divider(doc, state);
+    heading2(doc, logoB64, state, "Glossario desta aula");
+    table2col(doc, logoB64, state, [
+        ["Termo 1", "Definicao sem acentos"],
+        ["Termo 2", "Definicao sem acentos"],
+    ], ["Termo", "Definicao"]);
+
+    finalizePageNumbers(doc);
+    doc.save("Aula_1_X_Nome_Arquivo.pdf");
+}
+```
+
+### c) Registrar no dispatcher (ao final do arquivo)
+
+```javascript
+export async function generateLessonPDF(lessonId) {
+    if (lessonId === "lesson_m1_2") return generatePDF_m1_2();
+    if (lessonId === "lesson_m1_3") return generatePDF_m1_3();
+    if (lessonId === "lesson_m1_4") return generatePDF_m1_4();
+    if (lessonId === "lesson_m1_X") return generatePDF_m1_X();  // ← adicionar aqui
+    return generatePDF_m1_1();
+}
+```
+
+### Helpers disponíveis
+
+| Função | Uso |
+|---|---|
+| `heading1(doc, state, text)` | Título grande azul |
+| `heading2(doc, logoB64, state, text)` | Título médio com underline |
+| `heading3(doc, logoB64, state, text)` | Título pequeno bold |
+| `body(doc, logoB64, state, text, opts?)` | Parágrafo de texto |
+| `bullet(doc, logoB64, state, text, indent?)` | Item de lista com marcador |
+| `table2col(doc, logoB64, state, rows, headers)` | Tabela de 2 colunas |
+| `codeBlock(doc, logoB64, state, code)` | Bloco de código dark mode |
+| `callout(doc, logoB64, state, text, type)` | Caixa destacada (`"info"`, `"tip"`, `"success"`) |
+| `imageBlock(doc, logoB64, state, imgB64, caption)` | Imagem full-width com legenda |
+| `divider(doc, state)` | Linha horizontal |
+| `spacer(state, mm)` | Espaço em branco |
+| `newPage(doc, logoB64, state)` | Quebra de página |
+
+---
+
+## 4. Rebuild do Frontend (quando necessário)
+
+O backend lê os JSONs do volume montado (`./backend/content`) — **sem rebuild**.
+
+O frontend é pré-compilado. Se você alterar `generateLessonPDF.js` ou qualquer arquivo `.jsx/.js`, precisa rebuildar:
+
+```bash
+docker compose up -d --build
+```
+
+> [!NOTE]
+> Se o build falhar com "Could not resolve", verifique se o arquivo referenciado existe e se o caminho está correto. O build de produção é feito pelo Vite dentro do container.
+
+---
+
+## 5. Checklist de Verificação
+
+Após implementar, verifique no browser (`http://localhost`) logado como admin:
+
+- [ ] Navegar para `/lesson/lesson_m1_X`
+- [ ] Todas as 6 abas carregam sem erro
+- [ ] As imagens aparecem nas tabs de conteúdo (não placeholder cinza)
+- [ ] Desafio 1: rodar a `solution_query` e verificar mensagem verde de sucesso
+- [ ] Desafio 2 e 3: idem
+- [ ] Tab "Recapitulando": botão "Baixar resumo em PDF" visível
+- [ ] Clicar no botão PDF e verificar que o download funciona sem erro no console
+
+---
+
+## 6. Cores de tema por aula (use cores diferentes para cada cover)
+
+| Aula | Cor principal | RGB |
+|---|---|---|
+| 1.1 | Verde | `22, 163, 74` |
+| 1.2 | Azul | `26, 115, 232` |
+| 1.3 | Roxo/Índigo | `99, 102, 241` |
+| 1.4 | Teal/Esmeralda | `13, 148, 136` |
+| 1.5+ | Sua escolha | Laranja, Vermelho, Rosa, etc. |
+
+---
+
+## 7. Exemplo de prompt para geração de imagem
+
+```
+Create a professional educational infographic for a SQL course in Brazilian Portuguese.
+Topic: [TEMA DA AULA]
+Style: Clean, modern, blue/purple palette, white background, technical icons
+Content: [DESCREVA OS ELEMENTOS QUE DEVEM APARECER]
+Format: Horizontal comparison / vertical flow / diagram with arrows
+Language: All text must be in Brazilian Portuguese (PT-BR)
+```

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, ShieldCheck, Ticket } from "lucide-react";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
@@ -141,6 +141,7 @@ export default function CheckoutPage() {
       style={{ textAlign: "center", padding: "0 clamp(0.5rem, 2vw, 1.5rem)" }}
     >
       <p
+        className="checkout-hero-kicker"
         style={{
           margin: "0 0 1rem 0",
           fontSize: "0.84rem",
@@ -161,12 +162,14 @@ export default function CheckoutPage() {
           fontWeight: 500,
           letterSpacing: "-0.04em",
           lineHeight: 1.05,
-          color: "#1a1a1a",
+          color: isMobileViewport ? "#ffffff" : "#1a1a1a",
         }}
       >
-        De zero queries a análises
+        <span className="hero-line-1">De zero queries</span>
         <br />
-        <span style={{ color: "#5f6368" }}>complexas de negócio</span>
+        <span className="hero-line-2" style={{ color: isMobileViewport ? "rgba(255,255,255,0.55)" : "#5f6368" }}>
+          a análises complexas de negócio
+        </span>
       </h1>
 
       <p
@@ -174,29 +177,30 @@ export default function CheckoutPage() {
         style={{
           margin: "0 0 1.35rem 0",
           fontSize: "clamp(1rem, 1.4vw, 1.16rem)",
-          color: "#9aa0a6",
+          color: isMobileViewport ? "rgba(255,255,255,0.65)" : "#9aa0a6",
           fontWeight: 300,
           lineHeight: 1.55,
         }}
       >
         Aprenda SQL de forma prática com datasets reais e exercícios interativos.
       </p>
-
       <p
+        className="checkout-hero-meta"
         style={{
           margin: 0,
           fontSize: "0.9rem",
-          color: "#5f6368",
+          color: isMobileViewport ? "rgba(255,255,255,0.4)" : "#5f6368",
           letterSpacing: "0.02em",
         }}
       >
-        11 módulos · 35 aulas · acesso por 6 meses
+        <span className="meta-primary">11 módulos · 35 aulas</span>{" "}
+        <span className="meta-secondary">acesso por 6 meses</span>
       </p>
     </motion.div>
   );
 
   return (
-    <div style={{ background: "#ffffff", minHeight: "calc(100vh - 96px)", padding: "2rem clamp(1rem, 3vw, 2.5rem) 4rem" }}>
+    <div className="checkout-page-root" style={{ background: "#ffffff", minHeight: "calc(100vh - 96px)", padding: "2rem clamp(1rem, 3vw, 2.5rem) 4rem" }}>
       <style>{`
         .checkout-shell {
           width: min(98vw, 1840px);
@@ -261,23 +265,70 @@ export default function CheckoutPage() {
           }
         }
         @media (max-width: 760px) {
+          .checkout-page-root {
+            background: #111111 !important;
+            padding: 0 !important;
+            min-height: 100vh !important;
+          }
+          .checkout-shell {
+            width: 100% !important;
+          }
           .checkout-main {
-            padding-top: 1rem !important;
+            padding-top: 0 !important;
+          }
+          .checkout-grid {
+            display: flex !important;
+            flex-direction: column;
+            gap: 0 !important;
           }
           .checkout-left {
-            gap: 0.75rem;
+            display: contents;
+          }
+          .checkout-hero-section {
+            background: #111111;
+            padding: 1.5rem 1.25rem 1.9rem !important;
+          }
+          .checkout-info-section {
+            background: #ffffff;
+            border-radius: 20px 20px 0 0;
+            padding: 1.75rem 1.25rem 1.5rem !important;
+            margin-top: -16px;
+            position: relative;
+            z-index: 1;
+          }
+          .checkout-stripe-section {
+            background: #ffffff;
+            padding: 0 1.25rem 2.5rem !important;
           }
           .checkout-hero-copy {
-            padding: 0 0.3rem !important;
+            padding: 0 0.6rem !important;
+            max-width: 90%;
+            margin: 0 auto;
           }
           .checkout-hero-title {
-            font-size: clamp(1.42rem, 7.1vw, 1.95rem) !important;
-            margin: 0 0 0.62rem 0 !important;
-            line-height: 1.12 !important;
+            font-size: clamp(1.4rem, 6.6vw, 1.9rem) !important;
+            margin: 0 0 0.95rem 0 !important;
+            line-height: 1.24 !important;
+          }
+          .checkout-hero-title .hero-line-1,
+          .checkout-hero-title .hero-line-2,
+          .checkout-hero-title .hero-line-3 {
+            display: block;
           }
           .checkout-hero-subtitle {
             font-size: 0.9rem !important;
-            margin: 0 0 0.85rem 0 !important;
+            margin: 0 0 0.95rem 0 !important;
+            line-height: 1.6 !important;
+          }
+          .checkout-hero-meta {
+            margin: 0;
+            font-size: 0.84rem !important;
+            line-height: 1.5 !important;
+            opacity: 0.75;
+          }
+          .hero-brace-shell {
+            transform: scale(0.92);
+            transform-origin: center top;
           }
           .checkout-stripe-surface {
             min-height: 560px;
@@ -298,11 +349,13 @@ export default function CheckoutPage() {
       <div className="checkout-shell checkout-main">
         <div className="checkout-grid">
           <div className="checkout-left">
-            <section style={{ background: "#ffffff", overflow: "hidden" }}>
-              <BraceParticles>{heroCopy}</BraceParticles>
+            <section className="checkout-hero-section" style={{ overflow: "hidden" }}>
+              <div className="hero-brace-shell">
+                <BraceParticles>{heroCopy}</BraceParticles>
+              </div>
             </section>
 
-            <section style={{ background: "#ffffff", padding: "0.2rem 0.1rem" }}>
+            <section className="checkout-info-section" style={{ background: "#ffffff", padding: "0.2rem 0.1rem" }}>
               <h2
                 style={{
                   margin: 0,
@@ -358,7 +411,7 @@ export default function CheckoutPage() {
             </section>
           </div>
 
-          <section style={{ background: "#ffffff" }}>
+          <section className="checkout-stripe-section" style={{ background: "#ffffff" }}>
             <div
               style={{
                 marginBottom: "1rem",

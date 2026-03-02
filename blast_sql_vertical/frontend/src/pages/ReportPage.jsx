@@ -298,7 +298,7 @@ export default function ReportPage() {
             {/* Hero Cover */}
             <div className="report-hero" style={{ background: "linear-gradient(to bottom, #111 0%, #0a0a0a 100%)", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
                 <BraceParticles>
-                    <div style={{ padding: "4rem 2rem", pointerEvents: "auto" }}>
+                    <div className="report-hero-content" style={{ padding: "4rem 2rem", pointerEvents: "auto" }}>
                         <div style={{ display: "inline-block", background: "rgba(66, 133, 244, 0.1)", border: "1px solid rgba(66, 133, 244, 0.2)", color: "#4285F4", padding: "0.4rem 1rem", borderRadius: 999, fontSize: "0.8rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "1px", marginBottom: "1.5rem" }}>
                             {isMC ? "Relatório Executivo" : "Resumo da Aula"}
                         </div>
@@ -591,6 +591,21 @@ export default function ReportPage() {
             }
             button { display: none !important; }
             a { text-decoration: none !important; color: inherit !important; }
+        }
+        @media (max-width: 767px) {
+          .report-hero-content {
+            padding: 2.5rem 1.25rem !important;
+            width: min(600px, 72%);
+            margin: 0 auto;
+            box-sizing: border-box;
+          }
+          .report-hero-content h1 {
+            font-size: 1.3rem !important;
+            line-height: 1.2 !important;
+          }
+          .report-hero-content p {
+            font-size: 0.88rem !important;
+          }
         }
       `}</style>
         </div>

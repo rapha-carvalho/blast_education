@@ -250,7 +250,7 @@ export default function LoginPage() {
         @media (max-width: 767px) {
           .login-shell {
             padding: 0;
-            background: #ffffff;
+            background: #111111;
           }
           .login-grid {
             grid-template-columns: 1fr;
@@ -259,15 +259,24 @@ export default function LoginPage() {
             min-height: 100vh;
           }
           .login-left {
-            display: flex;
-            min-height: 240px;
+            height: clamp(220px, 34vh, 280px);
+            min-height: unset;
+            flex-shrink: 0;
           }
           .login-left-footer {
             display: none;
           }
           .login-right {
-            padding: 2rem 1.5rem 2.4rem;
+            background: #ffffff;
+            border-radius: 20px 20px 0 0;
+            padding: 1.75rem 1.5rem 2.4rem;
             justify-content: flex-start;
+            margin-top: -16px;
+            position: relative;
+            z-index: 1;
+          }
+          .login-title {
+            margin-top: 0;
           }
         }
       `}</style>
@@ -293,7 +302,6 @@ export default function LoginPage() {
           </div>
 
           <div className="login-right">
-            <BlastEducationLogo variant="black" width="170px" style={{ marginBottom: "2.25rem" }} />
             <h2 className="login-title">Entrar na conta</h2>
             <p className="login-subtitle">Use seu email e senha para acessar os cursos.</p>
 

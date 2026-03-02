@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, CheckCircle2, Loader2, Lock, Mail, ShieldCheck, Ticket } from "lucide-react";
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe-js";
@@ -426,19 +426,81 @@ export default function CheckoutStartPage() {
         }
         @media (max-width: 760px) {
           .checkout-start-shell {
-            padding: 0.9rem;
+            padding: 0;
+            background: #ffffff;
+          }
+          .checkout-start-grid {
+            display: flex !important;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0;
+          }
+          .checkout-start-left {
+            display: contents;
           }
           .checkout-start-hero {
-            min-height: 315px;
+            min-height: unset;
+            background: #ffffff;
+            padding: 1.6rem 1.25rem 2rem !important;
           }
-          .checkout-start-hero-copy {
-            width: min(740px, 96%);
+          .checkout-start-info {
+            background: #ffffff;
+            padding: 0 1.25rem 1.5rem !important;
+          }
+          .checkout-start-right {
+            background: #ffffff;
+            padding: 0 1.25rem 2.5rem !important;
           }
           .checkout-modules-grid {
             grid-template-columns: 1fr;
           }
           .checkout-start-stripe-surface {
             min-height: 500px;
+          }
+          .checkout-start-hero-copy {
+            width: 100% !important;
+            max-width: 90% !important;
+            margin: 0 auto;
+          }
+          .checkout-start-hero-kicker {
+            margin: 0 0 0.7rem 0 !important;
+          }
+          .checkout-start-hero-title {
+            font-size: 1.4rem !important;
+            line-height: 1.26 !important;
+            margin: 0 0 0.95rem 0 !important;
+          }
+          .checkout-start-hero-title .hero-line-1,
+          .checkout-start-hero-title .hero-line-2,
+          .checkout-start-hero-title .hero-line-3 {
+            display: block;
+          }
+          .checkout-start-hero-subtitle {
+            font-size: 0.9rem !important;
+            line-height: 1.6 !important;
+            margin: 0 0 0.95rem 0 !important;
+          }
+          .checkout-start-hero-meta {
+            margin: 0;
+            font-size: 0.84rem !important;
+            line-height: 1.5 !important;
+            opacity: 0.75;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.18rem;
+          }
+          .checkout-start-hero-meta .meta-secondary {
+            opacity: 0.78;
+          }
+          .checkout-start-btn {
+            width: 100%;
+            min-height: 48px;
+            margin-top: 1.9rem;
+          }
+          .hero-brace-shell {
+            transform: scale(0.92);
+            transform-origin: center top;
           }
         }
       `}</style>
@@ -447,59 +509,70 @@ export default function CheckoutStartPage() {
         <div className="checkout-start-grid">
           <section className="checkout-start-left">
             <section className="checkout-start-hero">
-              <BraceParticles>
-                <div className="checkout-start-hero-copy">
-                  <p
-                    style={{
-                      margin: "0 0 0.95rem 0",
-                      fontSize: "0.84rem",
-                      fontWeight: 600,
-                      letterSpacing: "0.12em",
-                      textTransform: "uppercase",
-                      color: "#1a73e8",
-                    }}
-                  >
-                    SQL DO BÁSICO AO AVANÇADO
-                  </p>
-                  <h1
-                    style={{
-                      margin: "0 0 0.85rem 0",
-                      fontSize: "clamp(1.7rem, 3.55vw, 3.1rem)",
-                      fontWeight: 600,
-                      letterSpacing: "-0.04em",
-                      lineHeight: 1.08,
-                      color: "#1a1a1a",
-                    }}
-                  >
-                    De zero queries a análises
-                    <br />
-                    <span style={{ color: "#5f6368" }}>complexas de negócio</span>
-                  </h1>
-                  <p
-                    style={{
-                      margin: "0 0 1.2rem 0",
-                      fontSize: "clamp(0.94rem, 1.2vw, 1.08rem)",
-                      color: "#5f6368",
-                      fontWeight: 400,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    Aprenda SQL com datasets reais e exercícios práticos.
-                    <br />
-                    Foco total em aplicação no negócio.
-                  </p>
-                  <p
-                    style={{
-                      margin: 0,
-                      fontSize: "0.9rem",
-                      color: "#5f6368",
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    {moduleCount} módulos · {lessonCount} aulas · acesso por 6 meses
-                  </p>
-                </div>
-              </BraceParticles>
+              <div className="hero-brace-shell">
+                <BraceParticles>
+                  <div className="checkout-start-hero-copy">
+                    <p
+                      className="checkout-start-hero-kicker"
+                      style={{
+                        margin: "0 0 0.95rem 0",
+                        fontSize: "0.84rem",
+                        fontWeight: 600,
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        color: "#1a73e8",
+                      }}
+                    >
+                      SQL DO BÁSICO AO AVANÇADO
+                    </p>
+                    <h1
+                      className="checkout-start-hero-title"
+                      style={{
+                        margin: "0 0 0.85rem 0",
+                        fontSize: "clamp(1.7rem, 3.55vw, 3.1rem)",
+                        fontWeight: 600,
+                        letterSpacing: "-0.04em",
+                        lineHeight: 1.08,
+                        color: "#1a1a1a",
+                      }}
+                    >
+                      <span className="hero-line-1">De zero queries</span>
+                      <br />
+                      <span className="hero-line-2" style={{ color: "#5f6368" }}>
+                        a análises complexas de negócio
+                      </span>
+                    </h1>
+                    <p
+                      className="checkout-start-hero-subtitle"
+                      style={{
+                        margin: "0 0 1.2rem 0",
+                        fontSize: "clamp(0.94rem, 1.2vw, 1.08rem)",
+                        color: "#5f6368",
+                        fontWeight: 400,
+                        lineHeight: 1.55,
+                      }}
+                    >
+                      Aprenda SQL com datasets reais e exercícios práticos.
+                      <br />
+                      Foco total em aplicação no negócio.
+                    </p>
+                    <p
+                      className="checkout-start-hero-meta"
+                      style={{
+                        margin: 0,
+                        fontSize: "0.9rem",
+                        color: "#5f6368",
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      <span className="meta-primary">
+                        {moduleCount} módulos · {lessonCount} aulas
+                      </span>
+                      <span className="meta-secondary">acesso por 6 meses</span>
+                    </p>
+                  </div>
+                </BraceParticles>
+              </div>
             </section>
 
             <section className="checkout-start-info">
