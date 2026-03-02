@@ -84,9 +84,9 @@ export default function BraceParticles({
             offCtx.textAlign = "center";
 
             // Use fallback sequence leaning heavily on system-ui or a reliable font
-            // Mobile uses a smaller brace size/offset so content remains readable.
+            // Scale brace glyph proportionally — large enough to read but not overwhelming.
             const fontSize = isMobile
-                ? clamp(width * 0.24, 78, 120)
+                ? clamp(width * 0.28, 88, 125)
                 : clamp(width * 0.45, 160, 260);
             offCtx.font = `300 ${fontSize}px "Outfit", "Segoe UI", sans-serif`;
 

@@ -42,7 +42,6 @@ const RESOURCES = [
     description: "Material de apoio consolidado de todo o curso, ideal para revisar.",
     badge: "free",
     cta: "Ver Material",
-    previewMedia: "/report_scroll_preview.webp",
   },
 ];
 
@@ -626,13 +625,44 @@ export default function CoursePage() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 767px) {
+          .course-hero-inner {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          .course-hero-copy {
+            width: min(600px, 82%) !important;
+            margin: 0 auto;
+          }
+          .course-hero-copy h1 {
+            font-size: 1.55rem !important;
+            line-height: 1.2 !important;
+          }
+          .course-hero-copy p {
+            font-size: 0.85rem !important;
+          }
+          .course-cta-section {
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+          }
+          .course-cta-copy {
+            width: min(600px, 82%) !important;
+            margin: 0 auto;
+          }
+          .course-cta-copy h2 {
+            font-size: 1.4rem !important;
+          }
+        }
+      `}</style>
       <div style={{ background: "#ffffff" }}>
 
         {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <div style={{ background: "#ffffff" }}>
-          <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 2rem" }}>
+          <div className="course-hero-inner" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 2rem" }}>
             <BraceParticles>
               <motion.div
+                className="course-hero-copy"
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.9, ease: "easeOut" }}
@@ -904,10 +934,11 @@ export default function CoursePage() {
           </div>
         )}
 
-        <div style={{ background: "#111111", padding: "6rem 2rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+        <div className="course-cta-section" style={{ background: "#111111", padding: "6rem 2rem", borderTop: "1px solid rgba(255,255,255,0.08)" }}>
           <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
             <BraceParticles>
               <motion.div
+                className="course-cta-copy"
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
