@@ -32,6 +32,7 @@ export default function AccountPage() {
     error: null,
   });
   const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [refundReason, setRefundReason] = useState("");
   const [refundNotes, setRefundNotes] = useState("");
   const [refundSubmitting, setRefundSubmitting] = useState(false);
@@ -75,6 +76,9 @@ export default function AccountPage() {
     setRefundError(null);
   };
 
+  const handleOpenPolicyModal = () => setPolicyModalOpen(true);
+  const handleClosePolicyModal = () => setPolicyModalOpen(false);
+
   const handleConfirmRefund = async () => {
     setRefundSubmitting(true);
     setRefundError(null);
@@ -94,7 +98,9 @@ export default function AccountPage() {
   };
 
   const handleEscape = (e) => {
-    if (e.key === "Escape" && refundModalOpen) handleCloseRefundModal();
+    if (e.key !== "Escape") return;
+    if (refundModalOpen) handleCloseRefundModal();
+    else if (policyModalOpen) handleClosePolicyModal();
   };
 
   const handleChangePassword = async (e) => {
@@ -137,7 +143,7 @@ export default function AccountPage() {
   useEffect(() => {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [refundModalOpen]);
+  }, [refundModalOpen, policyModalOpen]);
 
   const { loading, data, error } = account;
   const access = data?.access;
@@ -273,6 +279,44 @@ export default function AccountPage() {
 
               <p style={{ margin: "1rem 0 0 0", fontSize: "0.8rem", color: uiTokens.colors.textMuted }}>
                 Reembolso disponível em até {refundWindowDays} dias após a compra.
+              </p>
+
+              {access && (
+                <>
+                  {eligibleForRefund ? (
+                    <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem", color: uiTokens.colors.textSecondary, lineHeight: 1.5 }}>
+                      Para solicitar o reembolso, clique em <strong>Cancelar compra (reembolso)</strong> abaixo. Seu acesso será revogado imediatamente e o valor será devolvido conforme a forma de pagamento original, em até 7 dias úteis.
+                    </p>
+                  ) : statusVal === "active" && access?.purchase_at ? (
+                    <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem", color: uiTokens.colors.textSecondary, lineHeight: 1.5 }}>
+                      O prazo para reembolso automático online foi encerrado. Entre em contato com o suporte em{" "}
+                      <a href="https://blastgroup.org" target="_blank" rel="noopener noreferrer" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>
+                        blastgroup.org
+                      </a>{" "}
+                      para verificar possibilidades.
+                    </p>
+                  ) : null}
+                </>
+              )}
+
+              <p style={{ margin: "0.75rem 0 0 0", fontSize: "0.85rem" }}>
+                <button
+                  type="button"
+                  onClick={handleOpenPolicyModal}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    fontFamily: "inherit",
+                    fontSize: "inherit",
+                    color: uiTokens.colors.accent,
+                    fontWeight: 500,
+                    cursor: "pointer",
+                    textDecoration: "underline",
+                  }}
+                >
+                  Ver política de reembolso
+                </button>
               </p>
 
               {/* Actions */}
@@ -609,6 +653,134 @@ export default function AccountPage() {
                   }}
                 >
                   {refundSubmitting ? "Processando..." : "Confirmar solicitação de reembolso"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Política de Reembolso modal */}
+      <AnimatePresence>
+        {policyModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: "rgba(0,0,0,0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 100,
+              padding: "1.5rem",
+            }}
+            onClick={(e) => e.target === e.currentTarget && handleClosePolicyModal()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="policy-modal-title"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.2 }}
+              style={{
+                background: uiTokens.colors.surface,
+                borderRadius: uiTokens.radius.xl,
+                boxShadow: "0 24px 48px rgba(0,0,0,0.15)",
+                maxWidth: "480px",
+                width: "100%",
+                maxHeight: "85vh",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div style={{ padding: "1.5rem 1.75rem", borderBottom: `1px solid ${uiTokens.colors.border}`, flexShrink: 0 }}>
+                <h2 id="policy-modal-title" style={{ margin: 0, fontSize: "1.15rem", fontWeight: 600, color: uiTokens.colors.text }}>
+                  Política de Reembolso
+                </h2>
+              </div>
+              <div
+                style={{
+                  padding: "1.5rem 1.75rem",
+                  overflowY: "auto",
+                  fontSize: "0.9rem",
+                  color: uiTokens.colors.textSecondary,
+                  lineHeight: 1.6,
+                }}
+              >
+                <section style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>1. Introdução</h3>
+                  <p style={{ margin: 0 }}>
+                    Esta política aplica-se à venda de produtos digitais (cursos online, conteúdos em PDF e similares). A compra está sujeita aos termos aqui descritos, em conformidade com o Código de Defesa do Consumidor (CDC) e a legislação de comércio eletrônico no Brasil.
+                  </p>
+                </section>
+                <section style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>2. Direito de Arrependimento</h3>
+                  <p style={{ margin: 0 }}>
+                    Conforme o Artigo 49 do CDC, o consumidor tem direito de arrependimento em até 7 (sete) dias corridos após a compra, contados do recebimento do produto digital, desde que não tenha acessado ou baixado o conteúdo. Caso o produto digital já tenha sido acessado ou baixado, o direito de arrependimento perde validade, pois trata-se de bem consumível e irreversível.
+                  </p>
+                </section>
+                <section style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>3. Como Solicitar</h3>
+                  <p style={{ margin: 0 }}>
+                    Quando elegível, utilize o botão &quot;Cancelar compra (reembolso)&quot; nesta página. Caso o prazo tenha encerrado, entre em contato com o suporte em{" "}
+                    <a href="https://blastgroup.org" target="_blank" rel="noopener noreferrer" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>blastgroup.org</a>
+                    . A solicitação deve conter: nome completo, número do pedido (se houver), data da compra e motivo.
+                  </p>
+                </section>
+                <section style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>4. Prazo de Processamento</h3>
+                  <p style={{ margin: 0 }}>
+                    O reembolso será processado em até 7 (sete) dias úteis, conforme a forma de pagamento original.
+                  </p>
+                </section>
+                <section style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>5. Exceções</h3>
+                  <p style={{ margin: 0 }}>
+                    Não serão aceitos pedidos de reembolso quando: (a) o produto digital já tiver sido acessado ou baixado; (b) o motivo for incompatibilidade com dispositivos ou software, devendo o cliente verificar os requisitos mínimos antes da compra; (c) houver insatisfação subjetiva após acesso ao conteúdo.
+                  </p>
+                </section>
+                <section style={{ marginBottom: "1rem" }}>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>6. Problemas Técnicos</h3>
+                  <p style={{ margin: 0 }}>
+                    Em caso de problemas técnicos relacionados ao acesso ou uso do produto, entre em contato com o suporte. Se o problema não puder ser resolvido e for comprovado defeito no conteúdo, será feito o reenvio ou, em último caso, o reembolso integral.
+                  </p>
+                </section>
+                <section>
+                  <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>7. Recursos do Consumidor</h3>
+                  <p style={{ margin: 0 }}>
+                    Em caso de dificuldades, o consumidor pode recorrer ao portal{" "}
+                    <a href="https://www.consumidor.gov.br" target="_blank" rel="noopener noreferrer" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>Consumidor.gov.br</a>
+                    {" "}para mediação entre consumidores e empresas.
+                  </p>
+                </section>
+              </div>
+              <div style={{ padding: "1rem 1.75rem", borderTop: `1px solid ${uiTokens.colors.border}`, flexShrink: 0 }}>
+                <button
+                  onClick={handleClosePolicyModal}
+                  style={{
+                    border: "none",
+                    background: uiTokens.colors.accent,
+                    color: "#fff",
+                    borderRadius: uiTokens.radius.pill,
+                    padding: "0.55rem 1.2rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                  }}
+                >
+                  Fechar
                 </button>
               </div>
             </motion.div>
