@@ -553,14 +553,14 @@ export default function PlaygroundPage() {
                             style={{
                                 position: "fixed", inset: 0,
                                 background: "rgba(0,0,0,0.25)",
-                                zIndex: 140,
+                                zIndex: 420,
                             }}
                         />
                         {/* Sheet */}
                         <div style={{
                             position: "fixed",
                             bottom: 0, left: 0, right: 0,
-                            zIndex: 150,
+                            zIndex: 430,
                             background: "#fff",
                             borderRadius: "16px 16px 0 0",
                             maxHeight: "65vh",
@@ -646,12 +646,12 @@ export default function PlaygroundPage() {
                     <>
                         <div
                             onClick={() => setSchemaDrawerOpen(false)}
-                            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 290 }}
+                            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 460 }}
                         />
                         <div style={{
                             position: "fixed",
                             bottom: 0, left: 0, right: 0,
-                            zIndex: 300,
+                            zIndex: 470,
                             background: "#fff",
                             borderRadius: "16px 16px 0 0",
                             maxHeight: "78vh",
