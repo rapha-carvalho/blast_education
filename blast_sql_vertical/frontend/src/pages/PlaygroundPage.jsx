@@ -15,6 +15,7 @@ import SqlEditor from "../components/SqlEditor";
 import ResultTable from "../components/ResultTable";
 import PlaygroundSchemaPanel from "../components/PlaygroundSchemaPanel";
 import SqlErrorCard from "../components/SqlErrorCard";
+import PlaygroundHelp from "../components/PlaygroundHelp";
 import { useIsMobile } from "../hooks/useIsMobile";
 
 function useSessionId() {
@@ -216,10 +217,10 @@ export default function PlaygroundPage() {
 
         return (
             <div style={{
-                height: "100dvh",
+                minHeight: "100dvh",
                 display: "flex",
                 flexDirection: "column",
-                overflow: "hidden",
+                overflowY: "auto",
                 background: "#f8f9fa",
             }}>
                 {/* ── Header ────────────────────────────────────────────── */}
@@ -353,8 +354,11 @@ export default function PlaygroundPage() {
                     {tabBtn("editor", <Code2 size={13} />, "Editor")}
                 </div>
 
+                {/* ── Help card (mobile) ─────────────────────────────────── */}
+                <PlaygroundHelp variant="mobile" />
+
                 {/* ── Content area ───────────────────────────────────────── */}
-                <div style={{ flex: 1, position: "relative", overflow: "hidden" }}>
+                <div style={{ flex: 1, position: "relative" }}>
 
                     {/* Desafio panel */}
                     <div style={{
@@ -497,9 +501,9 @@ export default function PlaygroundPage() {
                                 <Maximize2 size={14} color="#5f6368" />
                             </button>
                         </div>
-                        {/* Monaco fills remaining height */}
-                        <div style={{ flex: 1, overflow: "hidden" }}>
-                            <SqlEditor value={query} onChange={setQuery} height="100%" />
+                        {/* Monaco with controlled height to avoid trapping scroll */}
+                        <div style={{ paddingBottom: "0.4rem" }}>
+                            <SqlEditor value={query} onChange={setQuery} height={260} />
                         </div>
                     </div>
 
@@ -840,6 +844,7 @@ export default function PlaygroundPage() {
                     <p style={{ margin: 0, color: "#5f6368", fontSize: "1.05rem" }}>
                         Pratique e explore cenários reais livremente.
                     </p>
+                    <PlaygroundHelp />
                 </div>
 
                 {/* Toggle Mode */}
