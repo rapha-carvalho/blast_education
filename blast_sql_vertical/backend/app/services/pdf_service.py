@@ -77,6 +77,7 @@ async def _ensure_browser():
         try:
             _BROWSER = await _PLAYWRIGHT.chromium.launch(**launch_kwargs)
         except Exception as exc:
+            logger.exception("Failed to launch Chromium for PDF rendering")
             await _PLAYWRIGHT.stop()
             _PLAYWRIGHT = None
             _BROWSER = None

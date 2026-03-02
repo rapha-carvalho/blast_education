@@ -1,6 +1,7 @@
 FROM python:3.11-slim-bookworm
 
 WORKDIR /app
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # System deps for Playwright/Chromium + healthcheck (curl)
 RUN apt-get update \
@@ -47,6 +48,7 @@ RUN apt-get update \
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
+    && mkdir -p /ms-playwright \
     && python -m playwright install chromium
 
 COPY app/ ./app/
@@ -59,7 +61,7 @@ COPY entrypoint.sh ./entrypoint.sh
 RUN useradd -m -u 1001 appuser \
     && mkdir -p /app/data \
     && chmod +x /app/entrypoint.sh \
-    && chown -R appuser:appuser /app
+    && chown -R appuser:appuser /app /ms-playwright
 
 USER appuser
 

@@ -36,6 +36,7 @@ services:
     environment:
       USER_DB_PATH: /app/data/users.db   # fixed — do not change
       PLAYWRIGHT_CHROMIUM_ARGS: --disable-dev-shm-usage,--no-sandbox
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     volumes:
       - backend_data:/app/data
     expose:
