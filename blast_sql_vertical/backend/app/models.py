@@ -151,6 +151,15 @@ class CheckoutStartRequest(BaseModel):
     email: str = Field(..., max_length=254)
     password: str = Field(..., min_length=1, max_length=256)
     course_id: str | None = Field(default=None, max_length=120)
+    promo_code_id: str | None = Field(default=None, max_length=120)
+
+
+class CheckoutStartInstallmentRequest(BaseModel):
+    email: str = Field(..., max_length=254)
+    password: str = Field(..., min_length=1, max_length=256)
+    course_id: str | None = Field(default=None, max_length=120)
+    installment_count: int = Field(..., ge=2, le=6)
+    promo_code_id: str | None = Field(default=None, max_length=120)
 
 
 class CheckoutStartResponse(BaseModel):

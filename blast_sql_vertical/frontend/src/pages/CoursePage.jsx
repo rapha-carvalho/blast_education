@@ -8,6 +8,7 @@ const SLUG_TO_COURSE_ID = {
 import { getAccountInfo, getCertificatePdf, getCourseProgress, getCourses, updateProfile } from "../api/client";
 import { getFirstLessonSlug } from "../utils/lessonResolver";
 import { fixPtBrText } from "../utils/ptBrText";
+import { formatDaysUntilUnlock, getDaysSincePurchase, getDaysUntilUnlock } from "../utils/unlockWindow";
 import { Play, ChevronDown, FileText, Calendar, FileDown, Lock, CheckCircle, ArrowRight } from "lucide-react";
 import BraceParticles from "../components/BraceParticles";
 import CertificationCard from "../components/CertificationCard";
@@ -51,13 +52,27 @@ const RESOURCES = [
   },
 ];
 
-function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, previewMedia, locked = false, lockMessage = "" }) {
+function ResourceCard({
+  icon: Icon,
+  title,
+  description,
+  badge,
+  cta,
+  onCtaClick,
+  previewMedia,
+  locked = false,
+  lockMessage = "",
+  lockedBadgeLabel = "",
+  lockedCtaLabel = "",
+}) {
   const isPremium = badge === "premium";
   const isTemporarilyLocked = locked && !isPremium;
   const safeTitle = fixPtBrText(title);
   const safeDescription = fixPtBrText(description);
   const safeCta = fixPtBrText(cta);
   const safeLockMessage = fixPtBrText(lockMessage);
+  const safeLockedBadgeLabel = fixPtBrText(lockedBadgeLabel);
+  const safeLockedCtaLabel = fixPtBrText(lockedCtaLabel);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -117,7 +132,7 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
             padding: "3px 10px", borderRadius: "50px",
             border: "1px solid rgba(245,158,11,0.2)",
           }}>
-            <Lock size={11} /> Libera no 8º dia
+            <Lock size={11} /> {safeLockedBadgeLabel}
           </span>
         ) : (
           <span style={{
@@ -197,17 +212,30 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
           transition: "all 0.2s ease",
         }}
       >
-        {isTemporarilyLocked ? "Disponível no 8º dia" : safeCta}
+        {isTemporarilyLocked ? safeLockedCtaLabel || safeCta : safeCta}
       </button>
     </motion.div>
   );
 }
 
-function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, completedLessons, activeLessonId, courseSlug }) {
+function ModuleAccordion({
+  mod,
+  index,
+  isOpen,
+  onToggle,
+  lockedLessons,
+  completedLessons,
+  activeLessonId,
+  courseSlug,
+  lockedBadgeLabel = "",
+  lockedAvailabilityLabel = "",
+}) {
   const lessonCount = mod.lessons?.length ?? 0;
   const moduleNum = String(index + 1).padStart(2, "0");
   const moduleLessonIds = (mod.lessons || []).map((lesson) => (typeof lesson === "string" ? lesson : lesson.id));
   const moduleLocked = lessonCount > 0 && moduleLessonIds.every((id) => lockedLessons?.has(id));
+  const safeLockedBadgeLabel = fixPtBrText(lockedBadgeLabel);
+  const safeLockedAvailabilityLabel = fixPtBrText(lockedAvailabilityLabel);
   const completedInModule = (mod.lessons || []).filter(l => {
     const id = typeof l === "string" ? l : l.id;
     return completedLessons?.has(id);
@@ -260,7 +288,7 @@ function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, complete
           </span>
           {moduleLocked && (
             <span style={{ fontSize: "0.85rem", color: "#b06000", marginTop: "4px", display: "block" }}>
-              {"Dispon\u00edvel no 8\u00ba dia ap\u00f3s a compra"}
+              {safeLockedAvailabilityLabel}
             </span>
           )}
         </div>
@@ -281,7 +309,7 @@ function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, complete
               borderRadius: "50px",
               border: "1px solid rgba(245,158,11,0.2)",
             }}>
-              <Lock size={11} /> {"Libera no 8\u00ba dia"}
+              <Lock size={11} /> {safeLockedBadgeLabel}
             </span>
             <div style={{ color: "#b06000", flexShrink: 0 }}>
               <Lock size={18} />
@@ -662,9 +690,9 @@ export default function CoursePage() {
   const access = accountInfo?.access;
   const hasActiveAccess = access?.status === "active";
   const purchaseAt = access?.purchase_at;
-  const daysSincePurchase = purchaseAt
-    ? Math.floor((Date.now() / 1000 - purchaseAt) / 86400)
-    : 0;
+  const daysSincePurchase = getDaysSincePurchase(purchaseAt);
+  const resourceUnlockDaysLabel = formatDaysUntilUnlock(getDaysUntilUnlock(purchaseAt, RESOURCE_UNLOCK_AFTER_DAYS));
+  const certificationUnlockDaysLabel = formatDaysUntilUnlock(getDaysUntilUnlock(purchaseAt, CERTIFICATION_DAYS_AFTER_PURCHASE));
   const advancedModulesUnlocked =
     accountInfo == null ||
     (hasActiveAccess && (purchaseAt == null || daysSincePurchase >= RESOURCE_UNLOCK_AFTER_DAYS));
@@ -1044,9 +1072,11 @@ export default function CoursePage() {
                     {...r}
                     cta={r.cta}
                     locked={isResourceLocked}
+                    lockedBadgeLabel={`Libera em ${resourceUnlockDaysLabel}`}
+                    lockedCtaLabel={`Dispon\u00edvel em ${resourceUnlockDaysLabel}`}
                     lockMessage={
                       isResourceLocked
-                        ? "Este material será liberado no 8º dia após a compra, quando o reembolso automático deixar de estar disponível."
+                        ? `Este material ser\u00e1 liberado em ${resourceUnlockDaysLabel}.`
                         : ""
                     }
                     onCtaClick={
@@ -1104,6 +1134,8 @@ export default function CoursePage() {
                   completedLessons={completedLessonSet}
                   activeLessonId={activeLessonId}
                   courseSlug={courseSlug || "sql-basico-avancado"}
+                  lockedBadgeLabel={`Libera em ${resourceUnlockDaysLabel}`}
+                  lockedAvailabilityLabel={`Dispon\u00edvel em ${resourceUnlockDaysLabel}`}
                 />
               ))}
             </motion.div>
@@ -1129,7 +1161,7 @@ export default function CoursePage() {
                 </p>
                 {!certificationUnlocked && (
                   <p style={{ margin: "0.75rem 0 0 0", color: "#b06000", fontSize: "0.95rem", lineHeight: 1.5 }}>
-                    {"Seu certificado ser\u00e1 liberado no 8\u00ba dia ap\u00f3s a compra, quando o reembolso autom\u00e1tico deixar de estar dispon\u00edvel."}
+                    {`Seu certificado ser\u00e1 liberado em ${certificationUnlockDaysLabel}.`}
                   </p>
                 )}
               </motion.div>
@@ -1137,9 +1169,10 @@ export default function CoursePage() {
                 userName={userName}
                 onClick={certificationUnlocked ? handleCertificateClick : undefined}
                 locked={!certificationUnlocked}
+                lockedBadgeLabel={`Libera em ${certificationUnlockDaysLabel}`}
                 helperText={
                   !certificationUnlocked
-                    ? "O certificado fica dispon\u00edvel apenas no 8\u00ba dia ap\u00f3s a compra."
+                    ? `O certificado fica dispon\u00edvel em ${certificationUnlockDaysLabel}.`
                     : ""
                 }
               />

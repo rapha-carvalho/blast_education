@@ -47,7 +47,7 @@ STRIPE_CHECKOUT_LOCALE = os.getenv("STRIPE_CHECKOUT_LOCALE", "pt-BR").strip()
 STRIPE_CARD_INSTALLMENTS_ENABLED = env_bool("STRIPE_CARD_INSTALLMENTS_ENABLED", default=True)
 STRIPE_WEBHOOK_FORWARD_EVENTS = os.getenv(
     "STRIPE_WEBHOOK_FORWARD_EVENTS",
-    "checkout.session.completed,payment_intent.succeeded,charge.refunded,customer.subscription.deleted,charge.dispute.created",
+    "checkout.session.completed,payment_intent.succeeded,charge.refunded,customer.subscription.deleted,charge.dispute.created,invoice.paid,invoice.payment_failed",
 ).strip()
 STRIPE_AUTOMATIC_TAX_ENABLED = env_bool("STRIPE_AUTOMATIC_TAX_ENABLED", default=False)
 BILLING_COURSE_ID = os.getenv("BILLING_COURSE_ID", "sql-basics").strip() or "sql-basics"
@@ -55,6 +55,13 @@ ACCESS_DURATION_MONTHS = int(os.getenv("ACCESS_DURATION_MONTHS", "6"))
 CPF_ENCRYPTION_KEY = os.getenv("CPF_ENCRYPTION_KEY", "").strip()
 CHECKOUT_SIGNUP_INTENT_TTL_HOURS = int(os.getenv("CHECKOUT_SIGNUP_INTENT_TTL_HOURS", "24"))
 REFUND_WINDOW_DAYS = int(os.getenv("REFUND_WINDOW_DAYS", "14"))
+
+# Installment payments via Stripe Subscriptions (up to 6x monthly)
+STRIPE_INSTALLMENTS_MAX_COUNT = int(os.getenv("STRIPE_INSTALLMENTS_MAX_COUNT", "6"))
+STRIPE_INSTALLMENT_PRICE_IDS: dict[int, str] = {
+    n: os.getenv(f"STRIPE_PRICE_ID_{n}X", "").strip()
+    for n in range(2, STRIPE_INSTALLMENTS_MAX_COUNT + 1)
+}
 
 _impersonation_ttl_minutes = int(os.getenv("IMPERSONATION_TTL_MINUTES", "30"))
 IMPERSONATION_TTL_MINUTES = max(15, min(60, _impersonation_ttl_minutes))

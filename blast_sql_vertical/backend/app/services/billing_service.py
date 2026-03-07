@@ -20,6 +20,8 @@ from app.config import (
     STRIPE_CARD_INSTALLMENTS_ENABLED,
     STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES,
     STRIPE_CHECKOUT_LOCALE,
+    STRIPE_INSTALLMENT_PRICE_IDS,
+    STRIPE_INSTALLMENTS_MAX_COUNT,
     STRIPE_PRICE_ID,
     STRIPE_PUBLISHABLE_KEY,
     STRIPE_SECRET_KEY,
@@ -170,6 +172,31 @@ def _require_embedded_checkout_config() -> None:
         )
 
 
+def _require_installment_embedded_checkout_config(installment_count: int) -> None:
+    missing = []
+    if not STRIPE_SECRET_KEY:
+        missing.append("STRIPE_SECRET_KEY")
+    if not STRIPE_PUBLISHABLE_KEY:
+        missing.append("STRIPE_PUBLISHABLE_KEY")
+    if not CHECKOUT_RETURN_URL:
+        missing.append("CHECKOUT_RETURN_URL")
+    if missing:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Missing installment checkout config: {', '.join(missing)}",
+        )
+    if installment_count < 2 or installment_count > STRIPE_INSTALLMENTS_MAX_COUNT:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Installment count must be between 2 and {STRIPE_INSTALLMENTS_MAX_COUNT}.",
+        )
+    if not STRIPE_INSTALLMENT_PRICE_IDS.get(installment_count):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"STRIPE_PRICE_ID_{installment_count}X is not configured.",
+        )
+
+
 def _require_public_checkout_config() -> None:
     missing = []
     if not STRIPE_SECRET_KEY:
@@ -314,6 +341,7 @@ def _build_public_embedded_checkout_params(
     email: str,
     course_id: str,
     metadata: dict[str, str],
+    promo_code_id: str | None = None,
 ) -> dict[str, Any]:
     params = _build_public_checkout_params(
         email=email,
@@ -324,6 +352,56 @@ def _build_public_embedded_checkout_params(
     params.pop("cancel_url", None)
     params["ui_mode"] = "embedded"
     params["return_url"] = CHECKOUT_RETURN_URL
+    if promo_code_id:
+        params.pop("allow_promotion_codes", None)
+        params["discounts"] = [{"promotion_code": promo_code_id}]
+    return params
+
+
+def _build_installment_embedded_checkout_params(
+    *,
+    email: str,
+    course_id: str,
+    installment_count: int,
+    metadata: dict[str, str],
+    promo_code_id: str | None = None,
+) -> dict[str, Any]:
+    price_id = STRIPE_INSTALLMENT_PRICE_IDS[installment_count]
+    # Only card is supported for subscriptions (PIX is not supported)
+    payment_method_types = [m for m in STRIPE_CHECKOUT_PAYMENT_METHOD_TYPES if m != "pix"]
+    params: dict[str, Any] = {
+        "mode": "subscription",
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "customer_email": email,
+        "ui_mode": "embedded",
+        "return_url": CHECKOUT_RETURN_URL,
+        "metadata": metadata,
+        "subscription_data": {
+            "metadata": {
+                "course_id": course_id,
+                "installment_count": str(installment_count),
+            }
+        },
+        "custom_fields": [
+            {
+                "key": "cpf",
+                "label": {"type": "custom", "custom": "CPF"},
+                "type": "text",
+                "optional": False,
+                "text": {"minimum_length": 11, "maximum_length": 14},
+            }
+        ],
+    }
+    if promo_code_id:
+        params["discounts"] = [{"promotion_code": promo_code_id}]
+    else:
+        params["allow_promotion_codes"] = True
+    if payment_method_types:
+        params["payment_method_types"] = payment_method_types
+    if STRIPE_CHECKOUT_LOCALE:
+        params["locale"] = STRIPE_CHECKOUT_LOCALE
+    if STRIPE_AUTOMATIC_TAX_ENABLED:
+        params["automatic_tax"] = {"enabled": True}
     return params
 
 
@@ -490,6 +568,38 @@ def get_user_access_status(user_id: int) -> dict[str, Any]:
     }
 
 
+def validate_promo_code(code: str) -> dict[str, Any]:
+    _configure_stripe()
+    clean_code = (code or "").strip()
+    if not clean_code:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Promo code is required.")
+    try:
+        result = stripe.PromotionCode.list(code=clean_code, active=True, limit=1)
+    except stripe.error.StripeError as exc:
+        logger.exception("stripe_promo_code_validate_failed code=%s", clean_code)
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Could not validate promo code.") from exc
+
+    data = _obj_get(result, "data") or []
+    if not data:
+        return {"valid": False}
+
+    promo = data[0]
+    promo_id = str(_obj_get(promo, "id") or "")
+    coupon = _obj_get(promo, "coupon") or {}
+    percent_off = _obj_get(coupon, "percent_off")
+    amount_off = _obj_get(coupon, "amount_off")
+    currency = str(_obj_get(coupon, "currency") or "brl")
+
+    if percent_off is not None:
+        discount = {"type": "percent", "value": float(percent_off)}
+    elif amount_off is not None:
+        discount = {"type": "fixed_amount", "value": int(amount_off), "currency": currency}
+    else:
+        return {"valid": False}
+
+    return {"valid": True, "promo_code_id": promo_id, "discount": discount}
+
+
 def start_public_checkout(email: str, password: str, course_id: str | None = None) -> dict[str, Any]:
     _require_public_checkout_config()
     _configure_stripe()
@@ -554,7 +664,7 @@ def start_public_checkout(email: str, password: str, course_id: str | None = Non
     }
 
 
-def start_public_embedded_checkout(email: str, password: str, course_id: str | None = None) -> dict[str, Any]:
+def start_public_embedded_checkout(email: str, password: str, course_id: str | None = None, promo_code_id: str | None = None) -> dict[str, Any]:
     _require_embedded_checkout_config()
     _configure_stripe()
     expire_old_checkout_signup_intents()
@@ -590,6 +700,7 @@ def start_public_embedded_checkout(email: str, password: str, course_id: str | N
         email=clean_email,
         course_id=normalized_course_id,
         metadata=metadata,
+        promo_code_id=promo_code_id or None,
     )
     session = _create_stripe_checkout_session(params, purchase_id=None, user_id=None)
     session_id = str(_obj_get(session, "id") or "")
@@ -609,6 +720,80 @@ def start_public_embedded_checkout(email: str, password: str, course_id: str | N
         checkout_intent_id,
         session_id,
         normalized_course_id,
+    )
+    return {
+        "session_id": session_id,
+        "client_secret": client_secret,
+        "publishable_key": STRIPE_PUBLISHABLE_KEY,
+        "checkout_intent_id": checkout_intent_id,
+        "expires_at": _to_int((updated_intent or intent).get("expires_at")) or expires_at,
+    }
+
+
+def start_installment_embedded_checkout(
+    email: str,
+    password: str,
+    course_id: str | None = None,
+    installment_count: int = 2,
+    promo_code_id: str | None = None,
+) -> dict[str, Any]:
+    _require_installment_embedded_checkout_config(installment_count)
+    _configure_stripe()
+    expire_old_checkout_signup_intents()
+
+    clean_email = _normalize_email(email)
+    if not is_valid_email(clean_email):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
+    password_err = validate_password_strength(password)
+    if password_err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=password_err)
+    if get_user_by_email(clean_email):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Email already registered. Please log in to complete your purchase.",
+        )
+
+    normalized_course_id = _normalize_course_id(course_id)
+    expires_at = int(time.time()) + max(1, CHECKOUT_SIGNUP_INTENT_TTL_HOURS) * 3600
+    intent = create_checkout_signup_intent(
+        email=clean_email,
+        password_hash=hash_password(password),
+        course_id=normalized_course_id,
+        expires_at=expires_at,
+        status="created",
+    )
+    checkout_intent_id = str(intent["id"])
+    metadata = {
+        "checkout_intent_id": checkout_intent_id,
+        "course_id": normalized_course_id,
+        "installment_count": str(installment_count),
+    }
+    params = _build_installment_embedded_checkout_params(
+        email=clean_email,
+        course_id=normalized_course_id,
+        installment_count=installment_count,
+        metadata=metadata,
+        promo_code_id=promo_code_id or None,
+    )
+    session = _create_stripe_checkout_session(params, purchase_id=None, user_id=None)
+    session_id = str(_obj_get(session, "id") or "")
+    client_secret = str(_obj_get(session, "client_secret") or "")
+    if not session_id or not client_secret:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Installment checkout session is missing required fields",
+        )
+
+    updated_intent = mark_checkout_signup_intent_session_created(
+        intent_id=checkout_intent_id,
+        stripe_checkout_session_id=session_id,
+    )
+    logger.info(
+        "stripe_installment_embedded_checkout_session_created checkout_intent_id=%s session_id=%s course_id=%s installment_count=%s",
+        checkout_intent_id,
+        session_id,
+        normalized_course_id,
+        installment_count,
     )
     return {
         "session_id": session_id,
@@ -756,11 +941,11 @@ def _resolve_purchase_from_metadata(metadata: dict[str, str], session_id: str | 
     return None
 
 
-def _grant_access_for_purchase(purchase: dict, paid_at: int) -> None:
+def _grant_access_for_purchase(purchase: dict, paid_at: int, access_months: int | None = None) -> None:
     user_id = int(purchase["user_id"])
     course_id = str(purchase["course_id"])
     starts_at = paid_at
-    expires_at = _add_months(starts_at, ACCESS_DURATION_MONTHS)
+    expires_at = _add_months(starts_at, access_months if access_months and access_months > 0 else ACCESS_DURATION_MONTHS)
     upsert_access_grant(user_id=user_id, course_id=course_id, starts_at=starts_at, expires_at=expires_at)
     _set_user_access_from_stripe(
         user_id,
@@ -1090,6 +1275,12 @@ def _handle_checkout_signup_intent_completion(
         user_id = int(user["id"])
 
     course_id = _normalize_course_id(str(intent.get("course_id") or BILLING_COURSE_ID))
+
+    # Detect subscription (installment plan) vs one-time payment
+    subscription_id = str(_obj_get(payload, "subscription") or "").strip() or None
+    session_metadata = _metadata_as_dict(_obj_get(payload, "metadata"))
+    installment_count = _to_int(session_metadata.get("installment_count"))
+
     purchase = get_purchase_by_checkout_session_id(session_id)
     if not purchase:
         purchase = create_purchase(
@@ -1102,6 +1293,15 @@ def _handle_checkout_signup_intent_completion(
             },
         )
     paid_at = _to_int(_obj_get(payload, "created")) or event_created or now_ts
+    purchase_metadata: dict[str, Any] = {
+        "checkout_intent_id": checkout_intent_id,
+        "last_webhook_event_id": event_id,
+        "last_webhook_event_type": "checkout.session.completed",
+    }
+    if subscription_id:
+        purchase_metadata["stripe_subscription_id"] = subscription_id
+    if installment_count:
+        purchase_metadata["installment_count"] = str(installment_count)
     updated_purchase, changed = mark_purchase_paid(
         purchase_id=int(purchase["id"]),
         stripe_checkout_session_id=session_id or None,
@@ -1109,11 +1309,7 @@ def _handle_checkout_signup_intent_completion(
         amount=_to_int(_obj_get(payload, "amount_total")),
         currency=str(_obj_get(payload, "currency") or "") or None,
         paid_at=paid_at,
-        metadata={
-            "checkout_intent_id": checkout_intent_id,
-            "last_webhook_event_id": event_id,
-            "last_webhook_event_type": "checkout.session.completed",
-        },
+        metadata=purchase_metadata,
     )
     if not updated_purchase:
         logger.warning(
@@ -1145,7 +1341,28 @@ def _handle_checkout_signup_intent_completion(
         )
         return event_context
 
-    _grant_access_for_purchase(updated_purchase, paid_at=paid_at)
+    # For installment subscriptions, set cancel_at to limit billing cycles
+    if subscription_id and installment_count and installment_count > 1:
+        try:
+            cancel_at = _add_months(paid_at, installment_count)
+            stripe.Subscription.modify(subscription_id, cancel_at=cancel_at)
+            logger.info(
+                "stripe_installment_subscription_cancel_at_set event_id=%s sub_id=%s installment_count=%s",
+                event_id,
+                subscription_id,
+                installment_count,
+            )
+        except stripe.error.StripeError as exc:
+            logger.warning(
+                "stripe_installment_subscription_cancel_at_failed event_id=%s sub_id=%s error=%s",
+                event_id,
+                subscription_id,
+                str(exc),
+            )
+
+    # Grant access: use installment_count months for subscriptions, otherwise default duration
+    access_months = installment_count if (subscription_id and installment_count) else ACCESS_DURATION_MONTHS
+    _grant_access_for_purchase(updated_purchase, paid_at=paid_at, access_months=access_months)
     _send_purchase_confirmation_for_purchase(
         event_id=event_id,
         event_type="checkout.session.completed",
@@ -1441,6 +1658,19 @@ def _handle_subscription_deleted(
         user_id=int(user["id"]),
         email=_normalize_email(str(user.get("email") or "")),
     )
+
+    # For installment plans, access was already granted for N months upfront — do not revoke
+    sub_metadata = _metadata_as_dict(_obj_get(payload, "metadata"))
+    installment_count = _to_int(sub_metadata.get("installment_count"))
+    if installment_count:
+        logger.info(
+            "stripe_subscription_deleted_installment_plan event_id=%s user_id=%s installment_count=%s reason=no_action_needed",
+            event_id,
+            user["id"],
+            installment_count,
+        )
+        return event_context
+
     expires_at = _to_int(user.get("expires_at"))
     _set_user_access_from_stripe(
         int(user["id"]),
@@ -1453,6 +1683,73 @@ def _handle_subscription_deleted(
         event_id,
         user["id"],
         customer_id,
+    )
+    return event_context
+
+
+def _handle_invoice_paid(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
+    subscription_id = str(_obj_get(payload, "subscription") or "").strip()
+    customer_id = str(_obj_get(payload, "customer") or "").strip()
+    if not subscription_id:
+        # Not a subscription invoice — ignore
+        return event_context
+    user = get_user_by_stripe_customer_id(customer_id) if customer_id else None
+    if not user:
+        logger.info(
+            "stripe_invoice_paid_ignored event_id=%s reason=user_not_found customer_id=%s sub_id=%s",
+            event_id,
+            customer_id,
+            subscription_id,
+        )
+        return event_context
+    _set_event_audit_context(
+        event_context,
+        user_id=int(user["id"]),
+        email=_normalize_email(str(user.get("email") or "")),
+    )
+    logger.info(
+        "stripe_installment_invoice_paid event_id=%s user_id=%s sub_id=%s",
+        event_id,
+        user["id"],
+        subscription_id,
+    )
+    return event_context
+
+
+def _handle_invoice_payment_failed(
+    payload: Any,
+    event_id: str,
+    event_created: int,
+    event_context: dict[str, Any],
+) -> dict[str, Any]:
+    subscription_id = str(_obj_get(payload, "subscription") or "").strip()
+    customer_id = str(_obj_get(payload, "customer") or "").strip()
+    if not subscription_id:
+        return event_context
+    user = get_user_by_stripe_customer_id(customer_id) if customer_id else None
+    if not user:
+        logger.info(
+            "stripe_invoice_payment_failed_ignored event_id=%s reason=user_not_found customer_id=%s sub_id=%s",
+            event_id,
+            customer_id,
+            subscription_id,
+        )
+        return event_context
+    _set_event_audit_context(
+        event_context,
+        user_id=int(user["id"]),
+        email=_normalize_email(str(user.get("email") or "")),
+    )
+    logger.warning(
+        "stripe_installment_invoice_payment_failed event_id=%s user_id=%s sub_id=%s",
+        event_id,
+        user["id"],
+        subscription_id,
     )
     return event_context
 
@@ -1656,6 +1953,10 @@ def process_stripe_event(event: Any) -> None:
         event_context = _handle_subscription_deleted(payload, event_id, event_created, event_context)
     elif event_type == "charge.dispute.created":
         event_context = _handle_charge_dispute_created(payload, event_id, event_created, event_context)
+    elif event_type == "invoice.paid":
+        event_context = _handle_invoice_paid(payload, event_id, event_created, event_context)
+    elif event_type == "invoice.payment_failed":
+        event_context = _handle_invoice_payment_failed(payload, event_id, event_created, event_context)
     else:
         logger.info("stripe_webhook_ignored event_id=%s event_type=%s", event_id, event_type)
 

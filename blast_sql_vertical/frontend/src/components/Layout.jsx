@@ -230,11 +230,6 @@ export default function Layout({ children }) {
                 Admin
               </Link>
             ) : null}
-            {user?.email && (
-              <span style={{ fontSize: "0.82rem", color: "#5f6368", fontWeight: 500 }}>
-                {user.email}
-              </span>
-            )}
             <button
               onClick={handleLogout}
               style={{
@@ -395,11 +390,6 @@ export default function Layout({ children }) {
                   Admin
                 </Link>
               ) : null}
-              {user?.email && (
-                <span style={{ fontSize: "0.95rem", color: "#5f6368", marginTop: "0.4rem" }}>
-                  {user.email}
-                </span>
-              )}
               <button
                 onClick={handleLogout}
                 style={{

@@ -46,6 +46,7 @@ import {
 } from "../utils/progressStore";
 import { resolveLessonSlugToKey, getPrevNextSlugs } from "../utils/lessonResolver";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { formatDaysUntilUnlock, getDaysSincePurchase, getDaysUntilUnlock } from "../utils/unlockWindow";
 
 const MASTER_CHALLENGE_ID = "lesson_master_challenge_1";
 const CAPSTONE_FORCE_UNLOCK = true;
@@ -233,9 +234,10 @@ export default function ClassPage() {
   const access = accountInfo?.access;
   const purchaseAt = access?.purchase_at;
   const hasActiveAccess = access?.status === "active";
-  const daysSincePurchase = purchaseAt
-    ? Math.floor((Date.now() / 1000 - purchaseAt) / 86400)
-    : 0;
+  const daysSincePurchase = getDaysSincePurchase(purchaseAt);
+  const refundModuleUnlockDaysLabel = formatDaysUntilUnlock(
+    getDaysUntilUnlock(purchaseAt, REFUND_LOCKED_MODULE_UNLOCK_AFTER_DAYS)
+  );
   const refundLockedModulesUnlocked =
     accountInfo == null ||
     (hasActiveAccess && (purchaseAt == null || daysSincePurchase >= REFUND_LOCKED_MODULE_UNLOCK_AFTER_DAYS));
@@ -647,7 +649,7 @@ export default function ClassPage() {
           <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 8, color: "#8a5a00" }}>
             <Lock size={18} /> {refundModuleLock.moduleTitle} bloqueado
           </h2>
-          <p>Este módulo será liberado no 8º dia após a compra, quando o reembolso automático deixar de estar disponível.</p>
+          <p>{`Este m\u00f3dulo ser\u00e1 liberado em ${refundModuleUnlockDaysLabel}.`}</p>
           <Link to={backTo}>Voltar para o curso</Link>
         </div>
       </div>

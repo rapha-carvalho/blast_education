@@ -6,6 +6,7 @@ import CertificationCard from "../components/CertificationCard";
 import FullNameCertificateModal from "../components/FullNameCertificateModal";
 import CertificationModal from "../components/CertificationModal";
 import { useAuth } from "../contexts/AuthContext";
+import { formatDaysUntilUnlock, getDaysSincePurchase, getDaysUntilUnlock } from "../utils/unlockWindow";
 
 const SLUG_TO_COURSE_ID = { "sql-basico-avancado": "sql-basics" };
 const CERTIFICATION_DAYS_AFTER_PURCHASE = 7;
@@ -42,9 +43,10 @@ export default function CertificatePage() {
   const courseCompleted = completionPct >= 100 && totalLessons > 0;
   const hasActiveAccess = accountInfo?.access?.status === "active";
   const purchaseAt = accountInfo?.access?.purchase_at;
-  const daysSincePurchase = purchaseAt
-    ? Math.floor((Date.now() / 1000 - purchaseAt) / 86400)
-    : 0;
+  const daysSincePurchase = getDaysSincePurchase(purchaseAt);
+  const certificateUnlockDaysLabel = formatDaysUntilUnlock(
+    getDaysUntilUnlock(purchaseAt, CERTIFICATION_DAYS_AFTER_PURCHASE)
+  );
   const showCertificate = courseCompleted && hasActiveAccess;
   const certificateUnlocked =
     showCertificate &&
@@ -120,16 +122,17 @@ export default function CertificatePage() {
           </p>
           {!certificateUnlocked && (
             <p style={{ margin: "0 0 1.5rem 0", color: "#b06000", lineHeight: 1.5 }}>
-              {"Seu certificado ser\u00e1 liberado no 8\u00ba dia ap\u00f3s a compra, quando o reembolso autom\u00e1tico deixar de estar dispon\u00edvel."}
+              {`Seu certificado ser\u00e1 liberado em ${certificateUnlockDaysLabel}.`}
             </p>
           )}
           <CertificationCard
             userName={userName}
             onClick={certificateUnlocked ? handleCertificateClick : undefined}
             locked={!certificateUnlocked}
+            lockedBadgeLabel={`Libera em ${certificateUnlockDaysLabel}`}
             helperText={
               !certificateUnlocked
-                ? "O certificado fica dispon\u00edvel apenas no 8\u00ba dia ap\u00f3s a compra."
+                ? `O certificado fica dispon\u00edvel em ${certificateUnlockDaysLabel}.`
                 : ""
             }
           />

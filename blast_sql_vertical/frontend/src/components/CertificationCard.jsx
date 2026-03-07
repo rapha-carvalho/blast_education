@@ -5,7 +5,7 @@ import { Lock } from "lucide-react";
  * CertificationCard displays the completion certificate preview.
  * It becomes non-interactive while access is temporarily locked.
  */
-export default function CertificationCard({ userName, onClick, locked = false, helperText = "" }) {
+export default function CertificationCard({ userName, onClick, locked = false, helperText = "", lockedBadgeLabel = "" }) {
   const displayName = userName?.trim() || "Participante";
   const isInteractive = Boolean(onClick) && !locked;
 
@@ -61,7 +61,7 @@ export default function CertificationCard({ userName, onClick, locked = false, h
           }}
         >
           <Lock size={12} />
-          {"Libera no 8\u00ba dia"}
+          {lockedBadgeLabel || "Bloqueado"}
         </div>
       )}
 

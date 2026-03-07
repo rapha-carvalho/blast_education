@@ -234,7 +234,11 @@ export async function startCheckout({ email, password, courseId = null }) {
   });
 }
 
-export async function startEmbeddedCheckout({ email, password, courseId = null }) {
+export async function validatePromoCode(code) {
+  return fetchApi(`/checkout/validate-promo?code=${encodeURIComponent(code)}`, { skipAuth: true });
+}
+
+export async function startEmbeddedCheckout({ email, password, courseId = null, promoCodeId = null }) {
   return fetchApi("/checkout/start-embedded", {
     method: "POST",
     skipAuth: true,
@@ -242,6 +246,21 @@ export async function startEmbeddedCheckout({ email, password, courseId = null }
       email,
       password,
       course_id: courseId,
+      promo_code_id: promoCodeId,
+    }),
+  });
+}
+
+export async function startInstallmentEmbeddedCheckout({ email, password, courseId = null, installmentCount, promoCodeId = null }) {
+  return fetchApi("/checkout/start-embedded-installment", {
+    method: "POST",
+    skipAuth: true,
+    body: JSON.stringify({
+      email,
+      password,
+      course_id: courseId,
+      installment_count: installmentCount,
+      promo_code_id: promoCodeId,
     }),
   });
 }

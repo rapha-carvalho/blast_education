@@ -5,11 +5,26 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from "@stripe/react-stripe
 import { loadStripe } from "@stripe/stripe-js";
 import BlastEducationLogo from "../components/BlastEducationLogo";
 import BraceParticles from "../components/BraceParticles";
-import { getCourses, startEmbeddedCheckout } from "../api/client";
+import { getCourses, startEmbeddedCheckout, startInstallmentEmbeddedCheckout, validatePromoCode } from "../api/client";
 import { fixPtBrText } from "../utils/ptBrText";
 
 const DEFAULT_COURSE_ID = "sql-basics";
 const STATIC_PUBLISHABLE_KEY = (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "").trim();
+const COURSE_PRICE_CENTS = parseInt(import.meta.env.VITE_COURSE_PRICE_CENTS || "0", 10);
+const MAX_INSTALLMENTS = parseInt(import.meta.env.VITE_MAX_INSTALLMENTS || "6", 10);
+
+function formatBRL(cents) {
+  return (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function buildInstallmentOptions(totalCents, maxCount) {
+  const options = [{ count: 1, label: `1x de ${formatBRL(totalCents)} (à vista)` }];
+  for (let n = 2; n <= maxCount; n++) {
+    const perInstallment = Math.floor(totalCents / n);
+    options.push({ count: n, label: `${n}x de ${formatBRL(perInstallment)}` });
+  }
+  return options;
+}
 const DEFAULT_MODULES = [
   { title: "SQL e o Mundo de Dados Moderno", lessons: 5 },
   { title: "Filtrando e Fatiando Dados", lessons: 6 },
@@ -62,6 +77,21 @@ export default function CheckoutStartPage() {
   const [moduleCards, setModuleCards] = useState(buildDefaultModuleCards);
   const [clientSecret, setClientSecret] = useState("");
   const [publishableKey, setPublishableKey] = useState(STATIC_PUBLISHABLE_KEY);
+  const [installmentCount, setInstallmentCount] = useState(1);
+
+  const [promoInput, setPromoInput] = useState("");
+  const [promoCodeId, setPromoCodeId] = useState("");
+  const [promoDiscountCents, setPromoDiscountCents] = useState(0);
+  const [promoLabel, setPromoLabel] = useState("");
+  const [promoError, setPromoError] = useState("");
+  const [promoValidating, setPromoValidating] = useState(false);
+
+  const effectivePriceCents = Math.max(0, COURSE_PRICE_CENTS - promoDiscountCents);
+
+  const installmentOptions = useMemo(
+    () => (effectivePriceCents > 0 ? buildInstallmentOptions(effectivePriceCents, MAX_INSTALLMENTS) : []),
+    [effectivePriceCents]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +147,59 @@ export default function CheckoutStartPage() {
     if (clientSecret) setClientSecret("");
   };
 
+  const handleInstallmentChange = (event) => {
+    setInstallmentCount(Number(event.target.value));
+    if (clientSecret) setClientSecret("");
+  };
+
+  const handlePromoApply = async () => {
+    const code = promoInput.trim();
+    if (!code) return;
+    setPromoError("");
+    setPromoValidating(true);
+    try {
+      const result = await validatePromoCode(code);
+      if (!result?.valid) {
+        setPromoError("Cupom inválido ou expirado.");
+        setPromoCodeId("");
+        setPromoDiscountCents(0);
+        setPromoLabel("");
+        if (clientSecret) setClientSecret("");
+        return;
+      }
+      const { discount, promo_code_id } = result;
+      let discountCents = 0;
+      let label = "";
+      if (discount?.type === "percent") {
+        discountCents = Math.round(COURSE_PRICE_CENTS * discount.value / 100);
+        label = `${discount.value}% de desconto aplicado`;
+      } else if (discount?.type === "fixed_amount") {
+        discountCents = discount.value;
+        label = `${formatBRL(discount.value)} de desconto aplicado`;
+      }
+      setPromoCodeId(promo_code_id || "");
+      setPromoDiscountCents(discountCents);
+      setPromoLabel(label);
+      if (clientSecret) setClientSecret("");
+    } catch (err) {
+      setPromoError(err?.message || "Erro ao validar cupom.");
+      setPromoCodeId("");
+      setPromoDiscountCents(0);
+      setPromoLabel("");
+    } finally {
+      setPromoValidating(false);
+    }
+  };
+
+  const handlePromoRemove = () => {
+    setPromoInput("");
+    setPromoCodeId("");
+    setPromoDiscountCents(0);
+    setPromoLabel("");
+    setPromoError("");
+    if (clientSecret) setClientSecret("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (submitting) return;
@@ -124,11 +207,21 @@ export default function CheckoutStartPage() {
     setError("");
     setSubmitting(true);
     try {
-      const payload = await startEmbeddedCheckout({
-        email: email.trim(),
-        password,
-        courseId: DEFAULT_COURSE_ID,
-      });
+      const payload =
+        installmentCount > 1
+          ? await startInstallmentEmbeddedCheckout({
+              email: email.trim(),
+              password,
+              courseId: DEFAULT_COURSE_ID,
+              installmentCount,
+              promoCodeId: promoCodeId || null,
+            })
+          : await startEmbeddedCheckout({
+              email: email.trim(),
+              password,
+              courseId: DEFAULT_COURSE_ID,
+              promoCodeId: promoCodeId || null,
+            });
 
       const sessionClientSecret = (payload?.client_secret || "").trim();
       const sessionPublishableKey = (payload?.publishable_key || "").trim() || STATIC_PUBLISHABLE_KEY;
@@ -298,6 +391,137 @@ export default function CheckoutStartPage() {
           align-items: center;
           gap: 0.35rem;
           font-size: 0.86rem;
+        }
+        .checkout-promo-field {
+          margin-top: 0.78rem;
+        }
+        .checkout-promo-row {
+          display: flex;
+          gap: 0.5rem;
+          margin-top: 0.38rem;
+          align-items: stretch;
+        }
+        .checkout-promo-input {
+          flex: 1;
+          min-width: 0;
+          border: 1px solid rgba(0,0,0,0.12);
+          border-radius: 12px;
+          padding: 0.72rem 0.85rem 0.72rem 2.4rem;
+          font-size: 0.95rem;
+          font-family: inherit;
+          color: #1a1a1a;
+          background: #ffffff;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          box-sizing: border-box;
+        }
+        .checkout-promo-input:focus {
+          outline: none;
+          border-color: #1a73e8;
+          box-shadow: 0 0 0 3px rgba(26,115,232,0.15);
+        }
+        .checkout-promo-input:disabled {
+          opacity: 0.6;
+        }
+        .checkout-promo-input-wrap {
+          position: relative;
+          flex: 1;
+          min-width: 0;
+        }
+        .checkout-promo-apply-btn {
+          flex-shrink: 0;
+          border: 1px solid rgba(0,0,0,0.15);
+          border-radius: 12px;
+          background: #f8f9fa;
+          color: #1a1a1a;
+          padding: 0 1rem;
+          font-size: 0.88rem;
+          font-weight: 600;
+          font-family: inherit;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .checkout-promo-apply-btn:hover:not(:disabled) {
+          background: #e8f0fe;
+          border-color: #1a73e8;
+          color: #1a73e8;
+        }
+        .checkout-promo-apply-btn:disabled {
+          opacity: 0.6;
+          cursor: wait;
+        }
+        .checkout-promo-success {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          margin-top: 0.45rem;
+          font-size: 0.84rem;
+          color: #0c7f57;
+          font-weight: 500;
+        }
+        .checkout-promo-remove {
+          background: none;
+          border: none;
+          color: #5f6368;
+          cursor: pointer;
+          font-size: 0.8rem;
+          padding: 0 0.2rem;
+          margin-left: 0.3rem;
+          text-decoration: underline;
+          font-family: inherit;
+        }
+        .checkout-promo-remove:hover {
+          color: #b3261e;
+        }
+        .checkout-promo-error {
+          margin: 0.3rem 0 0;
+          font-size: 0.84rem;
+          color: #b3261e;
+        }
+        .checkout-installment-selector {
+          margin-top: 0.78rem;
+        }
+        .checkout-installment-grid {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.5rem;
+          margin-top: 0.38rem;
+        }
+        .checkout-installment-option {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+        .checkout-installment-option input[type="radio"] {
+          position: absolute;
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+        .checkout-installment-option label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.5rem 0.6rem;
+          border: 1px solid rgba(0,0,0,0.12);
+          border-radius: 10px;
+          font-size: 0.84rem;
+          font-weight: 500;
+          color: #1a1a1a;
+          cursor: pointer;
+          text-align: center;
+          white-space: nowrap;
+          transition: border-color 0.15s, background 0.15s;
+          background: #ffffff;
+        }
+        .checkout-installment-option input[type="radio"]:checked + label {
+          border-color: #1a73e8;
+          background: #e8f0fe;
+          color: #1a73e8;
+          font-weight: 600;
+        }
+        .checkout-installment-option label:hover {
+          border-color: #1a73e8;
         }
         .checkout-start-stripe-surface {
           background: #ffffff;
@@ -680,6 +904,70 @@ export default function CheckoutStartPage() {
                   />
                 </div>
               </div>
+
+              <div className="checkout-promo-field">
+                <label className="checkout-start-label" htmlFor="checkout-promo">
+                  Cupom de desconto
+                </label>
+                {promoLabel ? (
+                  <div className="checkout-promo-success">
+                    <CheckCircle2 size={15} color="#0c7f57" />
+                    {promoLabel}
+                    <button type="button" className="checkout-promo-remove" onClick={handlePromoRemove}>
+                      remover
+                    </button>
+                  </div>
+                ) : (
+                  <div className="checkout-promo-row">
+                    <div className="checkout-promo-input-wrap">
+                      <Ticket size={15} className="checkout-start-icon" style={{ left: "0.78rem" }} />
+                      <input
+                        id="checkout-promo"
+                        className="checkout-promo-input"
+                        type="text"
+                        value={promoInput}
+                        onChange={(e) => { setPromoInput(e.target.value); setPromoError(""); }}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handlePromoApply(); } }}
+                        placeholder="CÓDIGO"
+                        disabled={promoValidating}
+                        maxLength={40}
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      className="checkout-promo-apply-btn"
+                      onClick={handlePromoApply}
+                      disabled={promoValidating || !promoInput.trim()}
+                    >
+                      {promoValidating ? "..." : "Aplicar"}
+                    </button>
+                  </div>
+                )}
+                {promoError && <p className="checkout-promo-error">{promoError}</p>}
+              </div>
+
+              {installmentOptions.length > 0 && (
+                <div className="checkout-installment-selector">
+                  <label className="checkout-start-label">Forma de pagamento</label>
+                  <div className="checkout-installment-grid">
+                    {installmentOptions.map((opt) => (
+                      <div key={opt.count} className="checkout-installment-option">
+                        <input
+                          type="radio"
+                          id={`installment-${opt.count}`}
+                          name="installment"
+                          value={opt.count}
+                          checked={installmentCount === opt.count}
+                          onChange={handleInstallmentChange}
+                        />
+                        <label htmlFor={`installment-${opt.count}`}>{opt.label}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {error && <p className="checkout-start-error">{error}</p>}
 
