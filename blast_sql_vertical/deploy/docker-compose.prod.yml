@@ -1,14 +1,13 @@
-# Production Docker Compose – blast-education NAS
+# Production Docker Compose - blast-education NAS
 #
 # USAGE:
 #   First time:  docker compose up -d
-#   Updates:     docker compose up -d          (auto-pulls latest images)
+#   Updates:     docker compose up -d
 #
-# REQUIREMENTS: a .env file in the same directory (copy .env.example → .env)
+# REQUIREMENTS: a .env file in the same directory
+#               (copy .env.example -> .env)
 
 services:
-
-  # ── Frontend ──────────────────────────────────────────────────────────────
   frontend:
     image: ghcr.io/rapha-carvalho/blast-sql-frontend:latest
     pull_policy: always
@@ -27,14 +26,13 @@ services:
         limits:
           memory: 256m
 
-  # ── Backend ───────────────────────────────────────────────────────────────
   backend:
     image: ghcr.io/rapha-carvalho/blast-sql-backend:latest
     pull_policy: always
     restart: unless-stopped
-    env_file: .env                       # all secrets come from .env
+    env_file: .env
     environment:
-      USER_DB_PATH: /app/data/users.db   # fixed — do not change
+      USER_DB_PATH: /app/data/users.db
       PLAYWRIGHT_CHROMIUM_ARGS: --disable-dev-shm-usage,--no-sandbox
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     volumes:
@@ -52,7 +50,6 @@ services:
         limits:
           memory: 1500m
 
-  # ── Cloudflare Tunnel ─────────────────────────────────────────────────────
   cloudflared:
     image: cloudflare/cloudflared:latest
     pull_policy: always
