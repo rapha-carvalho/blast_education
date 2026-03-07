@@ -113,7 +113,7 @@
         "order_matters": true
       },
       "success_criteria": {
-        "objective": "Gerar estatisticasinicas e totais por país em ordem de tamanho",
+        "objective": "Gerar estatisticas únicas e totais por país em ordem de tamanho",
         "expected_columns": [
           "country",
           "total_pedidos",

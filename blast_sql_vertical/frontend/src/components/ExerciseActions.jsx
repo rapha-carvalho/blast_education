@@ -33,6 +33,7 @@ export default function ExerciseActions({
 
     return (
       <motion.button
+        type="button"
         onClick={disabled ? undefined : onClick}
         whileHover={!disabled ? { scale: 1.02, backgroundColor: hoverBg } : undefined}
         whileTap={!disabled ? { scale: 0.98 } : undefined}

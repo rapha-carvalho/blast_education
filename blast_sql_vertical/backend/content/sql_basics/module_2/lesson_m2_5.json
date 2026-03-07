@@ -20,27 +20,27 @@
       "id": "tab_null_basics",
       "title": "O que NULL significa?",
       "type": "content",
-      "content_markdown": "#### NULL não e zero, nem string vazia\n\nEm SQL, `NULL` significa **ausência de valor**.\nIsso e diferente de:\n\n- `0` (valor numérico valido)\n- `''` (texto vazio, mas ainda ? um valor)\n\nQuando você ignora NULL, o relatório pode parecer certo e estar errado.\n\n```sql\nSELECT id, name, phone\nFROM filtering.customers\nWHERE phone IS NULL;\n```\n\nEssa query encontra clientes sem telefone cadastrado.\n\n---\n\n#### Erro clássico (bug silencioso)\n\nEssas comparações estão erradas:\n\n```sql\nWHERE phone = NULL\nWHERE phone != NULL\n```\n\nAmbas não funcionam como esperado, porque NULL não pode ser comparado com `=` ou `!=`.\n\n[PLACEHOLDER_IMAGEM: Painel educativo mostrando diferença entre NULL, zero e string vazia, com alerta de bug silencioso ao usar igual com NULL.]"
+      "content_markdown": "#### NULL não é zero, nem string vazia\n\nEm SQL, `NULL` significa **ausência de valor**.\nIsso é diferente de:\n\n- `0` (valor numérico válido)\n- `''` (texto vazio, mas ainda é um valor)\n\nQuando você ignora NULL, o relatório pode parecer certo e estar errado.\n\n```sql\nSELECT id, name, phone\nFROM filtering.customers\nWHERE phone IS NULL;\n```\n\nEssa query encontra clientes sem telefone cadastrado.\n\n---\n\n#### Erro clássico (bug silencioso)\n\nEssas comparações estão erradas:\n\n```sql\nWHERE phone = NULL\nWHERE phone != NULL\n```\n\nAmbas não funcionam como esperado, porque NULL não pode ser comparado com `=` ou `!=`.\n\n[PLACEHOLDER_IMAGEM: Painel educativo mostrando diferença entre NULL, zero e string vazia, com alerta de bug silencioso ao usar igual com NULL.]"
     },
     {
       "id": "tab_null_filters",
       "title": "IS NULL e IS NOT NULL",
       "type": "content",
-      "content_markdown": "#### Operadores corretos para valores ausentes\n\nUse sempre estes operadores:\n\n| Caso | Operador correto | Exemplo |\n|---|---|---|\n| Encontrar dados ausentes | `IS NULL` | `delivery_date IS NULL` |\n| Encontrar dados preenchidos | `IS NOT NULL` | `email IS NOT NULL` |\n\n---\n\n#### Casos reais de negócio\n\n| Pergunta de negócio | Filtro SQL |\n|---|---|\n| Quais clientes estão sem telefone? | `phone IS NULL` |\n| Quais pedidos ainda não tem entrega registrada? | `delivery_date IS NULL` |\n| Quais clientes tem contato completo? | `email IS NOT NULL AND phone IS NOT NULL` |\n\n---\n\n#### Regra de ouro\n\n> Sempre que o campo puder estar ausente, pense primeiro em `IS NULL` ou `IS NOT NULL`.\n\n[PLACEHOLDER_IMAGEM: Quadro comparativo com exemplos corretos de IS NULL e IS NOT NULL em clientes e pedidos, incluindo resultado esperado por regra.]"
+      "content_markdown": "#### Operadores corretos para valores ausentes\n\nUse sempre estes operadores:\n\n| Caso | Operador correto | Exemplo |\n|---|---|---|\n| Encontrar dados ausentes | `IS NULL` | `delivery_date IS NULL` |\n| Encontrar dados preenchidos | `IS NOT NULL` | `email IS NOT NULL` |\n\n---\n\n#### Casos reais de negócio\n\n| Pergunta de negócio | Filtro SQL |\n|---|---|\n| Quais clientes estão sem telefone? | `phone IS NULL` |\n| Quais pedidos ainda não têm entrega registrada? | `delivery_date IS NULL` |\n| Quais clientes têm contato completo? | `email IS NOT NULL AND phone IS NOT NULL` |\n\n---\n\n#### Regra de ouro\n\n> Sempre que o campo puder estar ausente, pense primeiro em `IS NULL` ou `IS NOT NULL`.\n\n[PLACEHOLDER_IMAGEM: Quadro comparativo com exemplos corretos de IS NULL e IS NOT NULL em clientes e pedidos, incluindo resultado esperado por regra.]"
     },
     {
       "id": "tab_practice_1",
       "title": "Desafio 1 - Clientes sem telefone",
       "type": "challenge",
       "exercise_index": 0,
-      "intro_markdown": "O time de CRM precisa identificar clientes sem telefone cadastrado para uma campanha de atualizacao de perfil.\n\n> **Sua missão:** Retorne os clientes sem telefone usando o filtro correto para valores ausentes."
+      "intro_markdown": "O time de CRM precisa identificar clientes sem telefone cadastrado para uma campanha de atualização de perfil.\n\n> **Sua missão:** Retorne os clientes sem telefone usando o filtro correto para valores ausentes."
     },
     {
       "id": "tab_practice_2",
       "title": "Desafio 2 - Pedidos sem entrega registrada",
       "type": "challenge",
       "exercise_index": 1,
-      "intro_markdown": "A operação quer monitorar pedidos sem data de entrega registrada para evitar atrasos invisiveis no dashboard.\n\n> **Sua missão:** Liste pedidos com `delivery_date` ausente, ordenando do mais recente para o mais antigo."
+      "intro_markdown": "A operação quer monitorar pedidos sem data de entrega registrada para evitar atrasos invisíveis no dashboard.\n\n> **Sua missão:** Liste pedidos com `delivery_date` ausente, ordenando do mais recente para o mais antigo."
     },
     {
       "id": "tab_practice_3",
@@ -53,7 +53,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `NULL` representa ausência de valor, não zero e não string vazia.\n- Comparar com `= NULL` ou `!= NULL` gera bug silencioso.\n- `IS NULL` encontra registros com valor ausente.\n- `IS NOT NULL` encontra registros preenchidos.\n- Tratar NULL corretamente evita erros de leitura de negócio.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `NULL` | Ausencia de valor em uma coluna |\n| `IS NULL` | Operador para filtrar valores ausentes |\n| `IS NOT NULL` | Operador para filtrar valores preenchidos |\n| Bug silencioso | Erro lógico sem mensagem explícita de falha |\n\n> **Próxima aula:** ORDER BY, LIMIT e OFFSET para priorizar leitura e paginar resultados."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `NULL` representa ausência de valor, não zero e não string vazia.\n- Comparar com `= NULL` ou `!= NULL` gera bug silencioso.\n- `IS NULL` encontra registros com valor ausente.\n- `IS NOT NULL` encontra registros preenchidos.\n- Tratar NULL corretamente evita erros de leitura de negócio.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `NULL` | Ausência de valor em uma coluna |\n| `IS NULL` | Operador para filtrar valores ausentes |\n| `IS NOT NULL` | Operador para filtrar valores preenchidos |\n| Bug silencioso | Erro lógico sem mensagem explícita de falha |\n\n> **Próxima aula:** ORDER BY, LIMIT e OFFSET para priorizar leitura e paginar resultados."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",

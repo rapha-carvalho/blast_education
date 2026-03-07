@@ -8,7 +8,7 @@ import CertificationModal from "../components/CertificationModal";
 import { useAuth } from "../contexts/AuthContext";
 
 const SLUG_TO_COURSE_ID = { "sql-basico-avancado": "sql-basics" };
-const CERTIFICATION_DAYS_AFTER_PURCHASE = 0;
+const CERTIFICATION_DAYS_AFTER_PURCHASE = 7;
 
 export default function CertificatePage() {
   const { courseSlug } = useParams();
@@ -41,10 +41,14 @@ export default function CertificatePage() {
   const completionPct = totalLessons > 0 ? Math.round((completed / totalLessons) * 100) : 0;
   const courseCompleted = completionPct >= 100 && totalLessons > 0;
   const hasActiveAccess = accountInfo?.access?.status === "active";
-  const daysSincePurchase = accountInfo?.access?.purchase_at
-    ? Math.floor((Date.now() / 1000 - accountInfo.access.purchase_at) / 86400)
+  const purchaseAt = accountInfo?.access?.purchase_at;
+  const daysSincePurchase = purchaseAt
+    ? Math.floor((Date.now() / 1000 - purchaseAt) / 86400)
     : 0;
-  const eligible = courseCompleted && hasActiveAccess && daysSincePurchase >= CERTIFICATION_DAYS_AFTER_PURCHASE;
+  const showCertificate = courseCompleted && hasActiveAccess;
+  const certificateUnlocked =
+    showCertificate &&
+    (purchaseAt == null || daysSincePurchase >= CERTIFICATION_DAYS_AFTER_PURCHASE);
 
   const userName = accountInfo?.user?.full_name || user?.full_name || user?.email;
 
@@ -67,6 +71,7 @@ export default function CertificatePage() {
   };
 
   const handleCertificateClick = () => {
+    if (!certificateUnlocked) return;
     const hasFullName = Boolean(accountInfo?.user?.full_name?.trim());
     if (!hasFullName) {
       setFullNameModalOpen(true);
@@ -108,12 +113,26 @@ export default function CertificatePage() {
         <ArrowLeft size={18} /> Voltar ao curso
       </Link>
       <h1 style={{ margin: "0 0 1rem 0", fontSize: "1.75rem", fontWeight: 600 }}>Certificado</h1>
-      {eligible ? (
+      {showCertificate ? (
         <>
           <p style={{ margin: "0 0 1.5rem 0", color: "#5f6368" }}>
             Parabéns! Você concluiu o curso. Clique no certificado para baixar.
           </p>
-          <CertificationCard userName={userName} onClick={handleCertificateClick} />
+          {!certificateUnlocked && (
+            <p style={{ margin: "0 0 1.5rem 0", color: "#b06000", lineHeight: 1.5 }}>
+              {"Seu certificado ser\u00e1 liberado no 8\u00ba dia ap\u00f3s a compra, quando o reembolso autom\u00e1tico deixar de estar dispon\u00edvel."}
+            </p>
+          )}
+          <CertificationCard
+            userName={userName}
+            onClick={certificateUnlocked ? handleCertificateClick : undefined}
+            locked={!certificateUnlocked}
+            helperText={
+              !certificateUnlocked
+                ? "O certificado fica dispon\u00edvel apenas no 8\u00ba dia ap\u00f3s a compra."
+                : ""
+            }
+          />
         </>
       ) : (
         <p style={{ margin: 0, color: "#5f6368" }}>

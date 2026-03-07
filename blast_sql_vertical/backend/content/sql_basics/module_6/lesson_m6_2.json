@@ -26,14 +26,14 @@
       "id": "tab_nullif_seguro",
       "title": "NULLIF e divisão segura",
       "type": "content",
-      "content_markdown": "#### NULLIF: transforma um valor específico em NULL\n\n`NULLIF(x, y)` retorna `NULL` quando `x = y`; caso contrario retorna `x`.\n\nUso clássico: evitar divisão por zero.\n\n```sql\nSELECT\n  SUM(valor) / NULLIF(SUM(quantidade), 0) AS media_segura\nFROM tabela;\n```\n\nSe o denominador for 0, `NULLIF(..., 0)` vira `NULL` ? a divisão não quebra.\n\n---\n\n#### Combinando NULLIF + COALESCE\n\n```sql\nSELECT\n  COALESCE(\n    SUM(valor) / NULLIF(SUM(qtd), 0),\n    0\n  ) AS media_segura_com_padrao\nFROM tabela;\n```\n\nAqui você evita erro e ainda define valor padrão.\n\n---\n\n#### Padrões recomendados\n\n1. Use `NULLIF(denominador, 0)` em qualquer divisão agregada\n2. Use `COALESCE(..., 0)` quando o relatório exige número\n3. Documente quando 0 e realmente adequado como fallback\n\n[PLACEHOLDER_IMAGEM: Diagrama de divisão segura com NULLIF no denominador e COALESCE no resultado final para evitar erro e padronizar saida.]"
+      "content_markdown": "#### NULLIF: transforma um valor específico em NULL\n\n`NULLIF(x, y)` retorna `NULL` quando `x = y`; caso contrário retorna `x`.\n\nUso clássico: evitar divisão por zero.\n\n```sql\nSELECT\n  SUM(valor) / NULLIF(SUM(quantidade), 0) AS media_segura\nFROM tabela;\n```\n\nSe o denominador for 0, `NULLIF(..., 0)` vira `NULL` e a divisão não quebra.\n\n---\n\n#### Combinando NULLIF + COALESCE\n\n```sql\nSELECT\n  COALESCE(\n    SUM(valor) / NULLIF(SUM(qtd), 0),\n    0\n  ) AS media_segura_com_padrao\nFROM tabela;\n```\n\nAqui você evita erro e ainda define valor padrão.\n\n---\n\n#### Padrões recomendados\n\n1. Use `NULLIF(denominador, 0)` em qualquer divisão agregada\n2. Use `COALESCE(..., 0)` quando o relatório exige número\n3. Documente quando 0 e realmente adequado como fallback\n\n[PLACEHOLDER_IMAGEM: Diagrama de divisão segura com NULLIF no denominador e COALESCE no resultado final para evitar erro e padronizar saida.]"
     },
     {
       "id": "tab_practice_1",
       "title": "Desafio 1 - Fallback de contato",
       "type": "challenge",
       "exercise_index": 0,
-      "intro_markdown": "CRM precisa de um campo único de contato para disparo de comunicacoes.\n\n> **Sua missão:** Use COALESCE para preencher `contato_preferencial` com phone, depois email, depois `sem_contato`."
+      "intro_markdown": "CRM precisa de um campo único de contato para disparo de comunicações.\n\n> **Sua missão:** Use COALESCE para preencher `contato_preferencial` com phone, depois email, depois `sem_contato`."
     },
     {
       "id": "tab_practice_2",
@@ -53,7 +53,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `COALESCE` retorna o primeiro valor não nulo da lista.\n- `NULLIF` converte um valor específico em `NULL`.\n- `NULLIF(..., 0)` evita divisão por zero em relatórios.\n- `COALESCE(..., 0)` padroniza saidas numericas quando necessário.\n- Esses padrões tornam dashboards mais robustos e confiaveis.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `COALESCE` | Retorna o primeiro argumento não nulo |\n| `NULLIF` | Retorna NULL quando dois valores são iguais |\n| Divisao segura | Uso de NULLIF para evitar erro de divisão por zero |\n| Fallback | Valor alternativo em caso de ausência de dado |\n\n> **Próxima aula:** verificacoes de qualidade de dados com SQL."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `COALESCE` retorna o primeiro valor não nulo da lista.\n- `NULLIF` converte um valor específico em `NULL`.\n- `NULLIF(..., 0)` evita divisão por zero em relatórios.\n- `COALESCE(..., 0)` padroniza saídas numéricas quando necessário.\n- Esses padrões tornam dashboards mais robustos e confiaveis.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `COALESCE` | Retorna o primeiro argumento não nulo |\n| `NULLIF` | Retorna NULL quando dois valores são iguais |\n| Divisão segura | Uso de NULLIF para evitar erro de divisão por zero |\n| Fallback | Valor alternativo em caso de ausência de dado |\n\n> **Próxima aula:** verificações de qualidade de dados com SQL."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
@@ -115,7 +115,7 @@
       "prompt_markdown": "Retorne em uma linha o ticket médio de pedidos entregues com divisão segura.\n\n**Requisitos:**\n- Tabela: `pedidos`\n- Colunas: `receita_entregue`, `qtd_entregues`, `ticket_medio_seguro`\n- `receita_entregue`: `ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2)`\n- `qtd_entregues`: `COUNT(CASE WHEN status_code = 'entregue' THEN 1 END)`\n- `ticket_medio_seguro`: receita_entregue / `NULLIF(qtd_entregues, 0)` arredondado com 2 casas\n- Retornar 1 linha",
       "starter_query": "",
       "solution_query": "SELECT ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, COUNT(CASE WHEN status_code = 'entregue' THEN 1 END) AS qtd_entregues, ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END) / NULLIF(COUNT(CASE WHEN status_code = 'entregue' THEN 1 END), 0), 2) AS ticket_medio_seguro FROM pedidos;",
-      "hint_level_1": "Monte primeiro a receita ? a quantidade entregues; depois use NULLIF no denominador da divisão.",
+      "hint_level_1": "Monte primeiro a receita e a quantidade entregues; depois use NULLIF no denominador da divisão.",
       "hint_level_2": "SELECT ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END), 2) AS receita_entregue, COUNT(CASE WHEN status_code = 'entregue' THEN 1 END) AS qtd_entregues, ROUND(SUM(CASE WHEN status_code = 'entregue' THEN order_total ELSE 0 END) / NULLIF(COUNT(CASE WHEN status_code = 'entregue' THEN 1 END), 0), 2) AS ticket_medio_seguro FROM pedidos;",
       "validation_type": "result_match",
       "validation": {

@@ -86,7 +86,7 @@
     {
       "id": "ex2_acumulado_por_cliente",
       "title": "Desafio 2 — Total acumulado por cliente",
-      "prompt_markdown": "Calcule a receita mensal por cliente ? o total acumulado **dentro de cada cliente**.\n\n**Sua missão:** Retorne `customer_id`, `mes_pedido`, `receita_mensal` e `total_acumulado_cliente`. Agrupe por customer_id e mês. Use `SUM(...) OVER (PARTITION BY customer_id ORDER BY mes_pedido)`.",
+      "prompt_markdown": "Calcule a receita mensal por cliente e o total acumulado **dentro de cada cliente**.\n\n**Sua missão:** Retorne `customer_id`, `mes_pedido`, `receita_mensal` e `total_acumulado_cliente`. Agrupe por customer_id e mês. Use `SUM(...) OVER (PARTITION BY customer_id ORDER BY mes_pedido)`.",
       "starter_query": "",
       "solution_query": "WITH receita_cliente_mes AS (SELECT customer_id, DATE_TRUNC('month', created_at)::DATE AS mes_pedido, SUM(order_total) AS receita_mensal FROM pedidos WHERE status_code = 'entregue' GROUP BY 1, 2) SELECT customer_id, mes_pedido, receita_mensal, SUM(receita_mensal) OVER (PARTITION BY customer_id ORDER BY mes_pedido) AS total_acumulado_cliente FROM receita_cliente_mes ORDER BY customer_id, mes_pedido;",
       "hint_level_1": "CTE: agrupe por customer_id e mes. Depois SUM OVER (PARTITION BY customer_id ORDER BY mes_pedido).",

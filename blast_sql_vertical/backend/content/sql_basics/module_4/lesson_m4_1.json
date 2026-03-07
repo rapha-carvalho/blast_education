@@ -2,7 +2,7 @@
   "id": "lesson_m4_1",
   "title": "INNER JOIN: Apenas Registros Correspondentes",
   "lesson_type": "interactive_sql",
-  "objective": "Conectar pedidos e clientes com INNER JOIN para montar visoes unificadas e evitar erros de leitura por falta de correspondência.",
+  "objective": "Conectar pedidos e clientes com INNER JOIN para montar visões unificadas e evitar erros de leitura por falta de correspondência.",
   "prerequisites": [
     "lesson_m3_4"
   ],
@@ -20,7 +20,7 @@
       "id": "tab_inner_join_basico",
       "title": "Como o INNER JOIN funciona",
       "type": "content",
-      "content_markdown": "#### Por que JOIN e obrigatório em análise real\n\nEm dados de negócio, as informações quase nunca ficam em uma única tabela.\n\n- `pedidos` guarda transações (valor, status, data)\n- `clientes` guarda perfil (nome, canal de aquisição, país)\n\nPara responder perguntas como \"quem comprou\" e \"quanto comprou\", você precisa juntar tabelas.\n\n```sql\nSELECT p.order_id, c.first_name, c.last_name, p.order_total\nFROM pedidos p\nINNER JOIN clientes c\n  ON p.customer_id = c.customer_id;\n```\n\n---\n\n#### Regra do INNER JOIN\n\n`INNER JOIN` retorna **apenas linhas com correspondência nos dois lados**.\n\n| Tabela A | Tabela B | Resultado no INNER JOIN |\n|---|---|---|\n| Tem chave correspondente | Tem chave correspondente | entra no resultado |\n| Tem chave correspondente | Não tem correspondente | fica de fora |\n| Não tem correspondente | Tem chave correspondente | fica de fora |\n\n[PLACEHOLDER_IMAGEM: Diagrama visual de INNER JOIN entre pedidos e clientes, destacando que apenas interseção de chaves customer_id entra no resultado.]"
+      "content_markdown": "#### Por que JOIN é obrigatório em análise real\n\nEm dados de negócio, as informações quase nunca ficam em uma única tabela.\n\n- `pedidos` guarda transações (valor, status, data)\n- `clientes` guarda perfil (nome, canal de aquisição, país)\n\nPara responder perguntas como \"quem comprou\" e \"quanto comprou\", você precisa juntar tabelas.\n\n```sql\nSELECT p.order_id, c.first_name, c.last_name, p.order_total\nFROM pedidos p\nINNER JOIN clientes c\n  ON p.customer_id = c.customer_id;\n```\n\n---\n\n#### Regra do INNER JOIN\n\n`INNER JOIN` retorna **apenas linhas com correspondência nos dois lados**.\n\n| Tabela A | Tabela B | Resultado no INNER JOIN |\n|---|---|---|\n| Tem chave correspondente | Tem chave correspondente | entra no resultado |\n| Tem chave correspondente | Não tem correspondente | fica de fora |\n| Não tem correspondente | Tem chave correspondente | fica de fora |\n\n[PLACEHOLDER_IMAGEM: Diagrama visual de INNER JOIN entre pedidos e clientes, destacando que apenas interseção de chaves customer_id entra no resultado.]"
     },
     {
       "id": "tab_inner_join_alias",
@@ -47,7 +47,7 @@
       "title": "Desafio 3 - Clientes recorrentes",
       "type": "challenge",
       "exercise_index": 2,
-      "intro_markdown": "Growth quer identificar clientes com recorrência para campanha de fidelizacao.\n\n> **Sua missão:** Use INNER JOIN e agregação para listar clientes com pelo menos 2 pedidos."
+      "intro_markdown": "Growth quer identificar clientes com recorrência para campanha de fidelização.\n\n> **Sua missão:** Use INNER JOIN e agregação para listar clientes com pelo menos 2 pedidos."
     },
     {
       "id": "tab_recap",

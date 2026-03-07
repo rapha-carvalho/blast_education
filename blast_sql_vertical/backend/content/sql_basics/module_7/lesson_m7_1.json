@@ -2,7 +2,7 @@
   "id": "lesson_m7_1",
   "title": "Subqueries na Prática",
   "lesson_type": "interactive_sql",
-  "objective": "Usar subqueries em WHERE, FROM e SELECT para montar filtros dinamicos e análises mais expressivas.",
+  "objective": "Usar subqueries em WHERE, FROM e SELECT para montar filtros dinâmicos e análises mais expressivas.",
   "prerequisites": [
     "lesson_m6_3"
   ],
@@ -14,14 +14,14 @@
       "clientes",
       "itens_pedido"
     ],
-    "scenario": "O time de analytics precisa comparar pedidos e clientes com medias dinamicas sem criar tabelas auxiliares permanentes."
+    "scenario": "O time de analytics precisa comparar pedidos e clientes com medias dinâmicas sem criar tabelas auxiliares permanentes."
   },
   "tabs": [
     {
       "id": "tab_subquery_where",
       "title": "Subquery no WHERE",
       "type": "content",
-      "content_markdown": "#### Filtrando com valor dinamico\n\nSubquery no `WHERE` permite filtrar usando um valor calculado em tempo real.\n\n```sql\nSELECT order_id, customer_id, order_total\nFROM pedidos\nWHERE status_code = 'entregue'\n  AND order_total > (\n    SELECT AVG(order_total)\n    FROM pedidos\n    WHERE status_code = 'entregue'\n  );\n```\n\nNesse caso, o filtro usa a média dos pedidos entregues como referência.\n\n---\n\n#### Quando esse padrão e util\n\n| Cenário | Ganho |\n|---|---|\n| Filtro acima/abaixo da média | Sem hardcode de limite |\n| Comparação com benchmark interno | Consulta autoajustável |\n| Regra que muda com os dados | Menos manutenção manual |\n\n---\n\n#### Ponto de atenção\n\n> Subquery em WHERE deve retornar valor compatível com a comparação (`=`, `>`, `IN`, etc.).\n\n[PLACEHOLDER_IMAGEM: Fluxo visual da subquery no WHERE calculando média de pedidos entregues e aplicando filtro no conjunto principal.]"
+      "content_markdown": "#### Filtrando com valor dinâmico\n\nSubquery no `WHERE` permite filtrar usando um valor calculado em tempo real.\n\n```sql\nSELECT order_id, customer_id, order_total\nFROM pedidos\nWHERE status_code = 'entregue'\n  AND order_total > (\n    SELECT AVG(order_total)\n    FROM pedidos\n    WHERE status_code = 'entregue'\n  );\n```\n\nNesse caso, o filtro usa a média dos pedidos entregues como referência.\n\n---\n\n#### Quando esse padrão e util\n\n| Cenário | Ganho |\n|---|---|\n| Filtro acima/abaixo da média | Sem hardcode de limite |\n| Comparação com benchmark interno | Consulta autoajustável |\n| Regra que muda com os dados | Menos manutenção manual |\n\n---\n\n#### Ponto de atenção\n\n> Subquery em WHERE deve retornar valor compatível com a comparação (`=`, `>`, `IN`, etc.).\n\n[PLACEHOLDER_IMAGEM: Fluxo visual da subquery no WHERE calculando média de pedidos entregues e aplicando filtro no conjunto principal.]"
     },
     {
       "id": "tab_subquery_from_select",
@@ -54,7 +54,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Subquery no `WHERE` cria filtros baseados em calculos dinamicos.\n- Subquery no `FROM` organiza resultados intermediarios como tabela virtual.\n- Subquery correlacionada usa contexto da linha atual.\n- Comparações com média interna reduzem hardcode de limites.\n- Subqueries bem estruturadas aumentam poder analitico sem perder clareza.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Subquery escalar | Retorna um único valor |\n| Subquery no FROM | Tabela virtual derivada de outra consulta |\n| Subquery correlacionada | Depende da linha da consulta externa |\n| Filtro dinamico | Regra baseada em calculo no momento da execução |\n\n> **Próxima aula:** CTEs para organizar consultas em etapas nomeadas."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Subquery no `WHERE` cria filtros baseados em calculos dinâmicos.\n- Subquery no `FROM` organiza resultados intermediários como tabela virtual.\n- Subquery correlacionada usa contexto da linha atual.\n- Comparações com média interna reduzem hardcode de limites.\n- Subqueries bem estruturadas aumentam poder analítico sem perder clareza.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Subquery escalar | Retorna um único valor |\n| Subquery no FROM | Tabela virtual derivada de outra consulta |\n| Subquery correlacionada | Depende da linha da consulta externa |\n| Filtro dinâmico | Regra baseada em cálculo no momento da execução |\n\n> **Próxima aula:** CTEs para organizar consultas em etapas nomeadas."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
@@ -72,7 +72,7 @@
         "order_matters": true
       },
       "success_criteria": {
-        "objective": "Filtrar pedidos com benchmark dinamico de média entregue",
+        "objective": "Filtrar pedidos com benchmark dinâmico de média entregue",
         "expected_columns": [
           "order_id",
           "customer_id",
@@ -90,7 +90,7 @@
       "prompt_markdown": "Use subquery no FROM para consolidar receita entregue por cliente e filtre os que estão acima da média.\n\n**Requisitos:**\n- Subquery no FROM com `customer_id` e `receita_entregue` (`SUM(order_total)`) para pedidos entregues\n- Join com `clientes` por `customer_id`\n- Filtrar `receita_entregue` maior que média da receita por cliente entregue\n- Colunas finais: `customer_id`, `first_name`, `receita_entregue`\n- Aplicar `ROUND(receita_entregue, 2)`\n- Ordenar por `receita_entregue` DESC, depois `customer_id` ASC",
       "starter_query": "",
       "solution_query": "SELECT c.customer_id, c.first_name, ROUND(r.receita_entregue, 2) AS receita_entregue FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) r JOIN clientes c ON r.customer_id = c.customer_id WHERE r.receita_entregue > (SELECT AVG(m.receita_entregue) FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) m) ORDER BY receita_entregue DESC, c.customer_id ASC;",
-      "hint_level_1": "Crie uma tabela virtual no FROM com receita por cliente e compare com a média dessa propria tabela virtual.",
+      "hint_level_1": "Crie uma tabela virtual no FROM com receita por cliente e compare com a média dessa própria tabela virtual.",
       "hint_level_2": "SELECT c.customer_id, c.first_name, ROUND(r.receita_entregue, 2) AS receita_entregue FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) r JOIN clientes c ON r.customer_id = c.customer_id WHERE r.receita_entregue > (SELECT AVG(m.receita_entregue) FROM (SELECT customer_id, SUM(order_total) AS receita_entregue FROM pedidos WHERE status_code = 'entregue' GROUP BY customer_id) m) ORDER BY receita_entregue DESC, c.customer_id ASC;",
       "validation_type": "result_match",
       "validation": {

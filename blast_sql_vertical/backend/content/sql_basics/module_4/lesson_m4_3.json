@@ -2,7 +2,7 @@
   "id": "lesson_m4_3",
   "title": "Depuração de Join: Quando a Contagem de Linhas Esta Errada",
   "lesson_type": "interactive_sql",
-  "objective": "Diagnosticar e corrigir erros de fan-out em joins um-para-muitos para evitar distorcao de métricas.",
+  "objective": "Diagnosticar e corrigir erros de fan-out em joins um-para-muitos para evitar distorção de métricas.",
   "prerequisites": [
     "lesson_m4_2"
   ],
@@ -21,7 +21,7 @@
       "id": "tab_join_fanout",
       "title": "O problema de fan-out",
       "type": "content",
-      "content_markdown": "#### Quando o join multiplica linhas sem você perceber\n\nEm joins **um-para-muitos**, uma linha da tabela principal pode aparecer varias vezes após a união.\n\nExemplo real:\n\n- `pedidos` tem 1 linha por pedido\n- `itens_pedido` tem varias linhas por pedido (uma por item)\n\n```sql\nSELECT p.order_id, p.order_total, ip.item_id\nFROM pedidos p\nJOIN itens_pedido ip\n  ON p.order_id = ip.order_id;\n```\n\nSe você somar `p.order_total` nesse resultado, o valor pode ser inflado, porque pedidos com mais de um item serão repetidos.\n\n---\n\n#### Sinal de alerta\n\nSempre compare contagem antes e depois do join:\n\n| Etapa | O que medir |\n|---|---|\n| Antes do join | `COUNT(*)` da tabela base |\n| Depois do join | `COUNT(*)` da tabela unida |\n\nSe aumentar inesperadamente, você pode estar com fan-out.\n\n[PLACEHOLDER_IMAGEM: Fluxo visual mostrando tabela pedidos (1 linha por pedido) sendo expandida após join com itens_pedido (varias linhas por pedido), destacando risco de duplicação de receita.]"
+      "content_markdown": "#### Quando o join multiplica linhas sem você perceber\n\nEm joins **um-para-muitos**, uma linha da tabela principal pode aparecer várias vezes após a união.\n\nExemplo real:\n\n- `pedidos` tem 1 linha por pedido\n- `itens_pedido` tem várias linhas por pedido (uma por item)\n\n```sql\nSELECT p.order_id, p.order_total, ip.item_id\nFROM pedidos p\nJOIN itens_pedido ip\n  ON p.order_id = ip.order_id;\n```\n\nSe você somar `p.order_total` nesse resultado, o valor pode ser inflado, porque pedidos com mais de um item serão repetidos.\n\n---\n\n#### Sinal de alerta\n\nSempre compare contagem antes e depois do join:\n\n| Etapa | O que medir |\n|---|---|\n| Antes do join | `COUNT(*)` da tabela base |\n| Depois do join | `COUNT(*)` da tabela unida |\n\nSe aumentar inesperadamente, você pode estar com fan-out.\n\n[PLACEHOLDER_IMAGEM: Fluxo visual mostrando tabela pedidos (1 linha por pedido) sendo expandida após join com itens_pedido (varias linhas por pedido), destacando risco de duplicação de receita.]"
     },
     {
       "id": "tab_join_debug_playbook",
@@ -31,10 +31,10 @@
     },
     {
       "id": "tab_practice_1",
-      "title": "Desafio 1 - Detectar explosao de linhas",
+      "title": "Desafio 1 - Detectar explosão de linhas",
       "type": "challenge",
       "exercise_index": 0,
-      "intro_markdown": "Você precisa provar tecnicamente que houve fan-out após o join entre pedidos e itens.\n\n> **Sua missão:** Retorne em uma única linha a contagem da base ? a contagem após o join."
+      "intro_markdown": "Você precisa provar tecnicamente que houve fan-out após o join entre pedidos e itens.\n\n> **Sua missão:** Retorne em uma única linha a contagem da base e a contagem após o join."
     },
     {
       "id": "tab_practice_2",
@@ -54,7 +54,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Join um-para-muitos pode multiplicar linhas (fan-out).\n- Fan-out distorce agregações quando a métrica vem da tabela base.\n- Comparar `COUNT(*)` antes e depois do join ? o primeiro diagnóstico.\n- Chaves com `COUNT(*) > 1` ajudam a localizar a origem da duplicação.\n- A correção depende da granularidade certa antes de agregar.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Fan-out | Multiplicacao de linhas após join um-para-muitos |\n| Granularidade | Nivel de detalhe de uma tabela (pedido, item, cliente) |\n| Tabela base | Tabela principal que deveria guiar a contagem |\n| Duplicação de métrica | Soma inflada por repetir a mesma linha base |\n\n> **Próxima etapa:** consolidar joins com práticas de qualidade para análises avançadas."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- Join um-para-muitos pode multiplicar linhas (fan-out).\n- Fan-out distorce agregações quando a métrica vem da tabela base.\n- Comparar `COUNT(*)` antes e depois do join e o primeiro diagnóstico.\n- Chaves com `COUNT(*) > 1` ajudam a localizar a origem da duplicação.\n- A correção depende da granularidade certa antes de agregar.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| Fan-out | Multiplicação de linhas após join um-para-muitos |\n| Granularidade | Nível de detalhe de uma tabela (pedido, item, cliente) |\n| Tabela base | Tabela principal que deveria guiar a contagem |\n| Duplicação de métrica | Soma inflada por repetir a mesma linha base |\n\n> **Próxima etapa:** consolidar joins com práticas de qualidade para análises avançadas."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
@@ -62,7 +62,7 @@
     {
       "id": "ex_m4_3_base_vs_join_count",
       "title": "Desafio 1 - Base vs join: contagem de linhas",
-      "prompt_markdown": "Retorne em uma única linha o total de linhas da tabela `pedidos` ? o total de linhas após join com `itens_pedido`.\n\n**Requisitos:**\n- Colunas: `linhas_base_pedidos`, `linhas_apos_join`\n- Usar subqueries ou CTE\n- Join por `p.order_id = ip.order_id`",
+      "prompt_markdown": "Retorne em uma única linha o total de linhas da tabela `pedidos` e o total de linhas após join com `itens_pedido`.\n\n**Requisitos:**\n- Colunas: `linhas_base_pedidos`, `linhas_apos_join`\n- Usar subqueries ou CTE\n- Join por `p.order_id = ip.order_id`",
       "starter_query": "",
       "solution_query": "SELECT (SELECT COUNT(*) FROM pedidos) AS linhas_base_pedidos, (SELECT COUNT(*) FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id) AS linhas_apos_join;",
       "hint_level_1": "Compare COUNT(*) da tabela base com COUNT(*) após o join. Retorne tudo em uma linha.",
@@ -72,7 +72,7 @@
         "order_matters": false
       },
       "success_criteria": {
-        "objective": "Demonstrar matematicamente a explosao de linhas após join",
+        "objective": "Demonstrar matematicamente a explosão de linhas após join",
         "expected_columns": [
           "linhas_base_pedidos",
           "linhas_apos_join"
@@ -89,7 +89,7 @@
       "prompt_markdown": "Liste os pedidos que aparecem mais de uma vez após join com `itens_pedido`.\n\n**Requisitos:**\n- Colunas: `order_id`, `linhas_apos_join`, `order_total`\n- Join: `pedidos` x `itens_pedido`\n- Agrupar por pedido\n- Filtrar com `HAVING COUNT(*) > 1`\n- Ordenar por `linhas_apos_join DESC`, depois `order_id ASC`",
       "starter_query": "",
       "solution_query": "SELECT p.order_id, COUNT(*) AS linhas_apos_join, p.order_total FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id GROUP BY p.order_id, p.order_total HAVING COUNT(*) > 1 ORDER BY linhas_apos_join DESC, p.order_id ASC;",
-      "hint_level_1": "Use GROUP BY por pedido e HAVING COUNT(*) > 1 para encontrar repeticoes.",
+      "hint_level_1": "Use GROUP BY por pedido e HAVING COUNT(*) > 1 para encontrar repetições.",
       "hint_level_2": "SELECT p.order_id, COUNT(*) AS linhas_apos_join, p.order_total FROM pedidos p JOIN itens_pedido ip ON p.order_id = ip.order_id GROUP BY p.order_id, p.order_total HAVING COUNT(*) > 1 ORDER BY linhas_apos_join DESC, p.order_id ASC;",
       "validation_type": "result_match",
       "validation": {

@@ -28,7 +28,7 @@
       "id": "tab_conceito2",
       "title": "Encadeando vários CTEs",
       "type": "content",
-      "content_markdown": "#### Vários CTEs na mesma query\n\nVocê pode encadear CTEs separados por vírgula. Cada um pode referenciar os anteriores:\n\n```sql\nWITH\n  etapa_1 AS (SELECT ... FROM tabela),\n  etapa_2 AS (SELECT ... FROM etapa_1)\nSELECT * FROM etapa_2;\n```\n\nO segundo CTE usa o resultado do primeiro. A ordem de definição importa: um CTE só pode referenciar CTEs declarados antes dele.\n\n---\n\n#### Quando usar CTE vs subquery\n\n- **CTE**: quando a lógica tem várias etapas, ou quando você quer reutilizar o mesmo bloco mais de uma vez.\n- **Subquery simples**: quando é uma única etapa ? a subquery é curta (ex: `WHERE x IN (SELECT ...)`).\n\n[PLACEHOLDER_IMAGEM: Fluxo de dois CTEs encadeados — etapa_1 alimenta etapa_2.]"
+      "content_markdown": "#### Vários CTEs na mesma query\n\nVocê pode encadear CTEs separados por vírgula. Cada um pode referenciar os anteriores:\n\n```sql\nWITH\n  etapa_1 AS (SELECT ... FROM tabela),\n  etapa_2 AS (SELECT ... FROM etapa_1)\nSELECT * FROM etapa_2;\n```\n\nO segundo CTE usa o resultado do primeiro. A ordem de definição importa: um CTE só pode referenciar CTEs declarados antes dele.\n\n---\n\n#### Quando usar CTE vs subquery\n\n- **CTE**: quando a lógica tem várias etapas, ou quando você quer reutilizar o mesmo bloco mais de uma vez.\n- **Subquery simples**: quando é uma única etapa e a subquery é curta (ex: `WHERE x IN (SELECT ...)`).\n\n[PLACEHOLDER_IMAGEM: Fluxo de dois CTEs encadeados — etapa_1 alimenta etapa_2.]"
     },
     {
       "id": "tab_practice_1",
@@ -55,7 +55,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **WITH nome AS (query)** — define um CTE que pode ser usado como tabela no SELECT principal.\n- **CTEs encadeados** — separe por vírgula; cada CTE pode referenciar os anteriores.\n- **CTE vs subquery** — use CTE para lógica multi-etapas; subquery para filtros simples.\n- **Leitura de cima para baixo** — CTEs tornam a query uma história sequencial.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|-------|-------------|\n| **CTE** | Common Table Expression; bloco WITH nome AS (query) |\n| **WITH** | Palavra-chave que introduce um ou mais CTEs |\n| **Encadear** | Um CTE referenciar outro CTE definido antes |\n| **Subquery** | Query aninhada dentro de outra (SELECT, FROM, WHERE) |\n\n---\n\n> **Próxima aula:** Ranqueando com ROW_NUMBER, RANK, DENSE_RANK (módulo 8)."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- **WITH nome AS (query)** — define um CTE que pode ser usado como tabela no SELECT principal.\n- **CTEs encadeados** — separe por vírgula; cada CTE pode referenciar os anteriores.\n- **CTE vs subquery** — use CTE para lógica multi-etapas; subquery para filtros simples.\n- **Leitura de cima para baixo** — CTEs tornam a query uma história sequencial.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Significado |\n|-------|-------------|\n| **CTE** | Common Table Expression; bloco WITH nome AS (query) |\n| **WITH** | Palavra-chave que introduz um ou mais CTEs |\n| **Encadear** | Um CTE referenciar outro CTE definido antes |\n| **Subquery** | Query aninhada dentro de outra (SELECT, FROM, WHERE) |\n\n---\n\n> **Próxima aula:** Ranqueando com ROW_NUMBER, RANK, DENSE_RANK (módulo 8)."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",

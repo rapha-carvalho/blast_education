@@ -1,19 +1,27 @@
 import { motion } from "framer-motion";
+import { Lock } from "lucide-react";
 
 /**
- * CertificationCard — certification display when user has completed the course
- * and meets eligibility (purchase + days since purchase).
- * Clickable to open full certificate view.
+ * CertificationCard displays the completion certificate preview.
+ * It becomes non-interactive while access is temporarily locked.
  */
-export default function CertificationCard({ userName, onClick }) {
+export default function CertificationCard({ userName, onClick, locked = false, helperText = "" }) {
   const displayName = userName?.trim() || "Participante";
+  const isInteractive = Boolean(onClick) && !locked;
 
   return (
     <motion.div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick?.()}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      aria-disabled={locked ? true : undefined}
+      onClick={isInteractive ? onClick : undefined}
+      onKeyDown={(e) => {
+        if (!isInteractive) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
@@ -26,12 +34,37 @@ export default function CertificationCard({ userName, onClick }) {
         padding: "3rem 2rem",
         overflow: "hidden",
         boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
-        cursor: onClick ? "pointer" : "default",
+        cursor: isInteractive ? "pointer" : "default",
         transition: "box-shadow 0.2s ease, transform 0.2s ease",
+        opacity: locked ? 0.85 : 1,
       }}
-      whileHover={onClick ? { boxShadow: "0 12px 40px rgba(0,0,0,0.1)", scale: 1.01 } : {}}
+      whileHover={isInteractive ? { boxShadow: "0 12px 40px rgba(0,0,0,0.1)", scale: 1.01 } : {}}
     >
-      {/* Watermark: Blast icon, centered and low-opacity */}
+      {locked && (
+        <div
+          style={{
+            position: "absolute",
+            top: "1rem",
+            right: "1rem",
+            zIndex: 2,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "0.35rem 0.75rem",
+            borderRadius: "999px",
+            background: "#fff8e1",
+            border: "1px solid rgba(245,158,11,0.2)",
+            color: "#b06000",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+          }}
+        >
+          <Lock size={12} />
+          {"Libera no 8\u00ba dia"}
+        </div>
+      )}
+
       <div
         style={{
           position: "absolute",
@@ -55,7 +88,6 @@ export default function CertificationCard({ userName, onClick }) {
         />
       </div>
 
-      {/* Content */}
       <div
         style={{
           position: "relative",
@@ -76,7 +108,7 @@ export default function CertificationCard({ userName, onClick }) {
             color: "#1a73e8",
           }}
         >
-          Certificado de conclusão
+          {"Certificado de conclus\u00e3o"}
         </span>
         <h3
           style={{
@@ -98,8 +130,21 @@ export default function CertificationCard({ userName, onClick }) {
             fontWeight: 400,
           }}
         >
-          SQL do básico ao avançado
+          {"SQL do b\u00e1sico ao avan\u00e7ado"}
         </p>
+        {locked && helperText ? (
+          <p
+            style={{
+              margin: 0,
+              maxWidth: "520px",
+              fontSize: "0.9rem",
+              color: "#b06000",
+              lineHeight: 1.5,
+            }}
+          >
+            {helperText}
+          </p>
+        ) : null}
       </div>
     </motion.div>
   );

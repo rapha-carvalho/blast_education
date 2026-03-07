@@ -18,15 +18,15 @@
   "tabs": [
     {
       "id": "tab_like_basico",
-      "title": "LIKE ? o Wildcard %",
+      "title": "LIKE e o Wildcard %",
       "type": "content",
-      "content_markdown": "#### Buscando por padrão de texto\n\nQueremos encontrar clientes cujo e-mail termina com `@gmail.com`, ou cujo nome começa com `Al`. Comparar com `=` não funciona aqui — precisamos de **correspondência de padrão**.\n\nA cláusula `LIKE` faz exatamente isso:\n\n```sql\nSELECT id, name, email\nFROM filtering.customers\nWHERE email LIKE '%@gmail.com';\n```\n\n---\n\n#### O wildcard `%` — qualquer sequência de caracteres\n\n| Padrão | Significado | Exemplo de match |\n|---|---|---|\n| `'A%'` | começa com A | `Alice`, `Alberto` |\n| `'%gmail.com'` | termina com gmail.com | `ana@gmail.com` |\n| `'%maria%'` | contem maria em qualquer posicao | `xmariax@y.com` |\n\n**Regra:** `%` substitui **zero ou mais** caracteres em qualquer posicao.\n\n---\n\n#### Exemplos práticos\n\n```sql\n-- Clientes com nome começando com 'Al'\nSELECT id, name, country\nFROM filtering.customers\nWHERE name LIKE 'Al%'\nORDER BY name ASC;\n\n-- Clientes com email do Gmail\nSELECT id, name, email\nFROM filtering.customers\nWHERE email LIKE '%@gmail.com'\nORDER BY id ASC;\n```\n\n> LIKE e **sensível a maiúsculas** em alguns bancos. Em produção, use `ILIKE` (PostgreSQL) ou `LOWER()` para garantir consistência.\n\n[PLACEHOLDER_IMAGEM: Diagrama mostrando como o wildcard % combina padrões em colunas de texto, com exemplos de clientes e emails destacados conforme cada padrão LIKE.]"
+      "content_markdown": "#### Buscando por padrão de texto\n\nQueremos encontrar clientes cujo e-mail termina com `@gmail.com`, ou cujo nome começa com `Al`. Comparar com `=` não funciona aqui — precisamos de **correspondência de padrão**.\n\nA cláusula `LIKE` faz exatamente isso:\n\n```sql\nSELECT id, name, email\nFROM filtering.customers\nWHERE email LIKE '%@gmail.com';\n```\n\n---\n\n#### O wildcard `%` — qualquer sequência de caracteres\n\n| Padrão | Significado | Exemplo de match |\n|---|---|---|\n| `'A%'` | começa com A | `Alice`, `Alberto` |\n| `'%gmail.com'` | termina com gmail.com | `ana@gmail.com` |\n| `'%maria%'` | contém maria em qualquer posição | `xmariax@y.com` |\n\n**Regra:** `%` substitui **zero ou mais** caracteres em qualquer posição.\n\n---\n\n#### Exemplos práticos\n\n```sql\n-- Clientes com nome começando com 'Al'\nSELECT id, name, country\nFROM filtering.customers\nWHERE name LIKE 'Al%'\nORDER BY name ASC;\n\n-- Clientes com email do Gmail\nSELECT id, name, email\nFROM filtering.customers\nWHERE email LIKE '%@gmail.com'\nORDER BY id ASC;\n```\n\n> LIKE e **sensível a maiúsculas** em alguns bancos. Em produção, use `ILIKE` (PostgreSQL) ou `LOWER()` para garantir consistência.\n\n[PLACEHOLDER_IMAGEM: Diagrama mostrando como o wildcard % combina padrões em colunas de texto, com exemplos de clientes e emails destacados conforme cada padrão LIKE.]"
     },
     {
       "id": "tab_like_avancado",
       "title": "Wildcard _ e NOT LIKE",
       "type": "content",
-      "content_markdown": "#### O wildcard `_` — exatamente um caractere\n\nEnquanto `%` substitui qualquer quantidade de caracteres, `_` substitui **exatamente um** caractere.\n\n| Padrão | Significado | Match | Sem match |\n|---|---|---|---|\n| `'Jo_o'` | 4 chars, J-o-?-o | `Joao`, `Jobo` | `Joaao` |\n| `'_@%'` | 1 char antes do @ | `a@b.com` | `ab@c.com` |\n| `'___'` | exatamente 3 chars | `Ana`, `Bob` | `Al`, `Jose` |\n\n```sql\n-- Clientes com nome de exatamente 4 letras\nSELECT id, name\nFROM filtering.customers\nWHERE name LIKE '____'\nORDER BY name ASC;\n```\n\n---\n\n#### NOT LIKE — excluindo padrões\n\nUse `NOT LIKE` para **remover** linhas que correspondem a um padrão:\n\n```sql\n-- Todos os clientes EXCETO os com email Google\nSELECT id, name, email\nFROM filtering.customers\nWHERE email NOT LIKE '%@gmail.com'\n  AND email IS NOT NULL\nORDER BY id ASC;\n```\n\n---\n\n#### Combinando LIKE com AND\n\nVocê pode combinar LIKE com qualquer outro filtro:\n\n```sql\n-- Clientes dos EUA com nome começando com 'J'\nSELECT id, name, country, email\nFROM filtering.customers\nWHERE country = 'USA'\n  AND name LIKE 'J%'\nORDER BY name ASC;\n```\n\n[PLACEHOLDER_IMAGEM: Dois paineis comparando o underscore _ com correspondência de um único caractere, e NOT LIKE excluindo padrões, com exemplos de linhas de uma tabela de clientes.]"
+      "content_markdown": "#### O wildcard `_` — exatamente um caractere\n\nEnquanto `%` substitui qualquer quantidade de caracteres, `_` substitui **exatamente um** caractere.\n\n| Padrão | Significado | Match | Sem match |\n|---|---|---|---|\n| `'Jo_o'` | 4 chars, J-o-_-o | `Joao`, `Jobo` | `Joaao` |\n| `'_@%'` | 1 char antes do @ | `a@b.com` | `ab@c.com` |\n| `'___'` | exatamente 3 chars | `Ana`, `Bob` | `Al`, `Jose` |\n\n```sql\n-- Clientes com nome de exatamente 4 letras\nSELECT id, name\nFROM filtering.customers\nWHERE name LIKE '____'\nORDER BY name ASC;\n```\n\n---\n\n#### NOT LIKE — excluindo padrões\n\nUse `NOT LIKE` para **remover** linhas que correspondem a um padrão:\n\n```sql\n-- Todos os clientes EXCETO os com email Google\nSELECT id, name, email\nFROM filtering.customers\nWHERE email NOT LIKE '%@gmail.com'\n  AND email IS NOT NULL\nORDER BY id ASC;\n```\n\n---\n\n#### Combinando LIKE com AND\n\nVocê pode combinar LIKE com qualquer outro filtro:\n\n```sql\n-- Clientes dos EUA com nome começando com 'J'\nSELECT id, name, country, email\nFROM filtering.customers\nWHERE country = 'USA'\n  AND name LIKE 'J%'\nORDER BY name ASC;\n```\n\n[PLACEHOLDER_IMAGEM: Dois painéis comparando o underscore _ com correspondência de um único caractere, e NOT LIKE excluindo padrões, com exemplos de linhas de uma tabela de clientes.]"
     },
     {
       "id": "tab_practice_1",
@@ -53,7 +53,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `LIKE '%texto%'` filtra linhas onde o valor de texto contem o padrão em qualquer posicao.\n- `'prefixo%'` busca valores que **comecam** com o padrão; `'%sufixo'` busca os que **terminam**.\n- `_` substitui **exatamente um** caractere — util para validar comprimento ou formato parcial.\n- `NOT LIKE` exclui linhas que combinam com o padrão.\n- LIKE pode ser combinado com AND e OR como qualquer outro filtro.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Definição |\n|---|---|\n| `LIKE` | Operador para correspondência de padrão em texto |\n| `%` | Wildcard que substitui zero ou mais caracteres |\n| `_` | Wildcard que substitui exatamente um caractere |\n| `NOT LIKE` | Exclui linhas que correspondem ao padrão |\n| `ILIKE` | Versao case-insensitive disponível em alguns bancos |\n\n> **Próxima aula:** IS NULL e IS NOT NULL — como tratar valores ausentes de forma robusta.\""
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `LIKE '%texto%'` filtra linhas onde o valor de texto contém o padrão em qualquer posição.\n- `'prefixo%'` busca valores que **começam** com o padrão; `'%sufixo'` busca os que **terminam**.\n- `_` substitui **exatamente um** caractere — útil para validar comprimento ou formato parcial.\n- `NOT LIKE` exclui linhas que combinam com o padrão.\n- LIKE pode ser combinado com AND e OR como qualquer outro filtro.\n\n---\n\n#### Glossário desta aula\n\n| Termo | Definição |\n|---|---|\n| `LIKE` | Operador para correspondência de padrão em texto |\n| `%` | Wildcard que substitui zero ou mais caracteres |\n| `_` | Wildcard que substitui exatamente um caractere |\n| `NOT LIKE` | Exclui linhas que correspondem ao padrão |\n| `ILIKE` | Versão case-insensitive disponível em alguns bancos |\n\n> **Próxima aula:** IS NULL e IS NOT NULL — como tratar valores ausentes de forma robusta."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
@@ -103,7 +103,7 @@
           "country"
         ],
         "notes": [
-          "Deve usar LIKE 'M%' — M maiusculo conforme dados da tabela",
+          "Deve usar LIKE 'M%' — M maiúsculo conforme dados da tabela",
           "Ordenação por name ASC"
         ]
       }
@@ -111,7 +111,7 @@
     {
       "id": "ex_m2_4_excluir_yahoo",
       "title": "Desafio 3 - Excluir emails Yahoo",
-      "prompt_markdown": "Retorne clientes com email que não contem yahoo.\n\n**Requisitos:**\n- Colunas: `id`, `name`, `email`\n- Tabela: `filtering.customers`\n- Filtros: `email NOT LIKE '%yahoo%'` AND `email IS NOT NULL`\n- Ordenar por `id` ASC",
+      "prompt_markdown": "Retorne clientes com email que não contém yahoo.\n\n**Requisitos:**\n- Colunas: `id`, `name`, `email`\n- Tabela: `filtering.customers`\n- Filtros: `email NOT LIKE '%yahoo%'` AND `email IS NOT NULL`\n- Ordenar por `id` ASC",
       "starter_query": "",
       "solution_query": "SELECT id, name, email FROM filtering.customers WHERE email NOT LIKE '%yahoo%' AND email IS NOT NULL ORDER BY id ASC;",
       "hint_level_1": "Use NOT LIKE com % em volta de yahoo para excluir qualquer email que contenha essa palavra. Também filtre emails nulos com IS NOT NULL.",
@@ -121,14 +121,14 @@
         "order_matters": true
       },
       "success_criteria": {
-        "objective": "Retornar clientes com email valido e que não usam Yahoo",
+        "objective": "Retornar clientes com email válido e que não usam Yahoo",
         "expected_columns": [
           "id",
           "name",
           "email"
         ],
         "notes": [
-          "Deve usar NOT LIKE '%yahoo%' para exclusao de padrão",
+          "Deve usar NOT LIKE '%yahoo%' para exclusão de padrão",
           "Deve excluir emails nulos com IS NOT NULL",
           "Ordenação por id ASC"
         ]

@@ -20,7 +20,7 @@
       "id": "tab_left_join_basico",
       "title": "Como o LEFT JOIN funciona",
       "type": "content",
-      "content_markdown": "#### Diferenca central para INNER JOIN\n\n`LEFT JOIN` sempre preserva **todas as linhas da tabela da esquerda**.\n\n- Se houver correspondência na tabela da direita, os campos da direita são preenchidos\n- Se não houver correspondência, os campos da direita ficam `NULL`\n\n```sql\nSELECT c.customer_id, c.first_name, p.order_id, p.order_total\nFROM clientes c\nLEFT JOIN pedidos p\n  ON c.customer_id = p.customer_id;\n```\n\n---\n\n#### Leitura de negócio\n\n| Tipo de join | O que acontece com linhas sem match na direita |\n|---|---|\n| `INNER JOIN` | some do resultado |\n| `LEFT JOIN` | permanece com `NULL` na direita |\n\nIsso e essencial para relatórios de base, cobertura e funil.\n\n[PLACEHOLDER_IMAGEM: Diagrama comparando INNER JOIN e LEFT JOIN com foco na preservacao da tabela clientes (lado esquerdo), destacando linhas sem match preenchidas com NULL no resultado.]"
+      "content_markdown": "#### Diferença central para INNER JOIN\n\n`LEFT JOIN` sempre preserva **todas as linhas da tabela da esquerda**.\n\n- Se houver correspondência na tabela da direita, os campos da direita são preenchidos\n- Se não houver correspondência, os campos da direita ficam `NULL`\n\n```sql\nSELECT c.customer_id, c.first_name, p.order_id, p.order_total\nFROM clientes c\nLEFT JOIN pedidos p\n  ON c.customer_id = p.customer_id;\n```\n\n---\n\n#### Leitura de negócio\n\n| Tipo de join | O que acontece com linhas sem match na direita |\n|---|---|\n| `INNER JOIN` | some do resultado |\n| `LEFT JOIN` | permanece com `NULL` na direita |\n\nIsso e essencial para relatórios de base, cobertura e funil.\n\n[PLACEHOLDER_IMAGEM: Diagrama comparando INNER JOIN e LEFT JOIN com foco na preservacao da tabela clientes (lado esquerdo), destacando linhas sem match preenchidas com NULL no resultado.]"
     },
     {
       "id": "tab_left_join_filtros",
@@ -53,7 +53,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `LEFT JOIN` preserva todas as linhas da tabela da esquerda.\n- Sem correspondência na direita, os campos da direita ficam `NULL`.\n- Filtros da tabela da direita no `WHERE` podem quebrar a lógica do LEFT JOIN.\n- Para preservar a base, coloque filtros da direita na cláusula `ON`.\n- `LEFT JOIN` + `IS NULL` ? um padrão para achar ausência de correspondência.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `LEFT JOIN` | Join que preserva todas as linhas da tabela da esquerda |\n| `NULL de join` | Campo da tabela da direita sem correspondência |\n| Filtro no `ON` | Mantem linhas da esquerda sem match |\n| Anti-join | Padrão para encontrar registros sem correspondência |\n\n> **Próxima aula:** Depuração de joins quando a contagem de linhas fica incorreta."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `LEFT JOIN` preserva todas as linhas da tabela da esquerda.\n- Sem correspondência na direita, os campos da direita ficam `NULL`.\n- Filtros da tabela da direita no `WHERE` podem quebrar a lógica do LEFT JOIN.\n- Para preservar a base, coloque filtros da direita na cláusula `ON`.\n- `LEFT JOIN` + `IS NULL` é um padrão para achar ausência de correspondência.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `LEFT JOIN` | Join que preserva todas as linhas da tabela da esquerda |\n| `NULL de join` | Campo da tabela da direita sem correspondência |\n| Filtro no `ON` | Mantem linhas da esquerda sem match |\n| Anti-join | Padrão para encontrar registros sem correspondência |\n\n> **Próxima aula:** Depuração de joins quando a contagem de linhas fica incorreta."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",
@@ -117,7 +117,7 @@
       "prompt_markdown": "Retorne clientes que não possuem nenhum pedido entregue.\n\n**Requisitos:**\n- Tabelas: `clientes` e `pedidos`\n- Join: `LEFT JOIN` por `customer_id` com filtro `p.status_code = 'entregue'` no `ON`\n- Filtro final: `p.order_id IS NULL`\n- Colunas: `customer_id`, `first_name`, `last_name`\n- Ordenar por `customer_id` ASC",
       "starter_query": "",
       "solution_query": "SELECT c.customer_id, c.first_name, c.last_name FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' WHERE p.order_id IS NULL ORDER BY c.customer_id ASC;",
-      "hint_level_1": "Esse ? o padrão anti-join: LEFT JOIN + WHERE p.order_id IS NULL.",
+      "hint_level_1": "Esse é o padrão anti-join: LEFT JOIN + WHERE p.order_id IS NULL.",
       "hint_level_2": "SELECT c.customer_id, c.first_name, c.last_name FROM clientes c LEFT JOIN pedidos p ON c.customer_id = p.customer_id AND p.status_code = 'entregue' WHERE p.order_id IS NULL ORDER BY c.customer_id ASC;",
       "validation_type": "result_match",
       "validation": {

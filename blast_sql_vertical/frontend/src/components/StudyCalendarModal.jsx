@@ -708,6 +708,7 @@ export default function StudyCalendarModal({ open, onClose, courseData, lessonCo
           role="dialog"
           aria-modal="true"
           aria-labelledby={dialogTitleId}
+          className="study-calendar-shell"
           style={{
             position: "fixed",
             inset: 0,
@@ -715,6 +716,8 @@ export default function StudyCalendarModal({ open, onClose, courseData, lessonCo
             display: "flex",
             flexDirection: "column",
             background: uiTokens.colors.canvas,
+            overflow: "hidden",
+            minHeight: 0,
           }}
         >
           <style>{`
@@ -738,6 +741,18 @@ export default function StudyCalendarModal({ open, onClose, courseData, lessonCo
               }
             }
             @media (max-width: 640px) {
+              .study-calendar-shell {
+                min-height: 0;
+              }
+              .study-calendar-scroll {
+                min-height: 0 !important;
+                -webkit-overflow-scrolling: touch;
+                overscroll-behavior: contain;
+                padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)) !important;
+              }
+              .study-calendar-footer {
+                padding-bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px)) !important;
+              }
               .study-calendar-session-row {
                 flex-wrap: wrap;
               }
@@ -946,7 +961,16 @@ export default function StudyCalendarModal({ open, onClose, courseData, lessonCo
             </div>
           )}
 
-          <div style={{ flex: 1, overflowY: "auto", padding: "1rem 1.5rem 1.25rem" }}>
+          <div
+            className="study-calendar-scroll"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: "auto",
+              WebkitOverflowScrolling: "touch",
+              padding: "1rem 1.5rem 1.25rem",
+            }}
+          >
             {sessions.length === 0 ? (
               <div
                 style={{
@@ -1140,6 +1164,7 @@ export default function StudyCalendarModal({ open, onClose, courseData, lessonCo
           )}
 
           <div
+            className="study-calendar-footer"
             style={{
               position: "sticky",
               bottom: 0,

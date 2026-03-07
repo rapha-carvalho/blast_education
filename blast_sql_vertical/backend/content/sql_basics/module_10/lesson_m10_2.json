@@ -20,20 +20,20 @@
       "id": "tab_legibilidade_padrao",
       "title": "Padrão de legibilidade em SQL",
       "type": "content",
-      "content_markdown": "#### SQL legível reduz erro e acelera manutenção\n\nEm times reais, uma query rara vez e usada só por quem escreveu. Por isso, clareza importa tanto quanto resultado correto.\n\nPadrao recomendado:\n\n1. Quebras de linha por bloco lógico (`SELECT`, `FROM`, `WHERE`, `GROUP BY`, `ORDER BY`)\n2. Alias claros de tabela (`p` para pedidos, `c` para clientes)\n3. Nomes de colunas de saida orientados a negócio\n4. Ordenação explícita e determinística\n\n```sql\nSELECT\n  p.order_id,\n  p.customer_id,\n  c.first_name || ' ' || c.last_name AS nome_cliente,\n  p.order_total AS valor_pedido\nFROM pedidos p\nJOIN clientes c ON p.customer_id = c.customer_id\nWHERE p.status_code = 'entregue'\nORDER BY p.created_at ASC, p.order_id ASC;\n```\n\n[PLACEHOLDER_IMAGEM: Comparativo entre query compactada e query formatada com blocos claros, mostrando ganho de leitura e manutenção.]"
+      "content_markdown": "#### SQL legível reduz erro e acelera manutenção\n\nEm times reais, uma query rara vez e usada só por quem escreveu. Por isso, clareza importa tanto quanto resultado correto.\n\nPadrao recomendado:\n\n1. Quebras de linha por bloco lógico (`SELECT`, `FROM`, `WHERE`, `GROUP BY`, `ORDER BY`)\n2. Alias claros de tabela (`p` para pedidos, `c` para clientes)\n3. Nomes de colunas de saída orientados a negócio\n4. Ordenação explícita e determinística\n\n```sql\nSELECT\n  p.order_id,\n  p.customer_id,\n  c.first_name || ' ' || c.last_name AS nome_cliente,\n  p.order_total AS valor_pedido\nFROM pedidos p\nJOIN clientes c ON p.customer_id = c.customer_id\nWHERE p.status_code = 'entregue'\nORDER BY p.created_at ASC, p.order_id ASC;\n```\n\n[PLACEHOLDER_IMAGEM: Comparativo entre query compactada e query formatada com blocos claros, mostrando ganho de leitura e manutenção.]"
     },
     {
       "id": "tab_ctes_sustentavel",
       "title": "CTEs com nomes semânticos",
       "type": "content",
-      "content_markdown": "#### Uma ideia por CTE\n\nCTEs ajudam a dividir raciocínio complexo em etapas nomeadas.\n\n```sql\nWITH pedidos_entregues AS (\n  SELECT order_id, customer_id, created_at, order_total\n  FROM pedidos\n  WHERE status_code = 'entregue'\n),\nresumo_cliente AS (\n  SELECT customer_id, COUNT(*) AS qtd_pedidos, SUM(order_total) AS receita_total\n  FROM pedidos_entregues\n  GROUP BY customer_id\n)\nSELECT *\nFROM resumo_cliente;\n```\n\n---\n\n#### Boas práticas de manutenção\n\n| Prática | Evite |\n|---|---|\n| CTE com nome de negócio (`resumo_cliente`) | `temp1`, `q2`, `cte_final2` |\n| Alias explícito em colunas finais | nomes ambíguos |\n| Comentario curto em regra não óbvia | comentario redundante |\n\n---\n\n#### Checklist de revisão\n\n- O nome da CTE explica o papel dela?\n- As colunas finais estão prontas para dashboard?\n- Existe alguma regra de negócio oculta sem explicação?\n\n[PLACEHOLDER_IMAGEM: Diagrama de query modular com duas CTEs (base e resumo), setas de fluxo e nomes semânticos destacando legibilidade.]"
+      "content_markdown": "#### Uma ideia por CTE\n\nCTEs ajudam a dividir raciocínio complexo em etapas nomeadas.\n\n```sql\nWITH pedidos_entregues AS (\n  SELECT order_id, customer_id, created_at, order_total\n  FROM pedidos\n  WHERE status_code = 'entregue'\n),\nresumo_cliente AS (\n  SELECT customer_id, COUNT(*) AS qtd_pedidos, SUM(order_total) AS receita_total\n  FROM pedidos_entregues\n  GROUP BY customer_id\n)\nSELECT *\nFROM resumo_cliente;\n```\n\n---\n\n#### Boas práticas de manutenção\n\n| Prática | Evite |\n|---|---|\n| CTE com nome de negócio (`resumo_cliente`) | `temp1`, `q2`, `cte_final2` |\n| Alias explícito em colunas finais | nomes ambíguos |\n| Comentário curto em regra não óbvia | comentário redundante |\n\n---\n\n#### Checklist de revisão\n\n- O nome da CTE explica o papel dela?\n- As colunas finais estão prontas para dashboard?\n- Existe alguma regra de negócio oculta sem explicação?\n\n[PLACEHOLDER_IMAGEM: Diagrama de query modular com duas CTEs (base e resumo), setas de fluxo e nomes semânticos destacando legibilidade.]"
     },
     {
       "id": "tab_practice_1",
       "title": "Desafio 1 - Consulta legível de pedidos",
       "type": "challenge",
       "exercise_index": 0,
-      "intro_markdown": "Você vai criar uma consulta clara para uso em auditoria operacional.\n\n> **Sua missão:** Retorne pedidos entregues com nome completo do cliente e colunas de saida amigaveis."
+      "intro_markdown": "Você vai criar uma consulta clara para uso em auditoria operacional.\n\n> **Sua missão:** Retorne pedidos entregues com nome completo do cliente e colunas de saída amigaveis."
     },
     {
       "id": "tab_practice_2",
@@ -60,7 +60,7 @@
   "exercises": [
     {
       "id": "ex_m10_2_consulta_legivel",
-      "title": "Desafio 1 - Pedidos entregues com saida amigavel",
+      "title": "Desafio 1 - Pedidos entregues com saída amigavel",
       "prompt_markdown": "Retorne pedidos entregues com dados do cliente em formato legível.\n\n**Requisitos:**\n- Tabelas: `pedidos` e `clientes`\n- Join por `customer_id`\n- Colunas finais: `order_id`, `customer_id`, `nome_cliente`, `data_pedido`, `valor_pedido`\n- Filtro: `status_code = 'entregue'`\n- Ordenar por `data_pedido` ASC, depois `order_id` ASC",
       "starter_query": "",
       "solution_query": "SELECT p.order_id, p.customer_id, c.first_name || ' ' || c.last_name AS nome_cliente, p.created_at AS data_pedido, p.order_total AS valor_pedido FROM pedidos p JOIN clientes c ON p.customer_id = c.customer_id WHERE p.status_code = 'entregue' ORDER BY p.created_at ASC, p.order_id ASC;",
@@ -71,7 +71,7 @@
         "order_matters": true
       },
       "success_criteria": {
-        "objective": "Entregar consulta clara com colunas de saida prontas para consumo",
+        "objective": "Entregar consulta clara com colunas de saída prontas para consumo",
         "expected_columns": [
           "order_id",
           "customer_id",
@@ -81,7 +81,7 @@
         ],
         "notes": [
           "Deve retornar pedidos entregues ordenados por data",
-          "Deve manter aliases de saida solicitados"
+          "Deve manter aliases de saída solicitados"
         ]
       }
     },

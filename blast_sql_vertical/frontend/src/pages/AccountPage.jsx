@@ -25,6 +25,12 @@ function formatDate(ts) {
   });
 }
 
+function getElapsedDaysSinceTimestamp(ts) {
+  if (!ts) return null;
+  const elapsedSeconds = Math.max(0, Date.now() / 1000 - ts);
+  return Math.floor(elapsedSeconds / 86400);
+}
+
 export default function AccountPage() {
   const [account, setAccount] = useState({
     loading: true,
@@ -151,6 +157,15 @@ export default function AccountPage() {
   const refundWindowDays = data?.refund_window_days ?? 14;
   const statusLabel = fixPtBrText(access?.status_label ?? "Sem acesso");
   const statusVal = access?.status ?? "expired";
+  const purchaseElapsedDays = getElapsedDaysSinceTimestamp(access?.purchase_at);
+  // 8th day since purchase == 7 full days elapsed.
+  const showExpiredRefundSupport = Boolean(
+    statusVal === "active" &&
+    access?.purchase_at &&
+    !eligibleForRefund &&
+    purchaseElapsedDays != null &&
+    purchaseElapsedDays >= 7
+  );
 
   const statusBadgeStyle =
     statusVal === "active"
@@ -287,11 +302,11 @@ export default function AccountPage() {
                     <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem", color: uiTokens.colors.textSecondary, lineHeight: 1.5 }}>
                       Para solicitar o reembolso, clique em <strong>Cancelar compra (reembolso)</strong> abaixo. Seu acesso será revogado imediatamente e o valor será devolvido conforme a forma de pagamento original, em até 7 dias úteis.
                     </p>
-                  ) : statusVal === "active" && access?.purchase_at ? (
+                  ) : showExpiredRefundSupport ? (
                     <p style={{ margin: "0.5rem 0 0 0", fontSize: "0.9rem", color: uiTokens.colors.textSecondary, lineHeight: 1.5 }}>
                       O prazo para reembolso automático online foi encerrado. Entre em contato com o suporte em{" "}
-                      <a href="https://blastgroup.org" target="_blank" rel="noopener noreferrer" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>
-                        blastgroup.org
+                      <a href="mailto:contato@blastgroup.org" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>
+                        contato@blastgroup.org
                       </a>{" "}
                       para verificar possibilidades.
                     </p>
@@ -339,11 +354,9 @@ export default function AccountPage() {
                     Cancelar compra (reembolso)
                   </button>
                 )}
-                {statusVal === "active" && !eligibleForRefund && access?.purchase_at && (
+                {showExpiredRefundSupport && (
                   <a
-                    href="https://blastgroup.org"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="mailto:contato@blastgroup.org"
                     style={{
                       fontSize: "0.9rem",
                       color: uiTokens.colors.accent,
@@ -734,7 +747,7 @@ export default function AccountPage() {
                   <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "0.95rem", fontWeight: 600, color: uiTokens.colors.text }}>3. Como Solicitar</h3>
                   <p style={{ margin: 0 }}>
                     Quando elegível, utilize o botão &quot;Cancelar compra (reembolso)&quot; nesta página. Caso o prazo tenha encerrado, entre em contato com o suporte em{" "}
-                    <a href="https://blastgroup.org" target="_blank" rel="noopener noreferrer" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>blastgroup.org</a>
+                    <a href="mailto:contato@blastgroup.org" style={{ color: uiTokens.colors.accent, fontWeight: 500 }}>contato@blastgroup.org</a>
                     . A solicitação deve conter: nome completo, número do pedido (se houver), data da compra e motivo.
                   </p>
                 </section>

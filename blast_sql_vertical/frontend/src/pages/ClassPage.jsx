@@ -3,6 +3,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
+  getAccountInfo,
   getCourses,
   getCourseProgress,
   getLesson,
@@ -29,6 +30,7 @@ import SqlEditor from "../components/SqlEditor";
 import ResultTable from "../components/ResultTable";
 import ChartResult from "../components/ChartResult";
 import SchemaPanel from "../components/SchemaPanel";
+import SchemaQuickAccess from "../components/SchemaQuickAccess";
 import SqlErrorCard from "../components/SqlErrorCard";
 import ExerciseActions from "../components/ExerciseActions";
 import { fixPtBrText } from "../utils/ptBrText";
@@ -47,6 +49,8 @@ import { useIsMobile } from "../hooks/useIsMobile";
 
 const MASTER_CHALLENGE_ID = "lesson_master_challenge_1";
 const CAPSTONE_FORCE_UNLOCK = true;
+const REFUND_LOCKED_MODULE_IDS = new Set(["module-8", "module-9", "module-10", "module-11"]);
+const REFUND_LOCKED_MODULE_UNLOCK_AFTER_DAYS = 7;
 
 function useSessionId() {
   const [sid] = useState(() => {
@@ -76,6 +80,18 @@ function findCourseIdForLesson(coursesData, lessonId) {
       for (const lesson of module.lessons || []) {
         const id = typeof lesson === "string" ? lesson : lesson.id;
         if (id === lessonId) return course.id;
+      }
+    }
+  }
+  return null;
+}
+
+function findModuleForLesson(coursesData, lessonId) {
+  for (const course of coursesData?.courses || []) {
+    for (const module of course.modules || []) {
+      for (const lesson of module.lessons || []) {
+        const id = typeof lesson === "string" ? lesson : lesson.id;
+        if (id === lessonId) return module;
       }
     }
   }
@@ -156,6 +172,7 @@ export default function ClassPage() {
 
   const [lesson, setLesson] = useState(null);
   const [coursesData, setCoursesData] = useState(null);
+  const [accountInfo, setAccountInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [currentChallenge, setCurrentChallenge] = useState(0);
@@ -167,6 +184,7 @@ export default function ClassPage() {
   const [lastQueryByChallenge, setLastQueryByChallenge] = useState({});
   const [resultSnapshotByChallenge, setResultSnapshotByChallenge] = useState({});
   const [schemaOpen, setSchemaOpen] = useState(false);
+  const [schemaPreviewExpanded, setSchemaPreviewExpanded] = useState(false);
   const [pendingNextChallenge, setPendingNextChallenge] = useState(null);
 
   const [writtenAnswersByTab, setWrittenAnswersByTab] = useState({});
@@ -212,6 +230,26 @@ export default function ClassPage() {
   const lessonCompleted = isConceptOnlyLesson ? manualLessonCompleted : allCompletedInteractive;
 
   const lessonId = lesson?.id ?? (coursesData && courseSlug && lessonSlug ? resolveLessonSlugToKey(coursesData, courseSlug, lessonSlug) : null);
+  const access = accountInfo?.access;
+  const purchaseAt = access?.purchase_at;
+  const hasActiveAccess = access?.status === "active";
+  const daysSincePurchase = purchaseAt
+    ? Math.floor((Date.now() / 1000 - purchaseAt) / 86400)
+    : 0;
+  const refundLockedModulesUnlocked =
+    accountInfo == null ||
+    (hasActiveAccess && (purchaseAt == null || daysSincePurchase >= REFUND_LOCKED_MODULE_UNLOCK_AFTER_DAYS));
+  const lessonModule = lessonId ? findModuleForLesson(coursesData, lessonId) : null;
+  const refundLockedModule = lessonModule ? REFUND_LOCKED_MODULE_IDS.has(lessonModule.id) : false;
+  const refundModuleLock = {
+    locked: refundLockedModule && !refundLockedModulesUnlocked,
+    moduleTitle: fixPtBrText(lessonModule?.title ?? "M\u00f3dulo"),
+  };
+
+  useEffect(() => {
+    const schemaCount = Array.isArray(lesson?.schema_reference) ? lesson.schema_reference.length : 0;
+    setSchemaPreviewExpanded(!isMobile && schemaCount > 0 && schemaCount <= 3);
+  }, [isMobile, lesson?.schema_reference, lessonId]);
 
   const queueProgressSync = useCallback(
     (payload) => {
@@ -292,15 +330,18 @@ export default function ClassPage() {
         const resolvedKey = resolveLessonSlugToKey(courses, courseSlug, lessonSlug);
         if (!resolvedKey) {
           setLesson(null);
+          setAccountInfo(null);
           setLoading(false);
           return;
         }
         return Promise.all([
           getLesson(resolvedKey),
           user?.id ? getLessonProgress(resolvedKey).catch(() => null) : Promise.resolve(null),
-        ]).then(([l, remote]) => {
+          user?.id ? getAccountInfo().catch(() => null) : Promise.resolve(null),
+        ]).then(([l, remote, account]) => {
           if (cancelled) return;
           setLesson(l);
+          setAccountInfo(account);
           const localProgress = readLessonProgressLocal(user?.id, resolvedKey);
         const remoteProgress = remote?.found
           ? {
@@ -373,7 +414,10 @@ export default function ClassPage() {
         });
       })
       .catch(() => {
-        if (!cancelled) setLesson(null);
+        if (!cancelled) {
+          setLesson(null);
+          setAccountInfo(null);
+        }
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -524,6 +568,7 @@ export default function ClassPage() {
   };
 
   const handleHint = async () => {
+    if (!hintUnlockedByChallenge[currentChallenge]) return;
     const level = Math.min((hintLevelShown[currentChallenge] ?? 0) + 1, 2);
     setHintLevelShown((prev) => ({ ...prev, [currentChallenge]: level }));
     const fallbackHint =
@@ -539,6 +584,7 @@ export default function ClassPage() {
   };
 
   const handleSolution = async () => {
+    if ((failuresByChallenge[currentChallenge] ?? 0) < 2) return;
     try {
       const r = await getSolution(lessonId, currentChallenge);
       const val = r.solution || "";
@@ -592,6 +638,22 @@ export default function ClassPage() {
     return <div style={{ padding: "3rem" }}>Aula não encontrada.</div>;
   }
 
+  if (refundModuleLock.locked) {
+    const backTo = courseSlug ? `/cursos/${courseSlug}` : "/cursos/sql-basico-avancado";
+    return (
+      <div style={{ maxWidth: "980px", margin: "0 auto", padding: "1rem 2rem 3rem" }}>
+        <BackButton courseSlug={courseSlug} />
+        <div style={{ background: "#fff", border: "1px solid rgba(245,158,11,0.2)", borderRadius: 16, padding: "1.5rem" }}>
+          <h2 style={{ marginTop: 0, display: "flex", alignItems: "center", gap: 8, color: "#8a5a00" }}>
+            <Lock size={18} /> {refundModuleLock.moduleTitle} bloqueado
+          </h2>
+          <p>Este módulo será liberado no 8º dia após a compra, quando o reembolso automático deixar de estar disponível.</p>
+          <Link to={backTo}>Voltar para o curso</Link>
+        </div>
+      </div>
+    );
+  }
+
   if (masterLock.locked) {
     const backTo = courseSlug ? `/cursos/${courseSlug}` : "/cursos/sql-basico-avancado";
     return (
@@ -611,6 +673,8 @@ export default function ClassPage() {
 
   const showSql = (!hasTabs && challenges.length > 0) || activeTab?.type === "challenge";
   const currentExercise = challenges[currentChallenge];
+  const schemaReference = Array.isArray(lesson?.schema_reference) ? lesson.schema_reference : [];
+  const hasSchemaReference = schemaReference.length > 0;
   const activeTabIndex = hasTabs ? lesson.tabs.findIndex((t) => t.id === activeTabId) : -1;
   const tabFolder = activeTabIndex >= 0 ? `tab_${activeTabIndex + 1}` : "tab_1";
   const interpretationReferenceIndices =
@@ -620,6 +684,8 @@ export default function ClassPage() {
   const pendingInterpretationReferenceIndices = interpretationReferenceIndices.filter((idx) => !completedChallenges[idx]);
   const interpretationBlocked = activeTab?.type === "interpretation" && pendingInterpretationReferenceIndices.length > 0;
   const hasInterpretationTemplate = activeTab?.type === "interpretation" && typeof activeTab.answer_template === "string" && activeTab.answer_template.trim().length > 0;
+  const hintLocked = !hintUnlockedByChallenge[currentChallenge];
+  const solutionLocked = (failuresByChallenge[currentChallenge] ?? 0) < 2;
 
   return (
     <div style={{ maxWidth: "1360px", margin: "0 auto", padding: "0 2rem 3rem" }}>
@@ -659,9 +725,9 @@ export default function ClassPage() {
       )}
 
       {/* SchemaPanel is a portal modal — sits outside grid so it works in both layouts */}
-      {schemaOpen && lesson?.schema_reference && (
+      {schemaOpen && hasSchemaReference && (
         <SchemaPanel
-          schemaReference={lesson.schema_reference}
+          schemaReference={schemaReference}
           onClose={() => setSchemaOpen(false)}
         />
       )}
@@ -766,10 +832,10 @@ export default function ClassPage() {
               justifyContent: "space-between",
             }}>
               <span>Editor SQL</span>
-              {lesson?.schema_reference && (
+              {hasSchemaReference && (
                 <button
                   onClick={() => setSchemaOpen(true)}
-                  title="Referência de schema"
+                  title="Abrir schema completo"
                   style={{
                     display: "flex", alignItems: "center", gap: 5,
                     fontSize: 12, fontWeight: 500, color: "#4b5563",
@@ -778,10 +844,19 @@ export default function ClassPage() {
                     minHeight: 36,
                   }}
                 >
-                  <Database size={13} /> Schema
+                  <Database size={13} /> Schema completo
                 </button>
               )}
             </div>
+            {hasSchemaReference && (
+              <SchemaQuickAccess
+                schemaReference={schemaReference}
+                expanded={schemaPreviewExpanded}
+                onToggleExpanded={() => setSchemaPreviewExpanded((prev) => !prev)}
+                onOpenModal={() => setSchemaOpen(true)}
+                compact
+              />
+            )}
             <div style={{ height: 240 }}>
               <SqlEditor
                 value={query}
@@ -801,41 +876,44 @@ export default function ClassPage() {
             borderBottom: "1px solid rgba(0,0,0,0.06)",
             display: "flex",
             gap: 8,
+            flexWrap: "wrap",
           }}>
             <button
-              onClick={hintUnlockedByChallenge[currentChallenge] ? handleHint : undefined}
-              disabled={!hintUnlockedByChallenge[currentChallenge]}
+              type="button"
+              onClick={hintLocked ? undefined : handleHint}
+              disabled={hintLocked}
               title={!hintUnlockedByChallenge[currentChallenge] ? "Desbloqueie após a primeira execução com erro." : undefined}
               style={{
                 padding: "0.5rem 0.9rem",
                 borderRadius: 8,
                 border: "none",
                 background: "#f1f3f4",
-                color: !hintUnlockedByChallenge[currentChallenge] ? "#9aa0a6" : "#5f6368",
+                color: hintLocked ? "#9aa0a6" : "#5f6368",
                 fontWeight: 600,
                 fontSize: "0.85rem",
-                cursor: !hintUnlockedByChallenge[currentChallenge] ? "not-allowed" : "pointer",
+                cursor: hintLocked ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
                 minHeight: 44,
               }}
             >
-              {!hintUnlockedByChallenge[currentChallenge] ? <Lock size={13} /> : <LockOpen size={13} />} Dica
+              {hintLocked ? <Lock size={13} /> : <LockOpen size={13} />} Dica
             </button>
             <button
-              onClick={(failuresByChallenge[currentChallenge] ?? 0) >= 2 ? handleSolution : undefined}
-              disabled={(failuresByChallenge[currentChallenge] ?? 0) < 2}
+              type="button"
+              onClick={solutionLocked ? undefined : handleSolution}
+              disabled={solutionLocked}
               title={(failuresByChallenge[currentChallenge] ?? 0) < 2 ? "Desbloqueie após 2 tentativas incorretas." : undefined}
               style={{
                 padding: "0.5rem 0.9rem",
                 borderRadius: 8,
                 border: "none",
                 background: "#f1f3f4",
-                color: (failuresByChallenge[currentChallenge] ?? 0) < 2 ? "#9aa0a6" : "#5f6368",
+                color: solutionLocked ? "#9aa0a6" : "#5f6368",
                 fontWeight: 600,
                 fontSize: "0.85rem",
-                cursor: (failuresByChallenge[currentChallenge] ?? 0) < 2 ? "not-allowed" : "pointer",
+                cursor: solutionLocked ? "not-allowed" : "pointer",
                 display: "flex",
                 alignItems: "center",
                 gap: 5,
@@ -1327,10 +1405,10 @@ export default function ClassPage() {
             <div style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 16, overflow: "hidden" }}>
               <div style={{ padding: "0.8rem 1rem", borderBottom: "1px solid rgba(0,0,0,0.08)", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <span>Editor SQL</span>
-                {lesson?.schema_reference && (
+                {hasSchemaReference && (
                   <button
                     onClick={() => setSchemaOpen(true)}
-                    title="Referência de schema"
+                    title="Abrir schema completo"
                     style={{
                       display: "flex", alignItems: "center", gap: 5,
                       fontSize: 12, fontWeight: 500, color: "#4b5563",
@@ -1339,10 +1417,18 @@ export default function ClassPage() {
                     }}
                   >
                     <Database size={13} />
-                    Schema
+                    Schema completo
                   </button>
                 )}
               </div>
+              {hasSchemaReference && (
+                <SchemaQuickAccess
+                  schemaReference={schemaReference}
+                  expanded={schemaPreviewExpanded}
+                  onToggleExpanded={() => setSchemaPreviewExpanded((prev) => !prev)}
+                  onOpenModal={() => setSchemaOpen(true)}
+                />
+              )}
               <div style={{ height: 350 }}>
                 <SqlEditor
                   value={query}
@@ -1363,8 +1449,8 @@ export default function ClassPage() {
                   onContinue={handleContinue}
                   canContinue={typeof pendingNextChallenge === "number"}
                   showHintButton={true}
-                  hintLocked={!hintUnlockedByChallenge[currentChallenge]}
-                  solutionLocked={(failuresByChallenge[currentChallenge] ?? 0) < 2}
+                  hintLocked={hintLocked}
+                  solutionLocked={solutionLocked}
                 />
               </div>
             </div>

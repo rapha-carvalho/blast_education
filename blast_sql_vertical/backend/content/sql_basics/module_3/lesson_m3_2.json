@@ -19,7 +19,7 @@
       "id": "tab_groupby_basico",
       "title": "GROUP BY com uma coluna",
       "type": "content",
-      "content_markdown": "#### De resumo geral para resumo por categoria\n\nSem `GROUP BY`, funções como `COUNT` e `SUM` retornam um único total.\nCom `GROUP BY`, você quebra o total em grupos e gera uma linha por categoria.\n\n| Sem GROUP BY | Com GROUP BY |\n|---|---|\n| 1 linha (total geral) | varias linhas (uma por grupo) |\n| responde \"quanto no total\" | responde \"quanto por categoria\" |\n\n```sql\nSELECT status, COUNT(*) AS total_pedidos\nFROM filtering.orders\nGROUP BY status\nORDER BY total_pedidos DESC, status ASC;\n```\n\nEssa query responde: quantos pedidos existem em cada status.\n\n---\n\n#### Regra fundamental\n\n> Toda coluna no `SELECT` que **não** estiver dentro de função de agregação deve aparecer no `GROUP BY`.\n\n[PLACEHOLDER_IMAGEM: Comparativo visual entre agregação sem GROUP BY (1 linha total) e com GROUP BY por status (múltiplas linhas), destacando a mudança de granularidade.]"
+      "content_markdown": "#### De resumo geral para resumo por categoria\n\nSem `GROUP BY`, funções como `COUNT` e `SUM` retornam um único total.\nCom `GROUP BY`, você quebra o total em grupos e gera uma linha por categoria.\n\n| Sem GROUP BY | Com GROUP BY |\n|---|---|\n| 1 linha (total geral) | várias linhas (uma por grupo) |\n| responde \"quanto no total\" | responde \"quanto por categoria\" |\n\n```sql\nSELECT status, COUNT(*) AS total_pedidos\nFROM filtering.orders\nGROUP BY status\nORDER BY total_pedidos DESC, status ASC;\n```\n\nEssa query responde: quantos pedidos existem em cada status.\n\n---\n\n#### Regra fundamental\n\n> Toda coluna no `SELECT` que **não** estiver dentro de função de agregação deve aparecer no `GROUP BY`.\n\n[PLACEHOLDER_IMAGEM: Comparativo visual entre agregação sem GROUP BY (1 linha total) e com GROUP BY por status (múltiplas linhas), destacando a mudança de granularidade.]"
     },
     {
       "id": "tab_groupby_multiplas",
@@ -46,13 +46,13 @@
       "title": "Desafio 3 - Segmentação país + status",
       "type": "challenge",
       "exercise_index": 2,
-      "intro_markdown": "A diretoria quer um corte mais granular para combinar dimensão geografica e operacional.\n\n> **Sua missão:** Agrupe por país e status e retorne volume e ticket médio por grupo."
+      "intro_markdown": "A diretoria quer um corte mais granular para combinar dimensão geográfica e operacional.\n\n> **Sua missão:** Agrupe por país e status e retorne volume e ticket médio por grupo."
     },
     {
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `GROUP BY` muda a granularidade de análise para categoria.\n- Sem GROUP BY, agregações retornam total geral.\n- Com GROUP BY, cada grupo vira uma linha.\n- Você pode agrupar por uma ou varias colunas.\n- `ORDER BY` após agregação facilita leitura executiva.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `GROUP BY` | Cláusula que agrupa linhas por dimensão |\n| Granularidade | Nivel de detalhe do resultado |\n| Dimensão | Coluna usada para segmentar análise |\n| Métrica agregada | Resultado de COUNT, SUM, AVG, etc. |\n\n> **Próxima aula:** WHERE vs HAVING para filtrar antes e depois da agregação."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `GROUP BY` muda a granularidade de análise para categoria.\n- Sem GROUP BY, agregações retornam total geral.\n- Com GROUP BY, cada grupo vira uma linha.\n- Você pode agrupar por uma ou várias colunas.\n- `ORDER BY` após agregação facilita leitura executiva.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `GROUP BY` | Cláusula que agrupa linhas por dimensão |\n| Granularidade | Nível de detalhe do resultado |\n| Dimensão | Coluna usada para segmentar análise |\n| Métrica agregada | Resultado de COUNT, SUM, AVG, etc. |\n\n> **Próxima aula:** WHERE vs HAVING para filtrar antes e depois da agregação."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",

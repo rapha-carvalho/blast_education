@@ -17,9 +17,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { lessonIsComplete, readAllLessonProgressLocal } from "../utils/progressStore";
 
 const CAPSTONE_FORCE_UNLOCK = true;
+const REFUND_LOCKED_MODULE_IDS = new Set(["module-8", "module-9", "module-10", "module-11"]);
 
-/** Days after purchase before certification is available. Set to 0 to allow immediately. */
-const CERTIFICATION_DAYS_AFTER_PURCHASE = 0;
+/** Unlock certification on the 8th day since purchase (7 full days elapsed). */
+const CERTIFICATION_DAYS_AFTER_PURCHASE = 7;
+/** Unlock downloadable resources on the 8th day since purchase (7 full days elapsed). */
+const RESOURCE_UNLOCK_AFTER_DAYS = 7;
 
 const RESOURCES = [
   {
@@ -28,6 +31,7 @@ const RESOURCES = [
     description: "Refer\u00eancia r\u00e1pida com todos os comandos, fun\u00e7\u00f5es e operadores essenciais em um s\u00f3 lugar.",
     badge: "free",
     cta: "Baixar Cheatsheet",
+    requiresRefundWindowEnd: true,
   },
   {
     icon: Calendar,
@@ -35,6 +39,7 @@ const RESOURCES = [
     description: "Plano de estudos de 4 semanas com metas di\u00e1rias para concluir o curso com consist\u00eancia.",
     badge: "free",
     cta: "Ver calend\u00e1rio",
+    requiresRefundWindowEnd: false,
   },
   {
     icon: FileDown,
@@ -42,14 +47,17 @@ const RESOURCES = [
     description: "Material de apoio consolidado de todo o curso, ideal para revisar.",
     badge: "free",
     cta: "Ver Material",
+    requiresRefundWindowEnd: true,
   },
 ];
 
-function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, previewMedia }) {
+function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, previewMedia, locked = false, lockMessage = "" }) {
   const isPremium = badge === "premium";
+  const isTemporarilyLocked = locked && !isPremium;
   const safeTitle = fixPtBrText(title);
   const safeDescription = fixPtBrText(description);
   const safeCta = fixPtBrText(cta);
+  const safeLockMessage = fixPtBrText(lockMessage);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -79,11 +87,11 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
         width: "48px",
         height: "48px",
         borderRadius: "12px",
-        background: isPremium ? "#fff8e1" : "#e8f5e9",
+        background: isPremium || isTemporarilyLocked ? "#fff8e1" : "#e8f5e9",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        color: isPremium ? "#f59e0b" : "#34A853",
+        color: isPremium || isTemporarilyLocked ? "#f59e0b" : "#34A853",
         flexShrink: 0,
       }}>
         <Icon size={22} />
@@ -100,6 +108,16 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
             border: "1px solid rgba(245,158,11,0.2)",
           }}>
             <Lock size={11} /> Premium
+          </span>
+        ) : isTemporarilyLocked ? (
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: "4px",
+            fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.04em",
+            color: "#f59e0b", background: "#fff8e1",
+            padding: "3px 10px", borderRadius: "50px",
+            border: "1px solid rgba(245,158,11,0.2)",
+          }}>
+            <Lock size={11} /> Libera no 8º dia
           </span>
         ) : (
           <span style={{
@@ -121,9 +139,14 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
         <p style={{ margin: 0, color: "#5f6368", fontSize: "0.95rem", lineHeight: 1.6 }}>
           {safeDescription}
         </p>
+        {isTemporarilyLocked && (
+          <p style={{ margin: "0.9rem 0 0 0", color: "#b06000", fontSize: "0.85rem", lineHeight: 1.5 }}>
+            {safeLockMessage}
+          </p>
+        )}
 
         <AnimatePresence>
-          {previewMedia && isHovered && (
+          {previewMedia && isHovered && !isTemporarilyLocked && (
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -158,23 +181,23 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
       </div>
 
       <button
-        disabled={isPremium}
-        onClick={!isPremium ? onCtaClick : undefined}
+        disabled={isPremium || isTemporarilyLocked}
+        onClick={!isPremium && !isTemporarilyLocked ? onCtaClick : undefined}
         style={{
           alignSelf: "flex-start",
           padding: "0.5rem 1.25rem",
           borderRadius: "50px",
-          border: isPremium ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(26,115,232,0.3)",
-          background: isPremium ? "#f8f9fa" : "#e8f0fe",
-          color: isPremium ? "#9aa0a6" : "#1a73e8",
+          border: isPremium || isTemporarilyLocked ? "1px solid rgba(0,0,0,0.1)" : "1px solid rgba(26,115,232,0.3)",
+          background: isPremium || isTemporarilyLocked ? "#f8f9fa" : "#e8f0fe",
+          color: isPremium || isTemporarilyLocked ? "#9aa0a6" : "#1a73e8",
           fontSize: "0.9rem",
           fontWeight: 500,
-          cursor: isPremium ? "not-allowed" : "pointer",
+          cursor: isPremium || isTemporarilyLocked ? "not-allowed" : "pointer",
           fontFamily: "inherit",
           transition: "all 0.2s ease",
         }}
       >
-        {safeCta}
+        {isTemporarilyLocked ? "Disponível no 8º dia" : safeCta}
       </button>
     </motion.div>
   );
@@ -183,6 +206,8 @@ function ResourceCard({ icon: Icon, title, description, badge, cta, onCtaClick, 
 function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, completedLessons, activeLessonId, courseSlug }) {
   const lessonCount = mod.lessons?.length ?? 0;
   const moduleNum = String(index + 1).padStart(2, "0");
+  const moduleLessonIds = (mod.lessons || []).map((lesson) => (typeof lesson === "string" ? lesson : lesson.id));
+  const moduleLocked = lessonCount > 0 && moduleLessonIds.every((id) => lockedLessons?.has(id));
   const completedInModule = (mod.lessons || []).filter(l => {
     const id = typeof l === "string" ? l : l.id;
     return completedLessons?.has(id);
@@ -194,7 +219,9 @@ function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, complete
     }}>
       {/* Module Header */}
       <button
-        onClick={onToggle}
+        type="button"
+        onClick={moduleLocked ? undefined : onToggle}
+        aria-disabled={moduleLocked}
         style={{
           width: "100%",
           display: "flex",
@@ -203,19 +230,19 @@ function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, complete
           padding: "1.5rem 0",
           background: "none",
           border: "none",
-          cursor: "pointer",
+          cursor: moduleLocked ? "not-allowed" : "pointer",
           textAlign: "left",
           fontFamily: "inherit",
           transition: "opacity 0.15s",
         }}
-        onMouseEnter={e => e.currentTarget.style.opacity = "0.75"}
-        onMouseLeave={e => e.currentTarget.style.opacity = "1"}
+        onMouseEnter={moduleLocked ? undefined : (e => e.currentTarget.style.opacity = "0.75")}
+        onMouseLeave={moduleLocked ? undefined : (e => e.currentTarget.style.opacity = "1")}
       >
         {/* Module number */}
         <span style={{
           fontSize: "1.75rem",
           fontWeight: 700,
-          color: "rgba(0,0,0,0.08)",
+          color: moduleLocked ? "rgba(245,158,11,0.45)" : "rgba(0,0,0,0.08)",
           letterSpacing: "-0.04em",
           minWidth: "2.5rem",
           lineHeight: 1,
@@ -225,27 +252,55 @@ function ModuleAccordion({ mod, index, isOpen, onToggle, lockedLessons, complete
 
         {/* Title + count */}
         <div style={{ flex: 1 }}>
-          <span style={{ fontSize: "1.1rem", fontWeight: 500, color: "#1a1a1a", letterSpacing: "-0.01em", display: "block" }}>
+          <span style={{ fontSize: "1.1rem", fontWeight: 500, color: moduleLocked ? "#8a5a00" : "#1a1a1a", letterSpacing: "-0.01em", display: "block" }}>
             {fixPtBrText(mod.title)}
           </span>
           <span style={{ fontSize: "0.85rem", color: "#9aa0a6", marginTop: "2px", display: "block" }}>
             {completedInModule} / {lessonCount} {lessonCount === 1 ? "aula concluída" : "aulas concluídas"}
           </span>
+          {moduleLocked && (
+            <span style={{ fontSize: "0.85rem", color: "#b06000", marginTop: "4px", display: "block" }}>
+              {"Dispon\u00edvel no 8\u00ba dia ap\u00f3s a compra"}
+            </span>
+          )}
         </div>
 
         {/* Chevron */}
-        <motion.div
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.25, ease: "easeInOut" }}
-          style={{ color: "#9aa0a6", flexShrink: 0 }}
-        >
-          <ChevronDown size={20} />
-        </motion.div>
+        {moduleLocked ? (
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.65rem", flexShrink: 0 }}>
+            <span style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+              color: "#f59e0b",
+              background: "#fff8e1",
+              padding: "3px 10px",
+              borderRadius: "50px",
+              border: "1px solid rgba(245,158,11,0.2)",
+            }}>
+              <Lock size={11} /> {"Libera no 8\u00ba dia"}
+            </span>
+            <div style={{ color: "#b06000", flexShrink: 0 }}>
+              <Lock size={18} />
+            </div>
+          </div>
+        ) : (
+          <motion.div
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+            style={{ color: "#9aa0a6", flexShrink: 0 }}
+          >
+            <ChevronDown size={20} />
+          </motion.div>
+        )}
       </button>
 
       {/* Lesson list */}
       <AnimatePresence initial={false}>
-        {isOpen && (
+        {isOpen && !moduleLocked && (
           <motion.div
             key="content"
             initial={{ height: 0, opacity: 0 }}
@@ -448,10 +503,18 @@ export default function CoursePage() {
   const [fullNameModalOpen, setFullNameModalOpen] = useState(false);
   const [certToast, setCertToast] = useState("");
 
-  const getLockedLessons = (course, lessonStatus) => {
+  const getLockedLessons = (course, lessonStatus, advancedModulesUnlocked) => {
     const locked = new Set();
-    if (CAPSTONE_FORCE_UNLOCK) return locked;
     if (!course) return locked;
+    if (!advancedModulesUnlocked) {
+      for (const mod of course.modules || []) {
+        if (!REFUND_LOCKED_MODULE_IDS.has(mod.id)) continue;
+        for (const lesson of mod.lessons || []) {
+          locked.add(typeof lesson === "string" ? lesson : lesson.id);
+        }
+      }
+    }
+    if (CAPSTONE_FORCE_UNLOCK) return locked;
     const allLessonIds = getCourseLessonIds(course);
     const capstoneId = "lesson_master_challenge_1";
     if (!allLessonIds.includes(capstoneId)) return locked;
@@ -538,6 +601,7 @@ export default function CoursePage() {
   };
 
   const handleCertificateClick = () => {
+    if (!certificationUnlocked) return;
     const hasFullName = Boolean(accountInfo?.user?.full_name?.trim());
     if (!hasFullName) {
       setFullNameModalOpen(true);
@@ -594,8 +658,6 @@ export default function CoursePage() {
       .filter(([, done]) => Boolean(done))
       .map(([lessonId]) => lessonId)
   );
-  const lockedLessons = getLockedLessons(course, lessonStatus);
-
   const courseCompleted = completionPct >= 100 && totalLessons > 0;
   const access = accountInfo?.access;
   const hasActiveAccess = access?.status === "active";
@@ -603,10 +665,20 @@ export default function CoursePage() {
   const daysSincePurchase = purchaseAt
     ? Math.floor((Date.now() / 1000 - purchaseAt) / 86400)
     : 0;
-  const eligibleForCertification =
-    courseCompleted &&
+  const advancedModulesUnlocked =
+    accountInfo == null ||
+    (hasActiveAccess && (purchaseAt == null || daysSincePurchase >= RESOURCE_UNLOCK_AFTER_DAYS));
+  const lockedLessons = getLockedLessons(course, lessonStatus, advancedModulesUnlocked);
+  const downloadableResourcesUnlocked =
     hasActiveAccess &&
-    daysSincePurchase >= CERTIFICATION_DAYS_AFTER_PURCHASE;
+    Boolean(purchaseAt) &&
+    daysSincePurchase >= RESOURCE_UNLOCK_AFTER_DAYS;
+  const showCertificateSection =
+    courseCompleted &&
+    hasActiveAccess;
+  const certificationUnlocked =
+    showCertificateSection &&
+    (purchaseAt == null || daysSincePurchase >= CERTIFICATION_DAYS_AFTER_PURCHASE);
   const userName = accountInfo?.user?.full_name || user?.full_name || user?.email;
 
   const firstLessonSlug = getFirstLessonSlug(data, courseSlug || "sql-basico-avancado");
@@ -627,20 +699,126 @@ export default function CoursePage() {
     <>
       <style>{`
         @media (max-width: 767px) {
+          .course-hero-section {
+            padding: 1rem 1rem 0 !important;
+          }
           .course-hero-inner {
             padding-left: 0 !important;
             padding-right: 0 !important;
           }
           .course-hero-copy {
-            width: min(600px, 82%) !important;
+            width: 100% !important;
+            box-sizing: border-box;
             margin: 0 auto;
+            padding: 1.5rem 1.2rem 1.25rem !important;
+            border-radius: 24px !important;
+            background: linear-gradient(180deg, rgba(248,249,250,0.96), rgba(255,255,255,0.98));
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 18px 40px rgba(0,0,0,0.05);
+          }
+          .course-hero-copy .course-hero-kicker {
+            margin-bottom: 0.85rem !important;
+            font-size: 0.72rem !important;
+            letter-spacing: 0.18em !important;
           }
           .course-hero-copy h1 {
-            font-size: 1.55rem !important;
-            line-height: 1.2 !important;
+            font-size: 1.95rem !important;
+            line-height: 1.08 !important;
+            margin-bottom: 0.85rem !important;
           }
           .course-hero-copy p {
             font-size: 0.85rem !important;
+          }
+          .course-hero-copy .course-hero-subline {
+            margin-bottom: 1.15rem !important;
+            font-size: 0.96rem !important;
+            line-height: 1.55 !important;
+            color: #5f6368 !important;
+          }
+          .course-hero-copy .course-hero-stats {
+            margin: 0 0 1.25rem 0 !important;
+            display: flex !important;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.5rem;
+            letter-spacing: 0 !important;
+          }
+          .course-hero-copy .course-hero-stat-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.55rem 0.8rem;
+            border-radius: 999px;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 8px 18px rgba(0,0,0,0.04);
+            font-size: 0.8rem !important;
+            font-weight: 600;
+            line-height: 1.1;
+            white-space: nowrap;
+          }
+          .course-hero-copy .course-hero-stat-separator {
+            display: none !important;
+          }
+          .course-hero-copy .course-hero-cta {
+            width: 100%;
+            justify-content: center;
+            padding: 0.95rem 1.25rem !important;
+          }
+          .course-progress-section {
+            padding: 1.25rem 1rem 0 !important;
+          }
+          .course-progress-card {
+            box-sizing: border-box;
+            border-radius: 24px !important;
+            padding: 1.25rem !important;
+            gap: 1rem !important;
+            box-shadow: 0 16px 36px rgba(0,0,0,0.04) !important;
+          }
+          .course-progress-top {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.9rem !important;
+          }
+          .course-progress-copy h2 {
+            font-size: 1.65rem !important;
+          }
+          .course-progress-copy p {
+            font-size: 0.98rem !important;
+          }
+          .course-progress-summary {
+            width: 100%;
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem !important;
+          }
+          .course-progress-metric-grid {
+            display: contents !important;
+          }
+          .course-progress-metric {
+            padding: 0.85rem 0.75rem !important;
+            border-radius: 16px !important;
+          }
+          .course-progress-completion {
+            grid-column: 1 / -1;
+            display: flex !important;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left !important;
+            padding: 0.9rem 1rem;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(52,168,83,0.14), rgba(255,255,255,0.98));
+            border: 1px solid rgba(52,168,83,0.18);
+          }
+          .course-progress-completion-value {
+            font-size: 2rem !important;
+          }
+          .course-progress-completion > div {
+            margin-top: 0 !important;
+            font-size: 0.85rem !important;
+          }
+          .course-progress-bar {
+            height: 14px !important;
           }
           .course-cta-section {
             padding-left: 0 !important;
@@ -658,7 +836,7 @@ export default function CoursePage() {
       <div style={{ background: "#ffffff" }}>
 
         {/* â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <div style={{ background: "#ffffff" }}>
+        <div className="course-hero-section" style={{ background: "#ffffff" }}>
           <div className="course-hero-inner" style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 2rem" }}>
             <BraceParticles>
               <motion.div
@@ -669,14 +847,17 @@ export default function CoursePage() {
                 style={{ textAlign: "center" }}
               >
                 {/* Eyebrow */}
-                <p style={{
+                <p
+                  className="course-hero-kicker"
+                  style={{
                   margin: "0 0 1.25rem 0",
                   fontSize: "0.8rem",
                   fontWeight: 600,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   color: "#1a73e8",
-                }}>
+                  }}
+                >
                   {fixPtBrText("SQL do b\u00e1sico ao Avan\u00e7ado")}
                 </p>
 
@@ -694,28 +875,41 @@ export default function CoursePage() {
                 </h1>
 
                 {/* Sub-line */}
-                <p style={{
+                <p
+                  className="course-hero-subline"
+                  style={{
                   margin: "0 0 2rem 0",
                   fontSize: "clamp(1rem, 2vw, 1.15rem)",
                   color: "#9aa0a6",
                   fontWeight: 300,
                   lineHeight: 1.6,
-                }}>
+                  }}
+                >
                   {fixPtBrText("Aprenda SQL de forma pr\u00e1tica com datasets reais e exerc\u00edcios interativos.")}
                 </p>
 
                 {/* Inline stats */}
-                <p style={{
+                <p
+                  className="course-hero-stats"
+                  style={{
                   margin: "0 0 2.5rem 0",
                   fontSize: "0.875rem",
                   color: "#5f6368",
                   letterSpacing: "0.02em",
-                }}>
-                  {fixPtBrText(`${modules.length} m\u00f3dulos \u00b7 ${totalLessons} aulas \u00b7 ${completedLessonCount} conclu\u00eddas \u00b7 ${completionPct}% completo`)}
+                  }}
+                >
+                  <span className="course-hero-stat-pill">{fixPtBrText(`${modules.length} m\u00f3dulos`)}</span>
+                  <span className="course-hero-stat-separator">{" \u00b7 "}</span>
+                  <span className="course-hero-stat-pill">{fixPtBrText(`${totalLessons} aulas`)}</span>
+                  <span className="course-hero-stat-separator">{" \u00b7 "}</span>
+                  <span className="course-hero-stat-pill">{fixPtBrText(`${completedLessonCount} conclu\u00eddas`)}</span>
+                  <span className="course-hero-stat-separator">{" \u00b7 "}</span>
+                  <span className="course-hero-stat-pill">{fixPtBrText(`${completionPct}% completo`)}</span>
                 </p>
 
                 {/* CTA */}
                 <Link
+                  className="course-hero-cta"
                   to={firstLessonSlug ? `/cursos/${courseSlug || "sql-basico-avancado"}/aulas/${firstLessonSlug}` : "/cursos/sql-basico-avancado"}
                   style={{
                     display: "inline-flex",
@@ -748,9 +942,10 @@ export default function CoursePage() {
         </div>
 
         {/* â”€â”€ STATS BAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        <div style={{ background: "#ffffff", padding: "3rem 2rem 0" }}>
+        <div className="course-progress-section" style={{ background: "#ffffff", padding: "3rem 2rem 0" }}>
           <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
             <motion.div
+              className="course-progress-card"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -766,8 +961,8 @@ export default function CoursePage() {
                 boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
               }}
             >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
-                <div>
+              <div className="course-progress-top" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "1rem" }}>
+                <div className="course-progress-copy">
                   <h2 style={{ margin: "0 0 0.25rem 0", fontSize: "1.5rem", fontWeight: 600, color: "#1a1a1a", letterSpacing: "-0.02em" }}>
                     Seu Progresso
                   </h2>
@@ -775,19 +970,19 @@ export default function CoursePage() {
                     {completedLessonCount} de {totalLessons} aulas concluídas
                   </p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
-                  <div style={{ display: "flex", gap: "0.75rem" }}>
-                    <div style={{ background: "#e8f0fe", padding: "0.5rem 1rem", borderRadius: "10px", border: "1px solid rgba(26,115,232,0.15)", textAlign: "center" }}>
+                <div className="course-progress-summary" style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+                  <div className="course-progress-metric-grid" style={{ display: "flex", gap: "0.75rem" }}>
+                    <div className="course-progress-metric" style={{ background: "#e8f0fe", padding: "0.5rem 1rem", borderRadius: "10px", border: "1px solid rgba(26,115,232,0.15)", textAlign: "center" }}>
                       <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a73e8", lineHeight: 1 }}>{modules.length}</div>
                       <div style={{ fontSize: "0.65rem", color: "#1a73e8", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px", fontWeight: 600 }}>Módulos</div>
                     </div>
-                    <div style={{ background: "#fff8e1", padding: "0.5rem 1rem", borderRadius: "10px", border: "1px solid rgba(245,158,11,0.15)", textAlign: "center" }}>
+                    <div className="course-progress-metric" style={{ background: "#fff8e1", padding: "0.5rem 1rem", borderRadius: "10px", border: "1px solid rgba(245,158,11,0.15)", textAlign: "center" }}>
                       <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f59e0b", lineHeight: 1 }}>{remainingLessonCount}</div>
                       <div style={{ fontSize: "0.65rem", color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: "2px", fontWeight: 600 }}>Restantes</div>
                     </div>
                   </div>
-                  <div style={{ textAlign: "right" }}>
-                    <span style={{ fontSize: "1.75rem", fontWeight: 700, color: completionPct === 100 ? "#34A853" : "#1a1a1a", letterSpacing: "-0.02em", lineHeight: 1 }}>
+                  <div className="course-progress-completion" style={{ textAlign: "right" }}>
+                    <span className="course-progress-completion-value" style={{ fontSize: "1.75rem", fontWeight: 700, color: completionPct === 100 ? "#34A853" : "#1a1a1a", letterSpacing: "-0.02em", lineHeight: 1 }}>
                       {completionPct}%
                     </span>
                     {completionPct === 100 && <div style={{ fontSize: "0.75rem", color: "#34A853", fontWeight: 600, marginTop: "2px" }}>Concluído!</div>}
@@ -796,7 +991,7 @@ export default function CoursePage() {
               </div>
 
               {/* Progress Bar Container */}
-              <div style={{ background: "rgba(0,0,0,0.04)", borderRadius: "99px", height: "12px", overflow: "hidden", position: "relative" }}>
+              <div className="course-progress-bar" style={{ background: "rgba(0,0,0,0.04)", borderRadius: "99px", height: "12px", overflow: "hidden", position: "relative" }}>
                 <motion.div
                   initial={{ width: 0 }}
                   whileInView={{ width: `${completionPct}%` }}
@@ -842,11 +1037,18 @@ export default function CoursePage() {
             }}>
               {RESOURCES.map((r) => {
                 const normalizedTitle = fixPtBrText(r.title);
+                const isResourceLocked = Boolean(r.requiresRefundWindowEnd && !downloadableResourcesUnlocked);
                 return (
                   <ResourceCard
                     key={normalizedTitle}
                     {...r}
                     cta={r.cta}
+                    locked={isResourceLocked}
+                    lockMessage={
+                      isResourceLocked
+                        ? "Este material será liberado no 8º dia após a compra, quando o reembolso automático deixar de estar disponível."
+                        : ""
+                    }
                     onCtaClick={
                       normalizedTitle === "Calendário Sugerido" ? () => navigate(`/cursos/${courseSlug || "sql-basico-avancado"}/calendario`) :
                         normalizedTitle === "Cheatsheet SQL" ? () => navigate(`/cursos/${courseSlug || "sql-basico-avancado"}/cheatsheet`) :
@@ -909,7 +1111,7 @@ export default function CoursePage() {
         </div>
 
         {/* â”€â”€ BOTTOM CTA â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-        {eligibleForCertification && (
+        {showCertificateSection && (
           <div style={{ background: "#f8f9fa", padding: "6rem 2rem" }}>
             <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
               <motion.div
@@ -925,10 +1127,21 @@ export default function CoursePage() {
                 <p style={{ margin: 0, color: "#9aa0a6", fontSize: "1rem", fontWeight: 300 }}>
                   Parabéns! Você concluiu o curso. Clique no certificado para abrir.
                 </p>
+                {!certificationUnlocked && (
+                  <p style={{ margin: "0.75rem 0 0 0", color: "#b06000", fontSize: "0.95rem", lineHeight: 1.5 }}>
+                    {"Seu certificado ser\u00e1 liberado no 8\u00ba dia ap\u00f3s a compra, quando o reembolso autom\u00e1tico deixar de estar dispon\u00edvel."}
+                  </p>
+                )}
               </motion.div>
               <CertificationCard
                 userName={userName}
-                onClick={handleCertificateClick}
+                onClick={certificationUnlocked ? handleCertificateClick : undefined}
+                locked={!certificationUnlocked}
+                helperText={
+                  !certificationUnlocked
+                    ? "O certificado fica dispon\u00edvel apenas no 8\u00ba dia ap\u00f3s a compra."
+                    : ""
+                }
               />
             </div>
           </div>

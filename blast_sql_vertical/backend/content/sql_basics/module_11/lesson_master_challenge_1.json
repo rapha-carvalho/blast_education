@@ -8,7 +8,7 @@
   ],
   "estimated_minutes": 210,
   "requires_full_course_completion": true,
-  "final_pdf_button_label": "Baixar estudo de caso em PDF",
+  "final_pdf_button_label": "Acessar resultado do estudo de caso",
   "final_pdf_requires_completion": false,
   "portfolio_pdf_mode": "master_challenge",
   "dataset_context": {
@@ -273,7 +273,7 @@
       "id": "tab_onboarding",
       "title": "Contexto Inicial",
       "type": "content",
-      "content_markdown": "## Blast Commerce — Crescimento desacelerou: três teorias, uma resposta\n\nVocê foi contratado como Analista SQL Jr pela **Blast Commerce**, um e-commerce omnichannel com forte presença no Brasil. A empresa vende via web, app e equipe de vendas internas em todo o país.\n\n---\n\n### O Problema\n\nO H1/2024 foi de crescimento acelerado. No H2, o crescimento desacelerou bruscamente. O CEO convocou uma reunião de emergência e três executivos chegaram com diagnósticos opostos:\n\n**CMO Mariana:** *\"O problema e de canal de aquisição. Paid search e paid social estão trazendo clientes de baixo valor que não ficam. Precisamos dobrar em organic e referral. Mais investimento em branding, menos em performance.\"*\n\n**CFO Roberto:** *\"Discordo. O problema e de margem. Eletrônicos tem receita enorme mas margem terrivel. O volume de defeitos e reembolsos está comendo nosso lucro operacional. Temos que auditar o portfólio de produtos.\"*\n\n**COO Felipe:** *\"Vocês dois estão errados. O gargalo e operacional. O canal app tem taxa de cancelamento absurda e prazo de entrega inconsistente. Estamos gerando evasão silencioso antes de qualquer problema de margem ou aquisição.\"*\n\n---\n\n### Sua Missão\n\n**Use SQL para reunir evidências e ao final recomendar ao CEO qual (ou quais) teoria(s) são sustentadas pelos dados.**\n\n- Os 20 desafios SQL constroem o dossiê de evidências.\n- As 5 tarefas de interpretação pedem que você análise os dados e tome posição.\n- O resumo executivo final ? o entregável para o CEO.\n\n### Regras do desafio\n- Editor abre vazio: você escreve tudo do zero.\n- Apenas SELECT (o ambiente bloqueia comandos destrutivos).\n- Valide cada desafio antes de avançar."
+      "content_markdown": "## Blast Commerce — Crescimento desacelerou: três teorias, uma resposta\n\nVocê foi contratado como Analista SQL Jr pela **Blast Commerce**, um e-commerce omnichannel com forte presença no Brasil. A empresa vende via web, app e equipe de vendas internas em todo o país.\n\n---\n\n### O Problema\n\nO H1/2024 foi de crescimento acelerado. No H2, o crescimento desacelerou bruscamente. O CEO convocou uma reunião de emergência e três executivos chegaram com diagnósticos opostos:\n\n**CMO Mariana:** *\"O problema é de canal de aquisição. Paid search e paid social estão trazendo clientes de baixo valor que não ficam. Precisamos dobrar em organic e referral. Mais investimento em branding, menos em performance.\"*\n\n**CFO Roberto:** *\"Discordo. O problema e de margem. Eletrônicos tem receita enorme mas margem terrivel. O volume de defeitos e reembolsos está comendo nosso lucro operacional. Temos que auditar o portfólio de produtos.\"*\n\n**COO Felipe:** *\"Vocês dois estão errados. O gargalo é operacional. O canal app tem taxa de cancelamento absurda e prazo de entrega inconsistente. Estamos gerando evasão silencioso antes de qualquer problema de margem ou aquisição.\"*\n\n---\n\n### Sua Missão\n\n**Use SQL para reunir evidências e ao final recomendar ao CEO qual (ou quais) teoria(s) são sustentadas pelos dados.**\n\n- Os 20 desafios SQL constroem o dossiê de evidências.\n- As 5 tarefas de interpretação pedem que você análise os dados e tome posição.\n- O resumo executivo final e o entregável para o CEO.\n\n### Regras do desafio\n- Editor abre vazio: você escreve tudo do zero.\n- Apenas SELECT (o ambiente bloqueia comandos destrutivos).\n- Valide cada desafio antes de avançar."
     },
     {
       "id": "tab_dataset_context",
@@ -306,14 +306,14 @@
       "title": "3. Aquecimento — Receita bruta 2024",
       "type": "challenge",
       "exercise_index": 2,
-      "intro_markdown": "**Contexto de investigação:** Qual ? a receita bruta total de pedidos entregues em 2024? Este número ser? a linha de base para as análises de crescimento."
+      "intro_markdown": "**Contexto de investigação:** Qual é a receita bruta total de pedidos entregues em 2024? Este número será a linha de base para as análises de crescimento."
     },
     {
       "id": "tab_sql_04",
       "title": "4. Aquecimento — Pedidos por canal",
       "type": "challenge",
       "exercise_index": 3,
-      "intro_markdown": "**Hipótese COO:** Felipe acredita que o app ? o problema. Antes de avaliar cancelamentos, veja a distribuição de volume entre os canais de venda."
+      "intro_markdown": "**Hipótese COO:** Felipe acredita que o app é o problema. Antes de avaliar cancelamentos, veja a distribuição de volume entre os canais de venda."
     },
     {
       "id": "tab_sql_05",
@@ -369,7 +369,7 @@
       "title": "12. Núcleo — Prazo de entrega por estado",
       "type": "challenge",
       "exercise_index": 11,
-      "intro_markdown": "**Hipótese COO:** Felipe acredita que atrasos de entrega causam cancelamentos e evasão. Qual o prazo médio por estado? Ha variações significativas?"
+      "intro_markdown": "**Hipótese COO:** Felipe acredita que atrasos de entrega causam cancelamentos e evasão. Qual o prazo médio por estado? Há variações significativas?"
     },
     {
       "id": "tab_sql_13",
@@ -432,7 +432,7 @@
       "title": "Interpretação 1 — Canal e cancelamento",
       "type": "interpretation",
       "question_id": "interp_1",
-      "prompt_markdown": "Com base nos desafios 4, 5 e 6, avalie a hipótese do **COO Felipe** sobre o canal app.\n\nA taxa de cancelamento por canal ? o volume de pedidos sustentam ou refutam o diagnóstico de Felipe?\n\nInclua:\n- 2 evidências numéricas dos desafios,\n- 1 risco de negócio se o problema não for corrigido,\n- 1 ação recomendada com responsável e prazo.",
+      "prompt_markdown": "Com base nos desafios 4, 5 e 6, avalie a hipótese do **COO Felipe** sobre o canal app.\n\nA taxa de cancelamento por canal e o volume de pedidos sustentam ou refutam o diagnóstico de Felipe?\n\nInclua:\n- 2 evidências numéricas dos desafios,\n- 1 risco de negócio se o problema não for corrigido,\n- 1 ação recomendada com responsável e prazo.",
       "min_chars": 280,
       "keyword_groups": [
         [
@@ -461,14 +461,14 @@
         5
       ],
       "validation_mode": "min_chars_only",
-      "answer_template": "### Avaliação da hipótese do COO\n- Evidencia 1 (desafio 4): [distribuição de pedidos por canal]\n- Evidencia 2 (desafio 6): [taxa de cancelamento — qual canal tem mais?]\n\n### Posição sobre a hipótese\n- [A hipótese do COO e sustentada/refutada porque...]\n\n### Risco de negócio\n- [O que acontece se nada mudar nos próximos 90 dias?]\n\n### Ação recomendada\n- Ação: \n- Responsável:\n- Prazo:\n- KPI de sucesso:"
+      "answer_template": "### Avaliação da hipótese do COO\n- Evidência 1 (desafio 4): [distribuição de pedidos por canal]\n- Evidência 2 (desafio 6): [taxa de cancelamento — qual canal tem mais?]\n\n### Posição sobre a hipótese\n- [A hipótese do COO e sustentada/refutada porque...]\n\n### Risco de negócio\n- [O que acontece se nada mudar nos próximos 90 dias?]\n\n### Ação recomendada\n- Ação: \n- Responsável:\n- Prazo:\n- KPI de sucesso:"
     },
     {
       "id": "tab_interp_2",
       "title": "Interpretação 2 — Margem e reembolso",
       "type": "interpretation",
       "question_id": "interp_2",
-      "prompt_markdown": "Com base nos desafios 13 e 14, avalie a hipótese do **CFO Roberto** sobre eletrônicos e margem.\n\nOs numeros de margem e de reembolso sustentam ou refutam o diagnóstico do Roberto?\n\nInclua:\n- 2 evidências numéricas,\n- O impacto financeiro estimado,\n- Uma ação de portfólio ou produto para o próximo trimestre.",
+      "prompt_markdown": "Com base nos desafios 13 e 14, avalie a hipótese do **CFO Roberto** sobre eletrônicos e margem.\n\nOs números de margem e de reembolso sustentam ou refutam o diagnóstico do Roberto?\n\nInclua:\n- 2 evidências numéricas,\n- O impacto financeiro estimado,\n- Uma ação de portfólio ou produto para o próximo trimestre.",
       "min_chars": 260,
       "keyword_groups": [
         [
@@ -497,7 +497,7 @@
         13
       ],
       "validation_mode": "min_chars_only",
-      "answer_template": "### Avaliação da hipótese do CFO\n- Evidencia 1 (desafio 13): [margem % de eletrônicos vs categoria com melhor margem]\n- Evidencia 2 (desafio 14): [principal motivo de reembolso e sua concentração]\n\n### Impacto financeiro\n- [Quanto o problema custa em receita líquida por ano?]\n\n### Posição sobre a hipótese\n- [A hipótese do CFO e sustentada/refutada porque...]\n\n### Ação recomendada para o portfólio\n- Ação:\n- Responsável:\n- Prazo:\n- KPI:"
+      "answer_template": "### Avaliação da hipótese do CFO\n- Evidência 1 (desafio 13): [margem % de eletrônicos vs categoria com melhor margem]\n- Evidência 2 (desafio 14): [principal motivo de reembolso e sua concentração]\n\n### Impacto financeiro\n- [Quanto o problema custa em receita líquida por ano?]\n\n### Posição sobre a hipótese\n- [A hipótese do CFO e sustentada/refutada porque...]\n\n### Ação recomendada para o portfólio\n- Ação:\n- Responsável:\n- Prazo:\n- KPI:"
     },
     {
       "id": "tab_interp_3",
@@ -534,7 +534,7 @@
         11
       ],
       "validation_mode": "min_chars_only",
-      "answer_template": "### Diagnóstico operacional e de qualidade\n- Evidencia 1 (desafio 10): [delta pedido x itens — magnitude do problema]\n- Evidencia 2 (desafio 11): [incidência de pagamento duplicado]\n- Evidencia 3 (desafio 12): [prazo médio por estado e variações]\n\n### Priorização de correções\n- Prioridade 1 (maior impacto):\n- Prioridade 2:\n- Prioridade 3:\n\n### Responsáveis sugeridos\n- Financeiro:\n- Operações:\n- Produto/Dados:"
+      "answer_template": "### Diagnóstico operacional e de qualidade\n- Evidência 1 (desafio 10): [delta pedido x itens — magnitude do problema]\n- Evidência 2 (desafio 11): [incidência de pagamento duplicado]\n- Evidência 3 (desafio 12): [prazo médio por estado e variações]\n\n### Priorização de correções\n- Prioridade 1 (maior impacto):\n- Prioridade 2:\n- Prioridade 3:\n\n### Responsáveis sugeridos\n- Financeiro:\n- Operações:\n- Produto/Dados:"
     },
     {
       "id": "tab_interp_4",
@@ -572,14 +572,14 @@
         18
       ],
       "validation_mode": "min_chars_only",
-      "answer_template": "### Análise de crescimento\n- Evidencia 1 (desafio 16): [comportamento da curva acumulada]\n- Evidencia 2 (desafio 17): [meses com queda ou desaceleracao MoM]\n- Evidencia 3 (desafio 18): [retenção M0-M3 — onde há maior queda?]\n- Evidencia 4 (desafio 19): [etapa de maior perda no funil]\n\n### Principal gargalo identificado\n- [Descrição do gargalo com evidência numérica]\n\n### A retenção sustenta qual hipótese?\n- [CMO (canal de aquisição), COO (operação), ou ambas?]\n\n### Mini-plano de ação\n- Experimento:\n- Público:\n- Janela de medição:\n- Métrica de sucesso:"
+      "answer_template": "### Análise de crescimento\n- Evidência 1 (desafio 16): [comportamento da curva acumulada]\n- Evidência 2 (desafio 17): [meses com queda ou desaceleracao MoM]\n- Evidência 3 (desafio 18): [retenção M0-M3 — onde há maior queda?]\n- Evidência 4 (desafio 19): [etapa de maior perda no funil]\n\n### Principal gargalo identificado\n- [Descrição do gargalo com evidência numérica]\n\n### A retenção sustenta qual hipótese?\n- [CMO (canal de aquisição), COO (operação), ou ambas?]\n\n### Mini-plano de ação\n- Experimento:\n- Público:\n- Janela de medição:\n- Métrica de sucesso:"
     },
     {
       "id": "tab_interp_5",
       "title": "Resumo Executivo Final",
       "type": "interpretation",
       "question_id": "interp_5",
-      "prompt_markdown": "Escreva um **memorando executivo** para o CEO da Blast Commerce.\n\nEle precisa de uma resposta clara: qual(is) das três teorias — CMO Mariana, CFO Roberto, COO Felipe — tem suporte nos dados, e qual ? a estratégia recomendada?\n\nEstruture em 4 blocos:\n1) Diagnóstico geral (o que os dados mostram?)\n2) 3 principais achados com evidências numéricas\n3) Recomendação principal (quem estava certo?)\n4) Riscos e limites da análise",
+      "prompt_markdown": "Escreva um **memorando executivo** para o CEO da Blast Commerce.\n\nEle precisa de uma resposta clara: qual(is) das três teorias — CMO Mariana, CFO Roberto, COO Felipe — tem suporte nos dados, e qual é a estratégia recomendada?\n\nEstruture em 4 blocos:\n1) Diagnóstico geral (o que os dados mostram?)\n2) 3 principais achados com evidências numéricas\n3) Recomendação principal (quem estava certo?)\n4) Riscos e limites da análise",
       "min_chars": 420,
       "keyword_groups": [
         [
@@ -632,7 +632,7 @@
       "id": "tab_final_review",
       "title": "Lista de Verificação e Entrega",
       "type": "content",
-      "content_markdown": "## Lista de verificação de entrega\n\n- [ ] 20 desafios SQL validados\n- [ ] 5 respostas de interpretação aprovadas\n- [ ] Resumo executivo revisado\n\n---\n\nQuando tudo estiver concluído, baixe o **PDF de Estudo de Caso** para usar no seu portfólio e LinkedIn.\n\nO documento inclui:\n- Seus KPIs calculados com SQL\n- Graficos dos resultados principais\n- Sua recomendação executiva"
+      "content_markdown": "## Lista de verificação de entrega\n\n- [ ] 20 desafios SQL validados\n- [ ] 5 respostas de interpretação aprovadas\n- [ ] Resumo executivo revisado\n\n---\n\nQuando tudo estiver concluído, acesse o **Estudo de Caso** para usar no seu portfólio e LinkedIn.\n\nO documento inclui:\n- Seus KPIs calculados com SQL\n- Os códigos SQL utilizados no desafio\n- Sua recomendação executiva"
     }
   ],
   "content_markdown": "Use as abas para navegar pelo Desafio Mestre.",
@@ -740,7 +740,7 @@
     {
       "id": "mc_ex_05",
       "title": "Núcleo 1 — Ticket médio mensal",
-      "prompt_markdown": "Calcule o ticket médio mensal considerando apenas pedidos entregues e usando `(valor_bruto - desconto_aplicado)`.\n\nSaída: `mes_ref`, `ticket_medio`.\n\n> **Observe:** Ha uma queda visível no meio do ano ? uma recuperação no Q4?",
+      "prompt_markdown": "Calcule o ticket médio mensal considerando apenas pedidos entregues e usando `(valor_bruto - desconto_aplicado)`. Arredonde (ROUND) para 2 casas decimais.\n\nSaída: `mes_ref`, `ticket_medio`.\n\n> **Observe:** Há uma queda visível no meio do ano? uma recuperação no Q4?",
       "starter_query": "",
       "solution_query": "SELECT CAST(DATE_TRUNC('month', data_pedido) AS DATE) AS mes_ref,\n       ROUND(AVG(valor_bruto - desconto_aplicado), 2) AS ticket_medio\nFROM capstone.pedidos\nWHERE status_pedido = 'entregue'\nGROUP BY 1\nORDER BY 1",
       "hint_level_1": "DATE_TRUNC para mes, AVG para ticket.",
@@ -804,7 +804,7 @@
     {
       "id": "mc_ex_07",
       "title": "Núcleo 3 — Receita líquida por estado",
-      "prompt_markdown": "Retorne a receita líquida por estado: `valor_bruto - desconto_aplicado - reembolsos`.\nConsidere apenas pedidos entregues.\n\nSaída: `estado`, `receita_liquida`.\n\n> **Observe:** Quão concentrada ? a receita geograficamente?",
+      "prompt_markdown": "Retorne a receita líquida por estado: `valor_bruto - desconto_aplicado - reembolsos`.\nConsidere apenas pedidos entregues.\n\nSaída: `estado`, `receita_liquida`.\n\n> **Observe:** Quão concentrada é a receita geograficamente?",
       "starter_query": "",
       "solution_query": "WITH reembolso_por_pedido AS (\n  SELECT pedido_id, SUM(valor_reembolso) AS total_reembolso\n  FROM capstone.reembolsos\n  GROUP BY pedido_id\n)\nSELECT c.estado,\n       ROUND(SUM(p.valor_bruto - p.desconto_aplicado - COALESCE(r.total_reembolso, 0)), 2) AS receita_liquida\nFROM capstone.pedidos p\nJOIN capstone.clientes c\n  ON p.cliente_id = c.cliente_id\nLEFT JOIN reembolso_por_pedido r\n  ON p.pedido_id = r.pedido_id\nWHERE p.status_pedido = 'entregue'\nGROUP BY c.estado\nORDER BY receita_liquida DESC, c.estado",
       "hint_level_1": "Monte um total de reembolso por pedido e depois faça join.",

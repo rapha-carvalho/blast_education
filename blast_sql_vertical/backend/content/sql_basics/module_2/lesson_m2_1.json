@@ -2,7 +2,7 @@
   "id": "lesson_m2_1",
   "title": "WHERE e Operadores de Comparação",
   "lesson_type": "interactive_sql",
-  "objective": "Filtrar dados com WHERE usando comparações numericas, texto e data para responder perguntas de negócio.",
+  "objective": "Filtrar dados com WHERE usando comparações numéricas, texto e data para responder perguntas de negócio.",
   "prerequisites": [
     "lesson_m1_5"
   ],
@@ -12,14 +12,14 @@
     "tables_used": [
       "filtering.orders"
     ],
-    "scenario": "Você faz parte do time de analytics da GrooveCommerce e precisa encontrar pedidos especificos para auditoria financeira."
+    "scenario": "Você faz parte do time de analytics da GrooveCommerce e precisa encontrar pedidos específicos para auditoria financeira."
   },
   "tabs": [
     {
       "id": "tab_contexto",
       "title": "Por que WHERE importa?",
       "type": "content",
-      "content_markdown": "#### Sem filtro, não existe análise de negócio\n\nNo trabalho real, quase nunca você quer a tabela inteira. A pergunta sempre vem com contexto:\n\n- Quais pedidos estão **aprovados**?\n- Quais pedidos são **acima de 300**?\n- Quais registros são de **2024**?\n\nA cláusula `WHERE` faz exatamente isso: **filtra linhas** antes de mostrar o resultado.\n\n```sql\nSELECT id, amount, status\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\n[PLACEHOLDER_IMAGEM: Painel comparando tabela sem filtro vs tabela com filtro WHERE, destacando reducao de linhas e foco na decisão.]"
+      "content_markdown": "#### Sem filtro, não existe análise de negócio\n\nNo trabalho real, quase nunca você quer a tabela inteira. A pergunta sempre vem com contexto:\n\n- Quais pedidos estão **aprovados**?\n- Quais pedidos são **acima de 300**?\n- Quais registros são de **2024**?\n\nA cláusula `WHERE` faz exatamente isso: **filtra linhas** antes de mostrar o resultado.\n\n```sql\nSELECT id, amount, status\nFROM filtering.orders\nWHERE status = 'approved';\n```\n\n[PLACEHOLDER_IMAGEM: Painel comparando tabela sem filtro vs tabela com filtro WHERE, destacando redução de linhas e foco na decisão.]"
     },
     {
       "id": "tab_operadores",
@@ -39,7 +39,7 @@
       "title": "Desafio 2 - Pedidos grandes",
       "type": "challenge",
       "exercise_index": 1,
-      "intro_markdown": "Agora você vai aplicar comparação numerica para encontrar pedidos de alto valor.\n\n> **Sua missão:** traga pedidos com valor acima de 300, ordenados do maior para o menor."
+      "intro_markdown": "Agora você vai aplicar comparação numérica para encontrar pedidos de alto valor.\n\n> **Sua missão:** traga pedidos com valor acima de 300, ordenados do maior para o menor."
     },
     {
       "id": "tab_practice_3",
@@ -52,7 +52,7 @@
       "id": "tab_recap",
       "title": "Recapitulando",
       "type": "content",
-      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `WHERE` filtra linhas para responder perguntas especificas.\n- `=` e `!=` funcionam bem para regras de status e categorias.\n- `>`, `>=`, `<`, `<=` permitem cortes por valor.\n- Filtro de data exige comparação explícita no intervalo correto.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `WHERE` | Cláusula que aplica condições de filtro |\n| Comparação | Regra lógica entre dois valores |\n| Registro elegível | Linha que satisfaz o filtro |\n| Ordenação | Forma de priorizar leitura do resultado |\n\n> **Próxima aula:** AND, OR e parênteses para combinar múltiplas regras sem ambiguidade."
+      "content_markdown": "#### O que você aprendeu nesta aula\n\n- `WHERE` filtra linhas para responder perguntas específicas.\n- `=` e `!=` funcionam bem para regras de status e categorias.\n- `>`, `>=`, `<`, `<=` permitem cortes por valor.\n- Filtro de data exige comparação explícita no intervalo correto.\n\n---\n\n#### Glossário rápido\n\n| Termo | Definição |\n|---|---|\n| `WHERE` | Cláusula que aplica condições de filtro |\n| Comparação | Regra lógica entre dois valores |\n| Registro elegível | Linha que satisfaz o filtro |\n| Ordenação | Forma de priorizar leitura do resultado |\n\n> **Próxima aula:** AND, OR e parênteses para combinar múltiplas regras sem ambiguidade."
     }
   ],
   "content_markdown": "Utilize as abas acima para navegar pelo conteúdo desta aula.",

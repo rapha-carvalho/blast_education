@@ -12,20 +12,20 @@
     "tables_used": [
       "filtering.orders"
     ],
-    "scenario": "Você precisa montar visoes executivas com os pedidos mais importantes sem sobrecarregar o dashboard com todas as linhas."
+    "scenario": "Você precisa montar visões executivas com os pedidos mais importantes sem sobrecarregar o dashboard com todas as linhas."
   },
   "tabs": [
     {
       "id": "tab_order_by",
       "title": "ORDER BY na prática",
       "type": "content",
-      "content_markdown": "#### ORDER BY prioriza o que importa\n\nDepois de filtrar dados, o próximo passo e definir **ordem de leitura**.\nCom `ORDER BY`, você escolhe se quer ver primeiro os maiores, os menores, os mais recentes ou os mais antigos.\n\n| Comando | Uso |\n|---|---|\n| `ORDER BY coluna ASC` | crescente (padrão) |\n| `ORDER BY coluna DESC` | decrescente |\n| `ORDER BY col1 DESC, col2 ASC` | desempate por segunda coluna |\n\n```sql\nSELECT id, amount, order_date\nFROM filtering.orders\nORDER BY amount DESC, id ASC;\n```\n\nEssa query mostra pedidos de maior valor primeiro e usa `id` como desempate.\n\n[PLACEHOLDER_IMAGEM: Painel mostrando mesma tabela em três ordenacoes diferentes: por valor desc, por data desc e por id asc, destacando priorizacao de leitura.]"
+      "content_markdown": "#### ORDER BY prioriza o que importa\n\nDepois de filtrar dados, o próximo passo é definir **ordem de leitura**.\nCom `ORDER BY`, você escolhe se quer ver primeiro os maiores, os menores, os mais recentes ou os mais antigos.\n\n| Comando | Uso |\n|---|---|\n| `ORDER BY coluna ASC` | crescente (padrão) |\n| `ORDER BY coluna DESC` | decrescente |\n| `ORDER BY col1 DESC, col2 ASC` | desempate por segunda coluna |\n\n```sql\nSELECT id, amount, order_date\nFROM filtering.orders\nORDER BY amount DESC, id ASC;\n```\n\nEssa query mostra pedidos de maior valor primeiro e usa `id` como desempate.\n\n[PLACEHOLDER_IMAGEM: Painel mostrando mesma tabela em três ordenações diferentes: por valor desc, por data desc e por id asc, destacando priorização de leitura.]"
     },
     {
       "id": "tab_limit_offset",
       "title": "LIMIT e OFFSET",
       "type": "content",
-      "content_markdown": "#### LIMIT reduz volume; OFFSET página\n\nEm análise diaria, quase nunca você precisa de todas as linhas.\n`LIMIT` corta o resultado para as primeiras N linhas, e `OFFSET` pula as primeiras linhas para simular página.\n\n| Recurso | Função | Exemplo |\n|---|---|---|\n| `LIMIT` | limita quantidade retornada | `LIMIT 10` |\n| `OFFSET` | pula linhas iniciais | `OFFSET 20` |\n| juntos | página de resultados | `LIMIT 10 OFFSET 20` |\n\n```sql\nSELECT id, country, order_date, amount\nFROM filtering.orders\nWHERE country = 'USA'\nORDER BY order_date DESC, id ASC\nLIMIT 3 OFFSET 3;\n```\n\nA query acima retorna a \"página 2\" de pedidos dos EUA (3 linhas por página).\n\n> Sempre use `ORDER BY` antes de `LIMIT/OFFSET`; sem ordenação, a página pode ficar instavel.\n\n[PLACEHOLDER_IMAGEM: Fluxo visual de paginação SQL com ORDER BY + LIMIT + OFFSET, exibindo página 1 e página 2 de um mesmo ranking.]"
+      "content_markdown": "#### LIMIT reduz volume; OFFSET página\n\nEm análise diária, quase nunca você precisa de todas as linhas.\n`LIMIT` corta o resultado para as primeiras N linhas, e `OFFSET` pula as primeiras linhas para simular página.\n\n| Recurso | Função | Exemplo |\n|---|---|---|\n| `LIMIT` | limita quantidade retornada | `LIMIT 10` |\n| `OFFSET` | pula linhas iniciais | `OFFSET 20` |\n| juntos | página de resultados | `LIMIT 10 OFFSET 20` |\n\n```sql\nSELECT id, country, order_date, amount\nFROM filtering.orders\nWHERE country = 'USA'\nORDER BY order_date DESC, id ASC\nLIMIT 3 OFFSET 3;\n```\n\nA query acima retorna a \"página 2\" de pedidos dos EUA (3 linhas por página).\n\n> Sempre use `ORDER BY` antes de `LIMIT/OFFSET`; sem ordenação, a página pode ficar instável.\n\n[PLACEHOLDER_IMAGEM: Fluxo visual de paginação SQL com ORDER BY + LIMIT + OFFSET, exibindo página 1 e página 2 de um mesmo ranking.]"
     },
     {
       "id": "tab_practice_1",

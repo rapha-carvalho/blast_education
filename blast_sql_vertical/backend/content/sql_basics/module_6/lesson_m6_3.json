@@ -1,6 +1,6 @@
 {
   "id": "lesson_m6_3",
-  "title": "Verificacoes de Qualidade de Dados com SQL",
+  "title": "Verificações de Qualidade de Dados com SQL",
   "lesson_type": "interactive_sql",
   "objective": "Aplicar checks de unicidade, integridade referencial e conciliação para detectar problemas de qualidade antes de publicar relatórios.",
   "prerequisites": [
@@ -15,7 +15,7 @@
       "clientes",
       "produtos"
     ],
-    "scenario": "Antes de liberar dashboards para a diretoria, você precisa executar verificacoes de qualidade para garantir que os dados estão consistentes."
+    "scenario": "Antes de liberar dashboards para a diretoria, você precisa executar verificações de qualidade para garantir que os dados estão consistentes."
   },
   "tabs": [
     {
@@ -49,7 +49,7 @@
       "title": "Desafio 3 - Top divergências financeiras",
       "type": "challenge",
       "exercise_index": 2,
-      "intro_markdown": "A liderança quer priorizar rapidamente os casos mais críticos de divergencia.\n\n> **Sua missão:** Liste os 5 pedidos com maior diferença entre `order_total` e soma dos itens."
+      "intro_markdown": "A liderança quer priorizar rapidamente os casos mais críticos de divergência.\n\n> **Sua missão:** Liste os 5 pedidos com maior diferença entre `order_total` e soma dos itens."
     },
     {
       "id": "tab_recap",
