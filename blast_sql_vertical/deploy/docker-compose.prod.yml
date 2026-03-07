@@ -38,7 +38,7 @@ services:
       PLAYWRIGHT_CHROMIUM_ARGS: --disable-dev-shm-usage,--no-sandbox
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     volumes:
-      - backend_data:/app/data
+      - ${BACKEND_DATA_DIR:-./data}:/app/data
     expose:
       - "8000"
     healthcheck:
@@ -67,7 +67,3 @@ services:
       resources:
         limits:
           memory: 128m
-
-volumes:
-  backend_data:
-    driver: local

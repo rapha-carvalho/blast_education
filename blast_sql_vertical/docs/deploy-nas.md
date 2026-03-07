@@ -159,6 +159,7 @@ ssh admin@<nas-ip>
 
 ```bash
 mkdir -p /volume1/docker/blast-education
+mkdir -p /volume1/docker/blast-education/data
 cd /volume1/docker/blast-education
 ```
 
@@ -193,6 +194,8 @@ CLOUDFLARE_TUNNEL_TOKEN=eyJ...
 
 APP_BASE_URL=https://education.blastgroup.org
 
+BACKEND_DATA_DIR=/volume1/docker/blast-education/data
+
 INITIAL_ADMIN_EMAIL=admin@blastgroup.org
 INITIAL_ADMIN_PASSWORD=very-strong-password-here
 
@@ -220,6 +223,32 @@ Protect the file:
 ```bash
 chmod 600 .env.prod
 ```
+
+Make sure the persistent data directory exists:
+```bash
+mkdir -p /volume1/docker/blast-education/data
+```
+
+### 5.4.1 Migrate an existing named-volume database
+
+If you already deployed an older version that stored SQLite in a Docker named volume,
+copy that data into `BACKEND_DATA_DIR` before the first restart with the new compose file.
+
+Find the old volume:
+```bash
+docker volume ls | grep backend_data
+```
+
+Copy its contents into the fixed NAS directory:
+```bash
+docker run --rm \
+  -v <existing_backend_volume>:/from \
+  -v /volume1/docker/blast-education/data:/to \
+  alpine sh -c "cp -av /from/. /to/"
+```
+
+After that, run the normal `docker compose ... up -d` deployment and the backend will
+keep using the same `users.db` file on every rebuild.
 
 ### 5.5 Authenticate with GHCR (only if images are private)
 
@@ -269,7 +298,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.prod up -d
 ```
 
 Docker Compose will restart only the containers whose image changed.
-The SQLite database in the `backend_data` named volume is untouched.
+The SQLite database under `BACKEND_DATA_DIR` is untouched.
 
 To deploy a specific git-sha tag instead of `latest`:
 
