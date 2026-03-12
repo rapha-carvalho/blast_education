@@ -1,4 +1,5 @@
-import { Navigate, Outlet, Route, Routes } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import Layout from "./components/Layout";
 import RequireAuth from "./components/RequireAuth";
 import RequireAdmin from "./components/RequireAdmin";
@@ -26,6 +27,9 @@ import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminUsersPage from "./pages/AdminUsersPage";
 import AdminUserDetailPage from "./pages/AdminUserDetailPage";
 import AdminUserCreatePage from "./pages/AdminUserCreatePage";
+import { trackMetaPageView } from "./utils/tracking";
+
+let lastTrackedMetaPath = "";
 
 function ProtectedLayout() {
   return (
@@ -41,9 +45,23 @@ function AdminOnly({ children }) {
   return <RequireAdmin>{children}</RequireAdmin>;
 }
 
+function MetaPixelPageTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    const currentPath = `${location.pathname}${location.search}${location.hash}`;
+    if (lastTrackedMetaPath === currentPath) return;
+    lastTrackedMetaPath = currentPath;
+    trackMetaPageView();
+  }, [location.pathname, location.search, location.hash]);
+
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
+      <MetaPixelPageTracker />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
